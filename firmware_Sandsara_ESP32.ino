@@ -10,7 +10,7 @@
 File myFile;
 File root;
 
-int movement= 1;
+int movement = 1;
 MoveSara halo(16);
 
 void setup() {
@@ -34,7 +34,7 @@ void setup() {
 
 
 void loop() {
-  halo.moveTo(50, 50);
+  //halo.moveTo(50, 50);
   run_sandsara(root);
   //while(1){delay(10000);}
   delay(5000);
@@ -62,21 +62,25 @@ void run_sandsara(File dircurrent) {
       if (file.fileType == 2) {
         file.getNextComponents(&component_1, &component_2);
         halo.z_current = component_1;
-        halo.theta_current = component_2;        
+        halo.theta_current = component_2;
         halo.setCouplingAngle();
       }
       while ( working_status == 0) {
         working_status = file.getNextComponents(&component_1, &component_2);
-        /*Serial.print(component_1);
+        Serial.print(component_1);
         Serial.print(", ");
-        Serial.println(component_2);*/
+        Serial.println(component_2);
         if (file.fileType == 1 || file.fileType == 3)
           halo.moveTo(component_1, component_2);
-        else if (file.fileType == 2){
+        else if (file.fileType == 2) {
           halo.movePolarTo(component_1, component_2);
         }
       }
       Serial.println("finished");
+      if (movement == 1)
+        movement = 0;
+      else
+        movement = 1;
     }
   }
 }

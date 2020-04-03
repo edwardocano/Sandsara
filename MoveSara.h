@@ -1,6 +1,8 @@
 #include <AccelStepper.h>
 #include <MultiStepper.h>
 
+//Speed
+#define millimeterSpeed 10;
 //variables of the geometry
 #define l1 76
 #define l2 76
@@ -29,14 +31,14 @@ class MoveSara {
         AccelStepper stepper1;
         AccelStepper stepper2;
         MultiStepper steppers;
-        int maxSpeed;
+        long maxSpeed;
         double q1_current;
         double q2_current;
         double x_current;
         double y_current;
         double x_home;
         double y_home;
-        bool constantMotorSpeed = true;
+        bool constantMotorSpeed = false;
 
     public:
         MoveSara(int = 16);
@@ -115,24 +117,24 @@ void MoveSara::movePolarTo(double z_next, double theta_next) { //z must be in mi
 
 void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance) { //distance is in milimeters
     long positions[2];
-    int valor_pot = analogRead(A0);
+    /*int valor_pot = analogRead(A0);
     if (valor_pot < 100)
-        valor_pot = 100;
+        valor_pot = 100;*/
     if (abs(q1_steps) > abs(q2_steps + q1_steps)) //importante
         maxSpeed = abs(q1_steps) * 1L;
     else
         maxSpeed = abs(q2_steps + q1_steps) * 1L;
-    maxSpeed = maxSpeed * valor_pot / 1024.0 * 10.0;
+    maxSpeed = (maxSpeed/distance)*millimeterSpeed;// * valor_pot / 1024.0 * 10.0;
     if (maxSpeed > 150 * microstepping)
         maxSpeed = 150 * microstepping;
     if (constantMotorSpeed)
         maxSpeed = 50 * microstepping;
     //variar velocidad
-    Serial.print(q1_steps);
+    /*Serial.print(q1_steps);
     Serial.print(",");
     Serial.print(q2_steps + q1_steps);
     Serial.print(",");
-    Serial.println(maxSpeed);
+    Serial.println(maxSpeed);*/
     stepper1.setMaxSpeed(maxSpeed);
     stepper2.setMaxSpeed(maxSpeed);
     positions[0] = stepper1.currentPosition() + q1_steps;
@@ -157,7 +159,7 @@ void MoveSara::moveTo(double x, double y) {
     if (distance > 1.1){
         moveInterpolateTo(x, y, distance);
     }
-    else{
+    else if (distance > 0.5){
         ik(x, y, &q1, &q2);
         steps_of_q1 = calculate_steps(q1_current, q1);
         steps_of_q2 = calculate_steps(q2_current, q2);
@@ -181,7 +183,7 @@ void MoveSara::moveInterpolateTo(double x, double y, double distance){
     moveTo(x,y);
 }
 //Configuration Methods---------------------------------------------------------------------
---------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
 void MoveSara::init(int speedMax, long positionMotor1, long positionMotor2) { //40
   double q1, q2;
   stepper1.setMaxSpeed(speedMax * microstepping);
