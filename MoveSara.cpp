@@ -98,10 +98,12 @@ void MoveSara::moveTo(double x, double y) {
         moveInterpolateTo(x, y, distance);
     }
     else if (distance > 0.5){
-        ik(x, y, &q1, &q2);
-        steps_of_q1 = calculate_steps(q1_current, q1);
-        steps_of_q2 = calculate_steps(q2_current, q2);
-        moveSteps(steps_of_q1, steps_of_q2, distance);
+        if (!(x == 0 && y == 0)){
+          ik(x, y, &q1, &q2);
+          steps_of_q1 = calculate_steps(q1_current, q1);
+          steps_of_q2 = calculate_steps(q2_current, q2);
+          moveSteps(steps_of_q1, steps_of_q2, distance);
+        }
     }
 
 }
