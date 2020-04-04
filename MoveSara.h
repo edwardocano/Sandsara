@@ -47,8 +47,8 @@ class MoveSara {
         void goHome();
         void setHomePosition();
         void setCouplingAngle();
-        double z_polar(double , double );
-        double thetaPolar(double , double );
+        static double z_polar(double , double );
+        static double thetaPolar(double , double );
     private:
         void moveInterpolateTo(double , double , double );
         void moveSteps(long, long, double);

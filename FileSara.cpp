@@ -1,4 +1,5 @@
 #include "FileSara.h"
+#include "MoveSara.h"
 
 FileSara::FileSara(String nameF, int directionMode) {
   fileName = nameF;
@@ -260,19 +261,37 @@ int FileSara::readFile() {
 }
 
 double FileSara::getStartZ(){
-  double component1, component2;
+  int stackMode = directionMode;
+  directionMode = 1;
+  double component1, component2, zStart;
   pFile = 0;
   getNextComponents(&component1, &component2);
   pFile = 0;
   dataBuffer = "";
+  directionMode = stackMode;
+
+  if (fileType == 2){
+    return component2;
+  }
+  zStart = MoveSara::z_polar(component1, component2);
+  return zStart;
 }
 
 double FileSara::getFinalZ(){
-  double component1, component2;
+  int stackMode = directionMode;
+  directionMode = 0;
+  double component1, component2, zFinal;
   pFile = file.size();
   getNextComponents(&component1, &component2);
   pFile = file.size();
   dataBuffer = "";
+  directionMode = stackMode;
+
+  if (fileType == 2){
+    return component2;
+  }
+  zFinal = MoveSara::z_polar(component1, component2);
+  return zFinal;
 }
 
 void FileSara::autoSetMode(double zCurrent){
