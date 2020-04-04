@@ -1,6 +1,8 @@
 #ifndef _MOVESARA_H_
 #define _MOVESARA_H_
 
+#define PROCESSING_SIMULATOR
+
 #include <AccelStepper.h>
 #include <MultiStepper.h>
 

@@ -28,7 +28,9 @@ void setup() {
   }
   root = SD.open("/");
   delay(1000);
+  #ifdef PROCESSING_SIMULATOR
   Serial.println("inicia");
+  #endif
 }
 
 
@@ -77,7 +79,9 @@ void run_sandsara(File dircurrent) {
           halo.movePolarTo(component_1, component_2);
         }
       }
+      #ifdef PROCESSING_SIMULATOR
       Serial.println("finished");
+      #endif
     }
   }
 }

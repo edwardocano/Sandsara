@@ -68,11 +68,13 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance) { //dist
     if (constantMotorSpeed)
         maxSpeed = 50 * microstepping;
     //variar velocidad
-    /*Serial.print(q1_steps);
+    #ifdef PROCESSING_SIMULATOR
+    Serial.print(q1_steps);
     Serial.print(",");
     Serial.print(q2_steps + q1_steps);
     Serial.print(",");
-    Serial.println(maxSpeed);*/
+    Serial.println(maxSpeed);
+    #endif
     stepper1.setMaxSpeed(maxSpeed);
     stepper2.setMaxSpeed(maxSpeed);
     positions[0] = stepper1.currentPosition() + q1_steps;
