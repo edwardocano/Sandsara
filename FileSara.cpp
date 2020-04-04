@@ -258,3 +258,36 @@ int FileSara::readFile() {
     pFile += index_nl + 1;
   }
 }
+
+double FileSara::getStartZ(){
+  double component1, component2;
+  pFile = 0;
+  getNextComponents(&component1, &component2);
+  pFile = 0;
+  dataBuffer = "";
+}
+
+double FileSara::getFinalZ(){
+  double component1, component2;
+  pFile = file.size();
+  getNextComponents(&component1, &component2);
+  pFile = file.size();
+  dataBuffer = "";
+}
+
+void FileSara::autoSetMode(double zCurrent){
+  double startZ, finalZ, diff1, diff2;
+  startZ = getStartZ();
+  finalZ = getFinalZ();
+  diff1 = abs(zCurrent - startZ);
+  diff2 = abs(zCurrent - finalZ);
+  if (diff1 < diff2){
+    directionMode = 1;
+  }
+  else if (diff2 < diff1){
+    directionMode = 0;
+  }
+  else{
+    directionMode = 1;
+  }
+}
