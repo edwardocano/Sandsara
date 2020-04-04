@@ -70,9 +70,9 @@ void run_sandsara(File dircurrent) {
       }
       while ( working_status == 0) {
         working_status = file.getNextComponents(&component_1, &component_2);
-        Serial.print(component_1);
-        Serial.print(", ");
-        Serial.println(component_2);
+        //Serial.print(component_1);
+        //Serial.print(", ");
+        //Serial.println(component_2);
         if (file.fileType == 1 || file.fileType == 3)
           halo.moveTo(component_1, component_2);
         else if (file.fileType == 2) {

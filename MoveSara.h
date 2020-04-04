@@ -7,7 +7,7 @@
 #include <MultiStepper.h>
 
 //Speed
-#define millimeterSpeed 10;
+#define millimeterSpeed 25;
 //variables of the geometry
 #define l1 76
 #define l2 76
