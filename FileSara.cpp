@@ -283,11 +283,14 @@ void FileSara::autoSetMode(double zCurrent){
   diff2 = abs(zCurrent - finalZ);
   if (diff1 < diff2){
     directionMode = 1;
+    pFile = 0;
   }
   else if (diff2 < diff1){
     directionMode = 0;
+    pFile = file.size();
   }
   else{
     directionMode = 1;
+    pFile = 0;
   }
 }

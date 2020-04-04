@@ -24,6 +24,7 @@ class FileSara {
     //public Methods
     int getNextComponents(double* , double* );
     int getStatus();
+    void autoSetMode(double );
     double getStartZ();
     double getFinalZ();
 
@@ -40,7 +41,6 @@ class FileSara {
     String currentRow = "";
     String dataBuffer = "";
     //private Methods
-    void autoSetMode(double );
     int getType(String);
     template <class T>
     int getComponents(T* , double* , double*) ;

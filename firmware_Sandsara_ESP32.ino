@@ -10,7 +10,6 @@
 File myFile;
 File root;
 
-int movement = 1;
 MoveSara halo(16);
 
 void setup() {
@@ -58,7 +57,9 @@ void run_sandsara(File dircurrent) {
       String name_file = current_file.name();
       current_file.close();
 
-      FileSara file(name_file, movement);
+      FileSara file(name_file);
+      double zInit = halo.z_polar(halo.x_current, halo.y_current);
+      file.autoSetMode(zInit);
       if (file.fileType == 2) {
         file.getNextComponents(&component_1, &component_2);
         halo.z_current = component_1;
@@ -77,10 +78,6 @@ void run_sandsara(File dircurrent) {
         }
       }
       Serial.println("finished");
-      if (movement == 1)
-        movement = 0;
-      else
-        movement = 1;
     }
   }
 }
