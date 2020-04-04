@@ -1,4 +1,5 @@
 #include "MoveSara.h"
+double m[no_picos * 2], b[no_picos * 2];
 
 MoveSara::MoveSara(int microstepping){
     this->microstepping = microstepping;
@@ -237,6 +238,8 @@ double MoveSara::normalize_angle(double angle) {
 //Workspace mathematics---------------------------------------------------------------------
 //------------------------------------------------------------------------------------------
 void MoveSara::calculate_line_equations() {
+  double radius_1 = 400;
+  double radius_2 = 500;
   double z = radius_2;
   double theta;
   for (int i = 0; i < 2 * no_picos; i++) {

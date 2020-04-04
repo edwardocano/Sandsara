@@ -17,10 +17,6 @@
 #define STEP2 27
 //variables of star equations
 #define no_picos 6
-double m[no_picos * 2], b[no_picos * 2];
-double theta = 0;
-double radius_1 = 400;
-double radius_2 = 500;
 
 class MoveSara {
     public:
