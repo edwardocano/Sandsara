@@ -21,6 +21,8 @@ class FileSara {
     File file;
     //Constructor
     FileSara(String , int = 1);
+    //destructor
+    ~FileSara();
     //public Methods
     int getNextComponents(double* , double* );
     int getStatus();

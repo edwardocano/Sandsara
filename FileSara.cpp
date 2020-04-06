@@ -33,6 +33,10 @@ FileSara::FileSara(String nameF, int directionMode) {
 
 }
 
+FileSara::~FileSara(){
+  free(dataBufferBin);
+}
+
 int FileSara::getNextComponents(double* component1, double* component2) {
   int resp;
   currentRow = nextRow();
