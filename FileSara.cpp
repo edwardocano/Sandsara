@@ -48,10 +48,10 @@ int FileSara::getNextComponents(double* component1, double* component2) {
     currentRow = nextRow();
   }
   if (fileType == 3) {
-    resp = getComponents<uint8_t>((dataBufferBin + pFileBin * 6), component1, component2);
+    resp = getComponentsBin((dataBufferBin + pFileBin * 6), component1, component2);
   }
   else {
-    resp = getComponents<String>(&currentRow, component1, component2);
+    resp = getComponents(currentRow, component1, component2);
   }
   if ( resp != 0 ) {
     return statusFile;
@@ -90,21 +90,18 @@ int FileSara::getType(String name_file) {
     return -1;
 }
 
-template <class T>
-int FileSara::getComponents(T* pline, double* c1, double* c2) {
-  if (fileType != 3) {
-    String* line = (String*) pline;
-    int commaIndex = line->indexOf(this->componentSeparator);
+int FileSara::getComponents(String line, double* c1, double* c2) {
+    int commaIndex = line.indexOf(this->componentSeparator);
     if (commaIndex == -1) { //no separator detected
       this->statusFile = -1;
       return -1;
     }
-    if (commaIndex >= line->length() - 1) { //no second component detected
+    if (commaIndex >= line.length() - 1) { //no second component detected
       this->statusFile = -4;
       return -4;
     }
-    String _c1 = line->substring(0, commaIndex);
-    String _c2 = line->substring(commaIndex + 1);
+    String _c1 = line.substring(0, commaIndex);
+    String _c2 = line.substring(commaIndex + 1);
     if (_c1.indexOf('\r') != -1)
       _c1.remove(_c1.indexOf('\r'), 1);
     if (_c2.indexOf('\r') != -1)
@@ -117,10 +114,9 @@ int FileSara::getComponents(T* pline, double* c1, double* c2) {
     *c2 = _c2.toDouble();
     this->statusFile = 0;
     return 0;
-  }
-  else
-  {
-    uint8_t* line = (uint8_t*) pline;
+}
+
+int FileSara::getComponentsBin(uint8_t* line, double* c1, double* c2){
     if ( *(line + 2) != ',') {
       return -1;
     }
@@ -132,9 +128,7 @@ int FileSara::getComponents(T* pline, double* c1, double* c2) {
     *c1 = double(xbin);
     *c2 = double(ybin);
     return 0;
-  }
 }
-
 String FileSara::nextRow() {
   String return_str;
   int index_separator;

@@ -42,8 +42,9 @@ class FileSara {
     String dataBuffer = "";
     //private Methods
     int getType(String);
-    template <class T>
-    int getComponents(T* , double* , double*) ;
+    //template <class T>
+    int getComponents(String , double* , double*);
+    int getComponentsBin(uint8_t* , double* , double* );
     String nextRow();
     int readFile();
 };
