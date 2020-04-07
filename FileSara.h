@@ -25,8 +25,9 @@ class FileSara {
         int getNextComponents(double* , double* );
         int getStatus();
         void autoSetMode(double );
-        double getStartZ();
-        double getFinalZ();
+        double getStartPoint(int , int);
+        double getFinalPoint(int , int);
+        double getFinalAngle();
 
     private:
         //private Members

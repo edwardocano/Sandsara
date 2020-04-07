@@ -268,44 +268,80 @@ int FileSara::readFile() {
   }
 }
 
-double FileSara::getStartZ(){
+double FileSara::getStartPoint(int component, int ignoreZero){
   int stackMode = directionMode;
   directionMode = 1;
-  double component1, component2, zStart;
+  double component1, component2, zStart, thetaStart;
   pFile = 0;
-  getNextComponents(&component1, &component2);
+  if (ignoreZero == 1 && fileType != 2){
+    getNextComponents(&component1, &component2);
+    while (component1 == 0 && component2 == 0){
+      if (getNextComponents(&component1, &component2) == 1){
+        break;
+      }      
+    }
+  }
+  else
+  {
+    getNextComponents(&component1, &component2);
+  }
   pFile = 0;
   dataBuffer = "";
   directionMode = stackMode;
 
   if (fileType == 2){
-    return component1;
+    if (component == 1)
+      return component1;
+    else
+      return component2;
   }
   zStart = MoveSara::z_polar(component1, component2);
-  return zStart;
+  thetaStart = MoveSara::thetaPolar(component1, component2);
+  if (component == 1)
+    return zStart;
+  else
+    return thetaStart;
 }
 
-double FileSara::getFinalZ(){
+double FileSara::getFinalPoint(int component, int ignoreZero){
   int stackMode = directionMode;
   directionMode = 0;
-  double component1, component2, zFinal;
+  double component1, component2, zFinal, thetaFinal;
   pFile = file.size();
-  getNextComponents(&component1, &component2);
+  if (ignoreZero == 1 && fileType != 2){
+    getNextComponents(&component1, &component2);
+    while (component1 == 0 && component2 == 0){
+      if (getNextComponents(&component1, &component2) == 1){
+        break;
+      }
+    }
+  }
+  else
+  {
+    getNextComponents(&component1, &component2);
+  }
   pFile = file.size();
   dataBuffer = "";
   directionMode = stackMode;
 
   if (fileType == 2){
-    return component1;
+    if (component == 1)
+      return component1;
+    else
+      return component2;
   }
   zFinal = MoveSara::z_polar(component1, component2);
-  return zFinal;
+  thetaFinal = MoveSara::thetaPolar(component1, component2);
+  if (component == 1)
+    return zFinal;
+  else
+    return thetaFinal;
 }
 
 void FileSara::autoSetMode(double zCurrent){
   double startZ, finalZ, diff1, diff2;
-  startZ = getStartZ();
-  finalZ = getFinalZ();
+  startZ = getStartPoint();
+  finalZ = getFinalPoint();
   diff1 = abs(zCurrent - startZ);
   diff2 = abs(zCurrent - finalZ);
   if (diff1 < diff2){
@@ -319,5 +355,22 @@ void FileSara::autoSetMode(double zCurrent){
   else{
     directionMode = 1;
     pFile = 0;
+  }
+}
+
+/**
+ * this function should be call before the process of reading file
+ * because this restart the pFile and dataBuffer viariables
+ * it should also call after set the directionMode viariable or
+ * in the same way to have called autoSetMode()
+ * @return the initial angle of the finel acoordint to the directionMode
+ */
+double FileSara::getFinalAngle(){
+  if (directionMode == 0){
+    return getStartPoint(2, 1);
+  }
+  else
+  {
+    return getFinalPoint(2, 1);
   }
 }
