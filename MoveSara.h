@@ -1,11 +1,13 @@
 #ifndef _MOVESARA_H_
 #define _MOVESARA_H_
 
+//#define PROCESSING_SIMULATOR
+#define DEBUGGING_DATA
 #include <AccelStepper.h>
 #include <MultiStepper.h>
 
 //Speed
-#define millimeterSpeed 10;
+#define millimeterSpeed 25;
 //variables of the geometry
 #define l1 76
 #define l2 76
@@ -25,6 +27,8 @@ class MoveSara {
         double z_current;
         double theta_current;
         double couplingAngle;
+        double x_current;
+        double y_current;
         
     private:
         AccelStepper stepper1;
@@ -33,8 +37,6 @@ class MoveSara {
         long maxSpeed;
         double q1_current;
         double q2_current;
-        double x_current;
-        double y_current;
         double x_home;
         double y_home;
         bool constantMotorSpeed = false;
@@ -47,6 +49,8 @@ class MoveSara {
         void goHome();
         void setHomePosition();
         void setCouplingAngle();
+        static double z_polar(double , double );
+        static double thetaPolar(double , double );
     private:
         void moveInterpolateTo(double , double , double );
         void moveSteps(long, long, double);
@@ -55,8 +59,6 @@ class MoveSara {
         void calculate_line_equations();
         double normalize_angle(double );
         double module(double , double , double , double );
-        double z_polar(double , double );
-        double thetaPolar(double , double );
         double dk_x(double , double ) ;
         double dk_y(double , double ) ;
         void ik(double , double , double* , double* );

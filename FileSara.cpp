@@ -1,9 +1,14 @@
 #include "FileSara.h"
+#include "MoveSara.h"
 
 FileSara::FileSara(String nameF, int directionMode) {
   fileName = nameF;
   fileType = getType(fileName);
   this->directionMode = directionMode;
+  #ifdef DEBUGGING_DATA
+  Serial.print("Se abrira el archivo: ");
+  Serial.println(fileName);
+  #endif
   file = SD.open(fileName);
   if (directionMode == 1) {
     pFile = 0;
@@ -32,6 +37,15 @@ FileSara::FileSara(String nameF, int directionMode) {
 
 }
 
+FileSara::~FileSara(){
+  file.close();
+  free(dataBufferBin);
+  #ifdef DEBUGGING_DATA
+  Serial.print("Se destruyo el archivo: ");
+  Serial.println(fileName);
+  #endif
+}
+
 int FileSara::getNextComponents(double* component1, double* component2) {
   int resp;
   currentRow = nextRow();
@@ -40,17 +54,16 @@ int FileSara::getNextComponents(double* component1, double* component2) {
     //Serial.println("Leera otros 1000 datos");
     resp = readFile();
     if (resp == -1) {
-      file.close();
       return 1;
     }
     //Serial.print(dataBuffer);
     currentRow = nextRow();
   }
   if (fileType == 3) {
-    resp = getComponents<uint8_t>((dataBufferBin + pFileBin * 6), component1, component2);
+    resp = getComponentsBin((dataBufferBin + pFileBin * 6), component1, component2);
   }
   else {
-    resp = getComponents<String>(&currentRow, component1, component2);
+    resp = getComponents(currentRow, component1, component2);
   }
   if ( resp != 0 ) {
     return statusFile;
@@ -89,21 +102,18 @@ int FileSara::getType(String name_file) {
     return -1;
 }
 
-template <class T>
-int FileSara::getComponents(T* pline, double* c1, double* c2) {
-  if (fileType != 3) {
-    String* line = (String*) pline;
-    int commaIndex = line->indexOf(this->componentSeparator);
+int FileSara::getComponents(String line, double* c1, double* c2) {
+    int commaIndex = line.indexOf(this->componentSeparator);
     if (commaIndex == -1) { //no separator detected
       this->statusFile = -1;
       return -1;
     }
-    if (commaIndex >= line->length() - 1) { //no second component detected
+    if (commaIndex >= line.length() - 1) { //no second component detected
       this->statusFile = -4;
       return -4;
     }
-    String _c1 = line->substring(0, commaIndex);
-    String _c2 = line->substring(commaIndex + 1);
+    String _c1 = line.substring(0, commaIndex);
+    String _c2 = line.substring(commaIndex + 1);
     if (_c1.indexOf('\r') != -1)
       _c1.remove(_c1.indexOf('\r'), 1);
     if (_c2.indexOf('\r') != -1)
@@ -116,11 +126,11 @@ int FileSara::getComponents(T* pline, double* c1, double* c2) {
     *c2 = _c2.toDouble();
     this->statusFile = 0;
     return 0;
-  }
-  else
-  {
-    uint8_t* line = (uint8_t*) pline;
+}
+
+int FileSara::getComponentsBin(uint8_t* line, double* c1, double* c2){
     if ( *(line + 2) != ',') {
+      statusFile = -1;
       return -1;
     }
     int16_t* puint16;
@@ -130,10 +140,9 @@ int FileSara::getComponents(T* pline, double* c1, double* c2) {
     ybin = *puint16;
     *c1 = double(xbin);
     *c2 = double(ybin);
+    statusFile = 0;
     return 0;
-  }
 }
-
 String FileSara::nextRow() {
   String return_str;
   int index_separator;
@@ -256,5 +265,59 @@ int FileSara::readFile() {
 
     dataBuffer = dataBuffer.substring(0, index_nl + 1);
     pFile += index_nl + 1;
+  }
+}
+
+double FileSara::getStartZ(){
+  int stackMode = directionMode;
+  directionMode = 1;
+  double component1, component2, zStart;
+  pFile = 0;
+  getNextComponents(&component1, &component2);
+  pFile = 0;
+  dataBuffer = "";
+  directionMode = stackMode;
+
+  if (fileType == 2){
+    return component1;
+  }
+  zStart = MoveSara::z_polar(component1, component2);
+  return zStart;
+}
+
+double FileSara::getFinalZ(){
+  int stackMode = directionMode;
+  directionMode = 0;
+  double component1, component2, zFinal;
+  pFile = file.size();
+  getNextComponents(&component1, &component2);
+  pFile = file.size();
+  dataBuffer = "";
+  directionMode = stackMode;
+
+  if (fileType == 2){
+    return component1;
+  }
+  zFinal = MoveSara::z_polar(component1, component2);
+  return zFinal;
+}
+
+void FileSara::autoSetMode(double zCurrent){
+  double startZ, finalZ, diff1, diff2;
+  startZ = getStartZ();
+  finalZ = getFinalZ();
+  diff1 = abs(zCurrent - startZ);
+  diff2 = abs(zCurrent - finalZ);
+  if (diff1 < diff2){
+    directionMode = 1;
+    pFile = 0;
+  }
+  else if (diff2 < diff1){
+    directionMode = 0;
+    pFile = file.size();
+  }
+  else{
+    directionMode = 1;
+    pFile = 0;
   }
 }
