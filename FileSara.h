@@ -25,8 +25,8 @@ class FileSara {
         int getNextComponents(double* , double* );
         int getStatus();
         void autoSetMode(double );
-        double getStartPoint(int , int);
-        double getFinalPoint(int , int);
+        double getStartPoint(int = 1, int = 0);
+        double getFinalPoint(int = 1, int = 0);
         double getFinalAngle();
 
     private:
