@@ -5,6 +5,10 @@ FileSara::FileSara(String nameF, int directionMode) {
   fileName = nameF;
   fileType = getType(fileName);
   this->directionMode = directionMode;
+  #ifdef DEBUGGING_DATA
+  Serial.print("Se abrira el archivo: ");
+  Serial.println(fileName);
+  #endif
   file = SD.open(fileName);
   if (directionMode == 1) {
     pFile = 0;
@@ -34,7 +38,12 @@ FileSara::FileSara(String nameF, int directionMode) {
 }
 
 FileSara::~FileSara(){
+  file.close();
   free(dataBufferBin);
+  #ifdef DEBUGGING_DATA
+  Serial.print("Se destruyo el archivo: ");
+  Serial.println(fileName);
+  #endif
 }
 
 int FileSara::getNextComponents(double* component1, double* component2) {
@@ -45,7 +54,6 @@ int FileSara::getNextComponents(double* component1, double* component2) {
     //Serial.println("Leera otros 1000 datos");
     resp = readFile();
     if (resp == -1) {
-      file.close();
       return 1;
     }
     //Serial.print(dataBuffer);
@@ -122,6 +130,7 @@ int FileSara::getComponents(String line, double* c1, double* c2) {
 
 int FileSara::getComponentsBin(uint8_t* line, double* c1, double* c2){
     if ( *(line + 2) != ',') {
+      statusFile = -1;
       return -1;
     }
     int16_t* puint16;
@@ -131,6 +140,7 @@ int FileSara::getComponentsBin(uint8_t* line, double* c1, double* c2){
     ybin = *puint16;
     *c1 = double(xbin);
     *c2 = double(ybin);
+    statusFile = 0;
     return 0;
 }
 String FileSara::nextRow() {
@@ -269,7 +279,7 @@ double FileSara::getStartZ(){
   directionMode = stackMode;
 
   if (fileType == 2){
-    return component2;
+    return component1;
   }
   zStart = MoveSara::z_polar(component1, component2);
   return zStart;
@@ -286,7 +296,7 @@ double FileSara::getFinalZ(){
   directionMode = stackMode;
 
   if (fileType == 2){
-    return component2;
+    return component1;
   }
   zFinal = MoveSara::z_polar(component1, component2);
   return zFinal;
