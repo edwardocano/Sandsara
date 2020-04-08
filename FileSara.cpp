@@ -268,6 +268,13 @@ int FileSara::readFile() {
   }
 }
 
+/**
+ * @param component, it can be 1 or 2 refering to first or sencond
+ * component, respectively.
+ * @param ignoreZero if is 1, it will iterate until find a point
+ * defferent then 0,0, by default is 0.
+ * @return the first component of the file
+ */
 double FileSara::getStartPoint(int component, int ignoreZero){
   int stackMode = directionMode;
   directionMode = 1;
@@ -295,7 +302,7 @@ double FileSara::getStartPoint(int component, int ignoreZero){
     else
       return component2;
   }
-  zStart = MoveSara::z_polar(component1, component2);
+  zStart = MoveSara::zPolar(component1, component2);
   thetaStart = MoveSara::thetaPolar(component1, component2);
   if (component == 1)
     return zStart;
@@ -303,6 +310,13 @@ double FileSara::getStartPoint(int component, int ignoreZero){
     return thetaStart;
 }
 
+/**
+ * @param component, it can be 1 or 2 refering to first or sencond
+ * component, respectively.
+ * @param ignoreZero if is 1, it will iterate until find a point
+ * defferent then 0,0, by default is 0.
+ * @return the last component of the file
+ */
 double FileSara::getFinalPoint(int component, int ignoreZero){
   int stackMode = directionMode;
   directionMode = 0;
@@ -330,7 +344,7 @@ double FileSara::getFinalPoint(int component, int ignoreZero){
     else
       return component2;
   }
-  zFinal = MoveSara::z_polar(component1, component2);
+  zFinal = MoveSara::zPolar(component1, component2);
   thetaFinal = MoveSara::thetaPolar(component1, component2);
   if (component == 1)
     return zFinal;
@@ -363,7 +377,7 @@ void FileSara::autoSetMode(double zCurrent){
  * because this restart the pFile and dataBuffer viariables
  * it should also call after set the directionMode viariable or
  * in the same way to have called autoSetMode()
- * @return the initial angle of the finel acoordint to the directionMode
+ * @return the angle of the last point acoordint to the directionMode
  */
 double FileSara::getFinalAngle(){
   if (directionMode == 0){
@@ -372,5 +386,15 @@ double FileSara::getFinalAngle(){
   else
   {
     return getFinalPoint(2, 1);
+  }
+}
+
+double FileSara::getStartAngle(){
+  if (directionMode == 0){
+    return getFinalPoint(2, 1);
+  }
+  else
+  {
+    return getStartPoint(2, 1);
   }
 }

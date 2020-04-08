@@ -24,19 +24,19 @@ class MoveSara {
     public:
         int microstepping = 16;
         double degrees_per_step = (1.8 * PI * 2.0) / (6.0 * 180 * microstepping);
-        double z_current;
-        double theta_current;
         double couplingAngle;
         double x_current;
         double y_current;
+        double q1_current;
+        double q2_current;
         
     private:
         AccelStepper stepper1;
         AccelStepper stepper2;
         MultiStepper steppers;
-        long maxSpeed;
-        double q1_current;
-        double q2_current;
+        double z_current;
+        double theta_current;
+        long maxSpeed;        
         double x_home;
         double y_home;
         bool constantMotorSpeed = false;
@@ -48,8 +48,13 @@ class MoveSara {
         void init(int = 50, long = 0, long = 0);
         void goHome();
         void setHomePosition();
-        void setCouplingAngle();
-        static double z_polar(double , double );
+        void setCouplingAngle(double );
+        double getZCurrent();
+        double getThetaCurrent();
+        void setZCurrent(double );
+        void setThetaCurrent(double );
+        static void rotate(double& ,double& ,double );
+        static double zPolar(double , double );
         static double thetaPolar(double , double );
     private:
         void moveInterpolateTo(double , double , double );
@@ -57,7 +62,7 @@ class MoveSara {
         //mathematics methods
         long calculate_steps(double , double );
         void calculate_line_equations();
-        double normalize_angle(double );
+        static double normalizeAngle(double );
         double module(double , double , double , double );
         double dk_x(double , double ) ;
         double dk_y(double , double ) ;

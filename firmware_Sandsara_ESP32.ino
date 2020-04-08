@@ -65,25 +65,29 @@ void run_sandsara(File& dircurrent) {
       int working_status = 0;
       String name_file = current_file.name();
       current_file.close();
-
+      double couplingAngle;
       FileSara file(name_file);
-      double zInit = halo.z_polar(halo.x_current, halo.y_current);
+      double zInit = halo.getZCurrent();
       file.autoSetMode(zInit);
+      if (zInit <= DISTANCIA_MAX/2){
+        couplingAngle = file.getFinalAngle();
+      }
+      else{
+        couplingAngle = file.getStartAngle();
+      }
       if (file.fileType == 2) {
         file.getNextComponents(&component_1, &component_2);
-        halo.z_current = component_1;
-        halo.theta_current = component_2;
-        halo.setCouplingAngle();
+        halo.setZCurrent(component_1);
+        halo.setThetaCurrent(component_2 - couplingAngle);
       }
       while ( working_status == 0) {
         working_status = file.getNextComponents(&component_1, &component_2);
-        //Serial.print(component_1);
-        //Serial.print(", ");
-        //Serial.println(component_2);
-        if (file.fileType == 1 || file.fileType == 3)
+        if (file.fileType == 1 || file.fileType == 3){
+          MoveSara::rotate(component_1 , component_2, -couplingAngle);
           halo.moveTo(component_1, component_2);
+        }
         else if (file.fileType == 2) {
-          halo.movePolarTo(component_1, component_2);
+          halo.movePolarTo(component_1, component_2 - couplingAngle);
         }
       }
       #ifdef DEBUGGING_DATA

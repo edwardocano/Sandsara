@@ -11,12 +11,10 @@ MoveSara::MoveSara(int microstepping){
 
 void MoveSara::movePolarTo(double z_next, double theta_next) { //z must be in milimeters and theta in radians
   long slices_factor = 1000;
-
-  double theta_current_aux = thetaPolar(x_current, y_current);
-  double z_current_aux = z_polar(x_current, y_current);
-
   double distance_points, delta_theta, delta_z;
-
+  double theta_current_aux = thetaPolar(x_current, y_current);
+  double z_current_aux = zPolar(x_current, y_current);
+  
   delta_theta = (theta_next - theta_current) / slices_factor;
   delta_z = (z_next - z_current) / slices_factor;
 
@@ -43,8 +41,8 @@ void MoveSara::movePolarTo(double z_next, double theta_next) { //z must be in mi
       theta_auxiliar = theta_next;
       z_auxliar = z_next;
     }
-    x_aux = z_auxliar * cos(theta_auxiliar + couplingAngle);
-    y_aux = z_auxliar * sin(theta_auxiliar + couplingAngle);
+    x_aux = z_auxliar * cos(theta_auxiliar);
+    y_aux = z_auxliar * sin(theta_auxiliar);
 
     moveTo(x_aux, y_aux);
   }
@@ -85,8 +83,8 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance) { //dist
 
     q1_current += degrees_per_step * q1_steps;
     q2_current += degrees_per_step * q2_steps;
-    q1_current = normalize_angle(q1_current);
-    q2_current = normalize_angle(q2_current);
+    q1_current = normalizeAngle(q1_current);
+    q2_current = normalizeAngle(q2_current);
     x_current = dk_x(q1_current, q2_current);
     y_current = dk_y(q1_current, q2_current);
 
@@ -124,7 +122,15 @@ void MoveSara::moveInterpolateTo(double x, double y, double distance){
     }
     moveTo(x,y);
 }
-//Configuration Methods---------------------------------------------------------------------
+//properties----------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+double MoveSara::getZCurrent(){
+  return zPolar(x_current, y_current);
+}
+double MoveSara::getThetaCurrent(){
+  return thetaPolar(x_current, y_current);
+}
+//Configuration Methods-----------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 void MoveSara::init(int speedMax, long positionMotor1, long positionMotor2) { //40
   double q1, q2;
@@ -142,10 +148,17 @@ void MoveSara::init(int speedMax, long positionMotor1, long positionMotor2) { //
   calculate_line_equations();
 }
 
-void MoveSara::setCouplingAngle(){
-    couplingAngle = thetaPolar(x_current,y_current) - theta_current;
+void MoveSara::setCouplingAngle(double angle){
+    couplingAngle = normalizeAngle(angle);
 }
 
+void MoveSara::setZCurrent(double z){
+    z_current = z;
+}
+
+void MoveSara::setThetaCurrent(double theta){
+    theta_current = theta;
+}
 //----------------------------mathematics---------------------------------------------------
 
 //Kinematics--------------------------------------------------------------------------------
@@ -200,11 +213,23 @@ void MoveSara::ik(double x, double y, double *q1, double *q2) {
 
 //Operations with components -------------------------------------------------------
 //----------------------------------------------------------------------------------
+/**
+ * rotate the point x,y with center in 0,0 a value determine by param angle
+ * @param angle is the angle of rotation
+ */
+void MoveSara::rotate(double& x,double& y,double angle){
+    double z = zPolar(x, y);
+    double theta = thetaPolar(x, y);
+    theta += angle;
+    x = z * cos(theta);
+    y = z * sin(theta);
+}
+
 double MoveSara::module(double x1, double y1, double x2, double y2){
     return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
 }
 
-double MoveSara::z_polar(double x, double y) {
+double MoveSara::zPolar(double x, double y) {
   return sqrt(pow(x, 2) + pow(y, 2));
 }
 
@@ -221,15 +246,15 @@ double MoveSara::thetaPolar(double x, double y) {
     else
       theta = 3 / 2 * PI;
   }
-  return theta;
+  return normalizeAngle(theta);
 }
 
 /**
- * normalize an angle to be between 0 and 2*pi.
+ * normalize an angle to be between [0 and 2*pi).
  *@param angle Is the angle to be limited, which is in radians.
  *@return a double value between [0 and 2*pi).
  */
-double MoveSara::normalize_angle(double angle) {
+double MoveSara::normalizeAngle(double angle) {
   long aux = angle / (2 * PI);
   angle -= aux * 2 * PI;
   if (angle < 0) {

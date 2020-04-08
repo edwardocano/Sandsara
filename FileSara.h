@@ -28,6 +28,7 @@ class FileSara {
         double getStartPoint(int = 1, int = 0);
         double getFinalPoint(int = 1, int = 0);
         double getFinalAngle();
+        double getStartAngle();
 
     private:
         //private Members
