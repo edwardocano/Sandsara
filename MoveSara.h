@@ -11,6 +11,8 @@
 //variables of the geometry
 #define l1 76
 #define l2 76
+#define bigPulleySize 6.0
+#define littlePulleySize 2.0
 #define maximun_radius 100.0
 //variables of steppers pin
 #define DIR 33
@@ -22,8 +24,8 @@
 
 class MoveSara {
     public:
-        int microstepping = 16;
-        double degrees_per_step = (1.8 * PI * 2.0) / (6.0 * 180 * microstepping);
+        int microstepping;
+        double degrees_per_step;
         double couplingAngle;
         double x_current;
         double y_current;
@@ -45,7 +47,7 @@ class MoveSara {
         MoveSara(int = 16);
         void moveTo(double x, double y);
         void movePolarTo(double , double ); //(modulo,angulo)
-        void init(int = 50, long = 0, long = 0);
+        void init(double ,double );
         void goHome();
         void setHomePosition();
         void setCouplingAngle(double );

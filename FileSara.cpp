@@ -1,6 +1,12 @@
 #include "FileSara.h"
 #include "MoveSara.h"
 
+/**
+ * @brief es el contructor de la clase FileSara
+ * @param nameF es el nombre del archivo que se va a leer desde la SD
+ * @param directionMode es la direccion de lectura del archivo, por defecto es 1.
+ * 1 representa que se va a leer el archivo de arriba hacia abajo y 0 que se debe leer de abajo para arriba.
+ */
 FileSara::FileSara(String nameF, int directionMode) {
   fileName = nameF;
   fileType = getType(fileName);
@@ -37,6 +43,12 @@ FileSara::FileSara(String nameF, int directionMode) {
 
 }
 
+/**
+ * @brief es el destructor de la clase
+ * 
+ * se utiliza un destructor para limpiar liberar la memoria dinamica y cerrar el
+ * el archivo de tipo File
+ */
 FileSara::~FileSara(){
   file.close();
   free(dataBufferBin);
@@ -46,17 +58,31 @@ FileSara::~FileSara(){
   #endif
 }
 
+/**
+ * @brief lee la siguiente linea del archivo y extrae el valor de los componentes que tiene
+ * @param component1 es donde se almacenara el primero componente (x o z)
+ * @param component2 es donde se almacenara el segundo componente (y o theta)
+ * @note los componentes se encuentran comprendidos en los siguientes rangos.
+ * x,y --> [-150,150]
+ * z   --> [0, 150]
+ * theta --> (-inf, inf)
+ * Sin embargo los datos se pueden salir de estos rangos si el archivo no sigue las indicaciones correctas.
+ * @return un codigo de error que puede significar lo siguiente
+ *  0 no hubo problemas
+ *  1 ya no hay mas lineas por leer en el archivo
+ * -1 no se encontro el separador de los componentes (',' o ' ')
+ * -4 no se encontro un segundo componente
+ * -6 no es un tipo de archivo valido
+ */
 int FileSara::getNextComponents(double* component1, double* component2) {
   int resp;
   currentRow = nextRow();
-  //Serial.println(currentRow);
   if (currentRow == "") {
-    //Serial.println("Leera otros 1000 datos");
     resp = readFile();
     if (resp == -1) {
+      statusFile = 1;
       return 1;
     }
-    //Serial.print(dataBuffer);
     currentRow = nextRow();
   }
   if (fileType == 3) {
@@ -70,9 +96,6 @@ int FileSara::getNextComponents(double* component1, double* component2) {
   }
 
   if (fileType == 1 || fileType == 3) {
-    /*Serial.print(*component1);
-    Serial.print(", ");
-    Serial.println(*component2);*/
     *component1 = DISTANCIA_MAX * *component1 / RESOLUCION_MAX;
     *component2 = DISTANCIA_MAX * *component2 / RESOLUCION_MAX;
   }
@@ -82,13 +105,28 @@ int FileSara::getNextComponents(double* component1, double* component2) {
     *component1 = z;
     *component2 = theta;
   }
+  else{
+    statusFile = -6;
+    return -6;
+  }
   return 0;
 }
 
+/**
+ * @return el estado actual del archivo leido
+ * @see getNextComponents
+ */
 int FileSara::getStatus() {
   return this->statusFile;
 }
 
+/**
+ * Encuentra el tipo de archivo que se va a leer
+ * @return un numero que representa uno de los siguientes tipos de archivo
+ * 1 para un .txt
+ * 2 para un .thr
+ * 3 para un .bin
+ */
 int FileSara::getType(String name_file) {
   name_file = name_file.substring(name_file.lastIndexOf('.') + 1);
   name_file.toLowerCase();
@@ -102,6 +140,15 @@ int FileSara::getType(String name_file) {
     return -1;
 }
 
+/**
+ * @brief de una linea de texto extrae la informacion de los 2 componentes.
+ * @param line Es el texto con informacion de los componentes.
+ * @param c1 es donde se va a almacenar el valor del componente 1.
+ * @param c2 es donde se va a almacenar el valor del componente 2.
+ * @note los valores devuelven por medio de c1 y c2.
+ * @return un codigo de error.
+ * @see getNextComponents.
+ */
 int FileSara::getComponents(String line, double* c1, double* c2) {
     int commaIndex = line.indexOf(this->componentSeparator);
     if (commaIndex == -1) { //no separator detected
@@ -128,6 +175,15 @@ int FileSara::getComponents(String line, double* c1, double* c2) {
     return 0;
 }
 
+/**
+ * @brief De 6 bytes se extrae la informacion de los 2 componentes.
+ * @param line es un apuntador al inicio de lo que se va a leer.
+ * @param c1 es donde se va a almacenar el valor del componente 1.
+ * @param c2 es donde se va a almacenar el valor del componente 2.
+ * @note los valores devuelven por medio de c1 y c2.
+ * @return un codigo de error.
+ * @see getNextComponents.
+ */
 int FileSara::getComponentsBin(uint8_t* line, double* c1, double* c2){
     if ( *(line + 2) != ',') {
       statusFile = -1;
@@ -143,6 +199,14 @@ int FileSara::getComponentsBin(uint8_t* line, double* c1, double* c2){
     statusFile = 0;
     return 0;
 }
+
+/**
+ * @brief Encuentra la siguiente linea a ser leida del archivo o su direccion en el caso de un archivo .bin.
+ * @return Un texto que representa la siguiente linea del archivo. En el caso de estar leyendo un .bin
+ * regresara la pablabra "nonStop" si aun hay lineas por leer y un "" si ya no hay mas lineas por leer.
+ * @note En el caso de estar leyendo un .bin se modificara la variable pFileBin la cual
+ * representa el el numero de linea siguiente.
+ */
 String FileSara::nextRow() {
   String return_str;
   int index_separator;
@@ -200,6 +264,14 @@ String FileSara::nextRow() {
   }
 }
 
+/**
+ * @brief lee no mas de 1002 bytes del archivo y los almacena.
+ * 
+ * Los datos los almacena en dataBuffer en el caso de archivos .txt o .thr y en dataBufferBin para archivos .bin
+ * @return un codigo de error que puede significar lo siguiente
+ *  0 no hubo problemas
+ * -1 ya no hay datos restantes por leer
+ */
 int FileSara::readFile() {
   if (this->directionMode == 0) {
     if (pFile >= charsToRead ) {
@@ -269,11 +341,15 @@ int FileSara::readFile() {
 }
 
 /**
- * @param component, it can be 1 or 2 refering to first or sencond
- * component, respectively.
- * @param ignoreZero if is 1, it will iterate until find a point
- * defferent then 0,0, by default is 0.
- * @return the first component of the file
+ * @brief regresa un componente perteneciente al primer punto del archivo.
+ * @param component es la poscion del componente que se quiere obtener, es decir:
+ * 1 --> para el primer componente
+ * 2 --> para el segundo componente
+ * en el caso de archivos .txt o .bin el primer componente es 'x', y el segundo 'y'.
+ * en el caso de archivos .thr el primer componente es 'z', y el segundo 'theta'.
+ * @param ignoreZero si este valor es 1, devolvera el primer punto que no sea 0,0 (coordenadas cartesianas)
+ * si es un archivo .thr este parametro no aplica.
+ * @return el componente deseado del primer punto del archivo.
  */
 double FileSara::getStartPoint(int component, int ignoreZero){
   int stackMode = directionMode;
@@ -311,11 +387,15 @@ double FileSara::getStartPoint(int component, int ignoreZero){
 }
 
 /**
- * @param component, it can be 1 or 2 refering to first or sencond
- * component, respectively.
- * @param ignoreZero if is 1, it will iterate until find a point
- * defferent then 0,0, by default is 0.
- * @return the last component of the file
+ * @brief regresa un componente perteneciente al ultimo punto del archivo.
+ * @param component es la poscion del componente que se quiere obtener, es decir:
+ * 1 --> para el primer componente
+ * 2 --> para el segundo componente
+ * en el caso de archivos .txt o .bin el primer componente es 'x', y el segundo 'y'
+ * en el caso de archivos .thr el primer componente es 'z', y el segundo 'theta'
+ * @param ignoreZero si este valor es 1, devolvera el primer punto que no sea 0,0 (coordenadas cartesianas)
+ * si es un archivo .thr este parametro no aplica.
+ * @return el componente deseado del ultimo punto del archivo.
  */
 double FileSara::getFinalPoint(int component, int ignoreZero){
   int stackMode = directionMode;
@@ -352,6 +432,15 @@ double FileSara::getFinalPoint(int component, int ignoreZero){
     return thetaFinal;
 }
 
+/**
+ * @brief Seleccion la direccion de lectura del archivo dependiendo del estado actual del robot
+ * 
+ * para ello encuentra el modulo del primer y utlimo punto del archivo y calcula cual es el más cercano de la posicion actual del robot
+ * si es el ultimo punto del archivo, entonces iniciará a leerlo de arriba hacia abajo y si no, de abajo hacia arriba
+ * si la distancia a la que se encuentra es la misma de ambos puntos del archivo entonces leera el archivo de arriba hacia abajo
+ * @param zCurrent Es la distancia actual del centro a la punta del robot
+ * @note No regresa nada, pero cambia el valor de la variable directionMode
+ */
 void FileSara::autoSetMode(double zCurrent){
   double startZ, finalZ, diff1, diff2;
   startZ = getStartPoint();
@@ -373,11 +462,11 @@ void FileSara::autoSetMode(double zCurrent){
 }
 
 /**
- * this function should be call before the process of reading file
- * because this restart the pFile and dataBuffer viariables
- * it should also call after set the directionMode viariable or
- * in the same way to have called autoSetMode()
- * @return the angle of the last point acoordint to the directionMode
+ * @brief la funcion encuentra el angulo del ultimo punto que va a ser leido, esto
+ * depende de la dirección de lectura (directionMode)
+ * @note Esta funcion debe ser llamada antes del proceso de lectura porque modifica
+ * las variables pFile y dataBuffer, y despues de haber asignado un valor a directionMode
+ * @return un valor que representa un angulo en radianes pudiendo tomar cualquier valor que permita un tipo de dato double
  */
 double FileSara::getFinalAngle(){
   if (directionMode == 0){
@@ -388,7 +477,11 @@ double FileSara::getFinalAngle(){
     return getFinalPoint(2, 1);
   }
 }
-
+/**
+ * @brief la funcion encuentra el angulo del primer punto que va a ser leido, esto
+ * depende de la dirección de lectura (directionMode)
+ * @return un valor que representa un angulo en radianes pudiendo tomar cualquier valor que permita un tipo de dato double
+ */
 double FileSara::getStartAngle(){
   if (directionMode == 0){
     return getFinalPoint(2, 1);

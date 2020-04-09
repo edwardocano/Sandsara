@@ -1,9 +1,14 @@
 #include "MoveSara.h"
 double m[no_picos * 2], b[no_picos * 2];
 
+/**
+ * @brief es el contructor de la clase
+ * @param microstepping es el microstepping que tienen los motores, por defecto es 16
+ * @
+ */
 MoveSara::MoveSara(int microstepping){
     this->microstepping = microstepping;
-    degrees_per_step = (1.8 * PI * 2.0) / (6.0 * 180 * microstepping);
+    degrees_per_step = (littlePulleySize / bigPulleySize) * (PI / 180.0) * (1.8 / microstepping);
     stepper1 = AccelStepper(1, STEP, DIR);
     stepper2 = AccelStepper(1, STEP2, DIR2);
     
@@ -14,7 +19,7 @@ void MoveSara::movePolarTo(double z_next, double theta_next) { //z must be in mi
   double distance_points, delta_theta, delta_z;
   double theta_current_aux = thetaPolar(x_current, y_current);
   double z_current_aux = zPolar(x_current, y_current);
-  
+
   delta_theta = (theta_next - theta_current) / slices_factor;
   delta_z = (z_next - z_current) / slices_factor;
 
@@ -51,16 +56,22 @@ void MoveSara::movePolarTo(double z_next, double theta_next) { //z must be in mi
   z_current = z_next;
 }
 
+/**
+ * @brief mueve los motores 1 y 2.
+ * 
+ * Los movera a una velocidad que depende de la distancia que va a recorrer el punto final del robot.
+ * @param q1_steps es el numero de pasos que va a girar el motor correspondiente al angulo q1.
+ * @param q2_steps es el numero de pasos que va a girar el motor correspondiente al angulo q2.
+ * @param distance es la distancia que va a recorrer entre el punto actual y el punto despues del momimiento.
+ * La distancia se mide en milimetros 
+ */
 void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance) { //distance is in milimeters
     long positions[2];
-    /*int valor_pot = analogRead(A0);
-    if (valor_pot < 100)
-        valor_pot = 100;*/
     if (abs(q1_steps) > abs(q2_steps + q1_steps)) //importante
         maxSpeed = abs(q1_steps) * 1L;
     else
         maxSpeed = abs(q2_steps + q1_steps) * 1L;
-    maxSpeed = (maxSpeed/distance)*millimeterSpeed;// * valor_pot / 1024.0 * 10.0;
+    maxSpeed = (maxSpeed/distance)*millimeterSpeed;
     if (maxSpeed > 150 * microstepping)
         maxSpeed = 150 * microstepping;
     if (constantMotorSpeed)
@@ -88,8 +99,19 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance) { //dist
     x_current = dk_x(q1_current, q2_current);
     y_current = dk_y(q1_current, q2_current);
 
-} //50
+}
 
+/**
+ * @brief El robot se mueve de su posicion actual hacia una nueva posicion x,y.
+ * 
+ * Si las coordenadas x,y se encuentran fuera del espacio de trabajo, la funcion se encarga de limitarlas.
+ * La posicion x,y se mide en milimetros.
+ * Si la distancia que tiene que recorrer es menor a 0.5 milimetros entonces no avanza.
+ * Si la distancia a recorrer es mayor a 1.1 milimetros, entonces se avanza en linea recta del origen al final a traves
+ * puntos separados por 1 mm.
+ * @param x es la coordenada en el eje x, medida en milimetros, hacia donde se desea avanzar.
+ * @param y es la coordenada en el eje y, medida en milimetros, hacia donde se desea avanzar.
+ */
 void MoveSara::moveTo(double x, double y) {
     double q1, q2, distance;
     long steps_of_q1, steps_of_q2;
@@ -108,6 +130,12 @@ void MoveSara::moveTo(double x, double y) {
 
 }
 
+/**
+ * @brief Se usa esta funcion para avanzar de la posicion actual a un punto nuevo en linea recta por medio de puntos equidistantes a un 1 mm.
+ * @param x coordenada en el eje x, medida en milimetros, a la que se desea avanzar.
+ * @param y coordenada en el eje y, medida en milimetros, a la que se desea avanzar.
+ * @param distance es la distancia, medida en milimetros, entre el punto actual y el punto al que se desea avanzar.
+ */
 void MoveSara::moveInterpolateTo(double x, double y, double distance){
     double alpha = atan2(y - y_current, x - x_current);
     double delta_x, delta_y;
@@ -124,23 +152,37 @@ void MoveSara::moveInterpolateTo(double x, double y, double distance){
 }
 //properties----------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
+/**
+ * @return La distancia entre el centro y la posicion actual del robot.
+ */
 double MoveSara::getZCurrent(){
   return zPolar(x_current, y_current);
 }
+
+/**
+ * @return El angulo, medido desde la horizontal, de la posicion actual del robot.
+ * @note el angulo se encuentra en el rango de [0 , 2*PI)
+ */
 double MoveSara::getThetaCurrent(){
   return thetaPolar(x_current, y_current);
 }
 //Configuration Methods-----------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
-void MoveSara::init(int speedMax, long positionMotor1, long positionMotor2) { //40
+/**
+ * @brief inicializa el objeto MoveSara
+ * @param xInit es la coordenada en el eje x, medida en milimetros, que se desea como posicion inicial.
+ * @param yInit es la coordenada en el eje y, medida en milimetros, que se desea como posicion inicial.
+ * @note por defecto el punto inicial es 0,0.
+ */
+void MoveSara::init(double xInit, double yInit) {
   double q1, q2;
-  stepper1.setMaxSpeed(speedMax * microstepping);
-  stepper2.setMaxSpeed(speedMax * microstepping);
-  stepper1.setCurrentPosition(positionMotor1);
-  stepper2.setCurrentPosition(positionMotor2);
+  stepper1.setMaxSpeed(50 * microstepping);
+  stepper2.setMaxSpeed(50 * microstepping);
+  stepper1.setCurrentPosition(0);
+  stepper2.setCurrentPosition(0);
   steppers.addStepper(stepper1);
   steppers.addStepper(stepper2);
-  ik(0.0, 0.0, &q1, &q2);
+  ik(xInit, yInit, &q1, &q2);
   q1_current = q1;
   q2_current = q2;
   x_current = dk_x(q1_current, q2_current);
@@ -148,14 +190,28 @@ void MoveSara::init(int speedMax, long positionMotor1, long positionMotor2) { //
   calculate_line_equations();
 }
 
+/**
+ * @brief define el angulo de acoplamiento.
+ * @param angle el angulo que se desea como angulo de acoplamiento.
+ * @note no retorna nada pero moficica la variable couplingAngle.
+ */
 void MoveSara::setCouplingAngle(double angle){
     couplingAngle = normalizeAngle(angle);
 }
 
+/**
+ * @brief moficica el miembro z_current a uno nuevo.
+ * @param z es el valor que se le va a asignar a la variable miembro z_current.
+ */
 void MoveSara::setZCurrent(double z){
     z_current = z;
 }
 
+/**
+ * @brief moficica el miembro theta_current a uno nuevo.
+ * @param theta es el valor que se le va a asignar a la variable miembro theta_current.
+ * @note  Esto es importante para que los archivos .thr tengan una referencia de donde empezar a moverse.
+ */
 void MoveSara::setThetaCurrent(double theta){
     theta_current = theta;
 }
@@ -163,14 +219,33 @@ void MoveSara::setThetaCurrent(double theta){
 
 //Kinematics--------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------
+/**
+ * @brief Calcula la cinematica directa del robot para la coordenada en x.
+ * @param q1 es el angulo del motor que mueve el primer eslabon del robot.
+ * @param q2 es el angulo del motor que mueve el segundo eslabon del robot.
+ * @return la coordenada en el eje x, medida en milimetros, correspondiente a los angulos q1,q2 del robot.
+ */
 double MoveSara::dk_x(double q1, double q2) {
   return l1 * cos(q1) + l2 * cos(q1 + q2);
 }
 
+/**
+ * @brief Calcula la cinematica directa del robot para la coordenada en y.
+ * @param q1 es el angulo del motor que mueve el primer eslabon del robot (motor 1).
+ * @param q2 es el angulo del motor que mueve el segundo eslabon del robot (motor 2).
+ * @return la coordenada en el eje y, medida en milimetros, correspondiente a los angulos q1,q2 del robot.
+ */
 double MoveSara::dk_y(double q1, double q2) {
   return l1 * sin(q1) + l2 * sin(q1 + q2);
 }
 
+/**
+ * @brief Calcula la cinematica inversa del robot.
+ * @param x coordenada en el eje x, medida en milimetros.
+ * @param y coordenada en el eje y, medida en milimetros.
+ * @param q1 el angulo correspondiente al motor 1, en la posicion segun los parametros x,y.
+ * @param q1 el angulo correspondiente al motor 2, en la posicion segun los parametros x,y.
+ */
 void MoveSara::ik(double x, double y, double *q1, double *q2) {
   double z, z_max, theta;
   int auxiliar, i;
@@ -190,8 +265,6 @@ void MoveSara::ik(double x, double y, double *q1, double *q2) {
   //if x,y is out of range, z will be the maximun radius possible
   if (z > l1 + l2 )
     z = l1 + l2;
-
-
   //theta always possitive
   if (theta < 0)
     theta = theta + 2 * PI;
@@ -214,8 +287,11 @@ void MoveSara::ik(double x, double y, double *q1, double *q2) {
 //Operations with components -------------------------------------------------------
 //----------------------------------------------------------------------------------
 /**
- * rotate the point x,y with center in 0,0 a value determine by param angle
- * @param angle is the angle of rotation
+ * @brief rota la posicion x,y con centro en 0,0 tantos grados como se desee.
+ * @param x coordenada en el eje x.
+ * @param y coordenada en el eje y.
+ * @param angle es el angulo que se desea rotar los puntos x,y.
+ * @note los valores x,y se pasan por referencia.
  */
 void MoveSara::rotate(double& x,double& y,double angle){
     double z = zPolar(x, y);
@@ -225,14 +301,35 @@ void MoveSara::rotate(double& x,double& y,double angle){
     y = z * sin(theta);
 }
 
+/**
+ * @brief Calcula la distancia entre 2 puntos.
+ * @param x1 es el valor en el eje x del primer punto.
+ * @param y1 es el valor en el eje y del primer punto.
+ * @param x2 es el valor en el eje x del segundo punto.
+ * @param y2 es el valor en el eje y del segundo punto.
+ * @return la distancia entre ambos puntos.
+ */
 double MoveSara::module(double x1, double y1, double x2, double y2){
     return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
 }
 
+/**
+ * @brief calcula el valor del modulo del punto en coordenadas polares
+ * @param x es el valor en el eje x del punto.
+ * @param y es el valor en el eje y del punto.
+ * @return el modulo del punto en coordenadas polares.
+ */
 double MoveSara::zPolar(double x, double y) {
   return sqrt(pow(x, 2) + pow(y, 2));
 }
 
+/**
+ * @brief calcula el angulo que se forma con la horizontal, de un punto x,y.
+ * @param x es el valor de la coordenada en el eje x, medido en milimetros.
+ * @param y es el valor de la coordenada en el eje y, medido en milimetros.
+ * @return el angulo, medido desde la horizontal, del punto x,y.
+ * @note el angulo se encuentra en el rango de [0 , 2*PI)
+ */
 double MoveSara::thetaPolar(double x, double y) {
   //calculus of theta
   double theta;
@@ -250,9 +347,9 @@ double MoveSara::thetaPolar(double x, double y) {
 }
 
 /**
- * normalize an angle to be between [0 and 2*pi).
- *@param angle Is the angle to be limited, which is in radians.
- *@return a double value between [0 and 2*pi).
+ *@brief normaliza un angulo para estar en el rango de [0,2*PI).
+ *@param angle es el angulo, medido en radianes, que se desea normalizar.
+ *@return un valor con el rango de [0 , 2*PI).
  */
 double MoveSara::normalizeAngle(double angle) {
   long aux = angle / (2 * PI);
@@ -266,6 +363,12 @@ double MoveSara::normalizeAngle(double angle) {
 }
 //Workspace mathematics---------------------------------------------------------------------
 //------------------------------------------------------------------------------------------
+/**
+ * @brief Calcula las escuaciones que describen la geometria de Stelle.
+ * @return no retorna ningun valor pero modifica las variables miembro m y b.
+ * @note m contiene las pendientes de las rectas que describen la geometria de Stelle.
+ *       b contiene informacion de las rectas que describen la geometria de Stelle.
+ */
 void MoveSara::calculate_line_equations() {
   double radius_1 = 400;
   double radius_2 = 500;
@@ -295,12 +398,11 @@ void MoveSara::calculate_line_equations() {
 //Motor maths--------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------
 /**
- * Calculate the steps to go form one angle to another one accoording to the stepping
- * configuration of the motor. As there are two option to achive the position, the shortest one
- * is chosen. 
- * @param q1 is the current angle
- * @param q2 is the next angle to be achived
- * @return the necessary steps to go from q1 to q2
+ * @brief Calcula los pasos que se debe mover el motor para ir de un angulo a otro.
+ * @note existen 2 caminos para llegar a un cierto angulo, pero siempre se escoge el mas corto.
+ * @param q1 es el angulo inicial.
+ * @param q2 es el angulo al que se quiere llegar.
+ * @return los angulos necesarios para ir de q1 a q2.
  */
 long MoveSara::calculate_steps(double q1, double q2) {
   double steps_option_1, steps_option_2;
