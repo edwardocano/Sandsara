@@ -51,20 +51,20 @@ class MoveSara {
         void goHome();
         void setHomePosition();
         void setCouplingAngle(double );
-        double getZCurrent();
-        double getThetaCurrent();
+        double getCurrentModule();
+        double getCurrentAngle();
         void setZCurrent(double );
         void setThetaCurrent(double );
         static void rotate(double& ,double& ,double );
         static double zPolar(double , double );
         static double thetaPolar(double , double );
+        static double normalizeAngle(double );
     private:
         void moveInterpolateTo(double , double , double );
         void moveSteps(long, long, double);
         //mathematics methods
         long calculate_steps(double , double );
         void calculate_line_equations();
-        static double normalizeAngle(double );
         double module(double , double , double , double );
         double polarModule(double , double , double , double );
         double dk_x(double , double ) ;

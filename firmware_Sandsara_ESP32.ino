@@ -65,16 +65,14 @@ void run_sandsara(File& dircurrent) {
       int working_status = 0;
       String name_file = current_file.name();
       current_file.close();
-      double couplingAngle;
+      double couplingAngle, startRobotAngle, startFileAngle;
       FileSara file(name_file);
-      double zInit = halo.getZCurrent();
+      double zInit = halo.getCurrentModule();
       file.autoSetMode(zInit);
-      if (zInit <= DISTANCIA_MAX/2){
-        couplingAngle = file.getFinalAngle();
-      }
-      else{
-        couplingAngle = file.getStartAngle();
-      }
+      startFileAngle = file.getStartAngle();
+      startFileAngle = MoveSara::normalizeAngle(couplingAngle);
+      startRobotAngle = halo.getCurrentAngle();
+      couplingAngle = startFileAngle - startRobotAngle;
       if (file.fileType == 2) {
         file.getNextComponents(&component_1, &component_2);
         halo.setZCurrent(component_1);

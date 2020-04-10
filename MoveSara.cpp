@@ -15,7 +15,7 @@ MoveSara::MoveSara(int microstepping){
 
 /**
  * @brief Interpola los puntos necesarios entre el punto actual y el siguiente con el objetivo que
- * se mueva en coordenadas polares.
+ * se mueva en coordenadas polares como lo hace sisyphus.
  * @param zNext valor en el eje z polar, medido en milimetros.
  * @param thetaNext valor en el eje theta polar, medido en radianes.
  * @note es muy importante que se hayan definido las variables zCurrent y thetaCurrent antes
@@ -156,7 +156,7 @@ void MoveSara::moveInterpolateTo(double x, double y, double distance){
 /**
  * @return La distancia entre el centro y la posicion actual del robot.
  */
-double MoveSara::getZCurrent(){
+double MoveSara::getCurrentModule(){
   return zPolar(x_current, y_current);
 }
 
@@ -164,9 +164,10 @@ double MoveSara::getZCurrent(){
  * @return El angulo, medido desde la horizontal, de la posicion actual del robot.
  * @note el angulo se encuentra en el rango de [0 , 2*PI)
  */
-double MoveSara::getThetaCurrent(){
+double MoveSara::getCurrentAngle(){
   return thetaPolar(x_current, y_current);
 }
+
 //Configuration Methods-----------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 /**
