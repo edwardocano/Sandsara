@@ -26,14 +26,21 @@ void MoveSara::movePolarTo(double zNext, double thetaNext) {
   long slices;
   double distancePoints = 100, deltaTheta, deltaZ;
   double thetaAuxiliar, zAuxliar, xAux, yAux;
-
-  while (distancePoints > 0.9 && distancePoints < 1.1){
+  int overIterates = 0;
+  while (!(distancePoints > 0.9 && distancePoints < 1.1)){
     deltaTheta = (thetaNext - thetaCurrent) / slicesFactor;
     deltaZ = (zNext - zCurrent) / slicesFactor;
     thetaAuxiliar = thetaCurrent + deltaTheta;
     zAuxliar = zCurrent + deltaZ;
     distancePoints = polarModule(zCurrent, thetaCurrent, zAuxliar, thetaAuxiliar);
     slicesFactor *= distancePoints;
+    overIterates += 1;
+    if (slicesFactor == 0){
+      break;
+    }
+    if (overIterates > 10){
+      break;
+    }
   }
   slices = slicesFactor;
   if (slices < 1) {
@@ -42,16 +49,21 @@ void MoveSara::movePolarTo(double zNext, double thetaNext) {
 
   deltaTheta = (thetaNext - thetaCurrent) / slices;
   deltaZ = (zNext - zCurrent) / slices;
-
   for (long i = 1; i < slices; i++) {
     thetaAuxiliar = thetaCurrent + deltaTheta * double(i);
     zAuxliar = zCurrent + deltaZ * double(i);
     xAux = zAuxliar * cos(thetaAuxiliar);
     yAux = zAuxliar * sin(thetaAuxiliar);
+    #ifdef DEBUGGING_DETAIL
+    Serial.println("Se ejecutara moveTo dentro de movePolarTo: ");
+    #endif
     moveTo(xAux, yAux);
   }
   xAux = zNext * cos(thetaNext);
   yAux = zNext * sin(thetaNext);
+  #ifdef DEBUGGING_DETAIL
+  Serial.println("Se ejecutara ultimo moveTo dentro de movePolarTo: ");
+  #endif
   moveTo(xAux, yAux);
   thetaCurrent = thetaNext;
   zCurrent = zNext;
@@ -89,10 +101,10 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance) { //dist
     stepper2.setMaxSpeed(maxSpeed);
     positions[0] = stepper1.currentPosition() + q1_steps;
     positions[1] = stepper2.currentPosition() + q2_steps + q1_steps;
-
+    #ifndef DISABLE_MOTORS
     steppers.moveTo(positions);
     steppers.runSpeedToPosition();
-
+    #endif
     q1_current += degrees_per_step * q1_steps;
     q2_current += degrees_per_step * q2_steps;
     q1_current = normalizeAngle(q1_current);
@@ -118,6 +130,9 @@ void MoveSara::moveTo(double x, double y) {
     long steps_of_q1, steps_of_q2;
     distance = module(x, y, x_current, y_current);
     if (distance > 1.1){
+        #ifdef DEBUGGING_DETAIL
+        Serial.println("Se ejecutara moveInterpolateTo: ");
+        #endif
         moveInterpolateTo(x, y, distance);
     }
     else if (distance > 0.5){
@@ -125,6 +140,9 @@ void MoveSara::moveTo(double x, double y) {
           ik(x, y, &q1, &q2);
           steps_of_q1 = calculate_steps(q1_current, q1);
           steps_of_q2 = calculate_steps(q2_current, q2);
+          #ifdef DEBUGGING_DETAIL
+          Serial.println("Se ejecutara moveSteps (Esta deshabilitado) ");
+          #endif  
           moveSteps(steps_of_q1, steps_of_q2, distance);
         }
     }
@@ -147,8 +165,14 @@ void MoveSara::moveInterpolateTo(double x, double y, double distance){
     for (int i = 1; i <= intervals; i++){
         x_aux += delta_x;
         y_aux += delta_y;
+        #ifdef DEBUGGING_DETAIL
+        Serial.println("Se ejecutara moveTo dentro de moveInterpolateTo: ");
+        #endif
         moveTo(x_aux, y_aux);
     }
+    #ifdef DEBUGGING_DETAIL
+    Serial.println("Se ejecutara ultimo moveTo dentro de moveInterpolateTo: ");
+    #endif
     moveTo(x,y);
 }
 //properties----------------------------------------------------------------------------------

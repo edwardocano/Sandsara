@@ -78,7 +78,13 @@ int FileSara::getNextComponents(double* component1, double* component2) {
   int resp;
   currentRow = nextRow();
   if (currentRow == "") {
+    #ifdef DEBUGGING_DETAIL
+    Serial.println("Se ejecutara readFile: ");
+    #endif
     resp = readFile();
+    #ifdef DEBUGGING_DETAIL
+    Serial.println("Se ejecuto readFile: ");
+    #endif
     if (resp == -1) {
       statusFile = 1;
       return 1;
@@ -89,7 +95,13 @@ int FileSara::getNextComponents(double* component1, double* component2) {
     resp = getComponentsBin((dataBufferBin + pFileBin * 6), component1, component2);
   }
   else {
+    #ifdef DEBUGGING_DETAIL
+    Serial.println("Se ejecutara getComponents: ");
+    #endif
     resp = getComponents(currentRow, component1, component2);
+    #ifdef DEBUGGING_DETAIL
+    Serial.println("Se ejecuto getComponents: ");
+    #endif
   }
   if ( resp != 0 ) {
     return statusFile;

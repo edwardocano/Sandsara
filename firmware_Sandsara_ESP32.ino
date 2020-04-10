@@ -74,18 +74,37 @@ void run_sandsara(File& dircurrent) {
       startRobotAngle = halo.getCurrentAngle();
       couplingAngle = startFileAngle - startRobotAngle;
       if (file.fileType == 2) {
+        #ifdef DEBUGGING_DETAIL
+        Serial.println("Se ejecutara setZ y Theta current: ");
+        #endif  
         file.getNextComponents(&component_1, &component_2);
         halo.setZCurrent(component_1);
         halo.setThetaCurrent(component_2 - couplingAngle);
       }
-      while ( working_status == 0) {
+      while ( 1 ) {
         working_status = file.getNextComponents(&component_1, &component_2);
+        if (working_status != 0){
+          break;
+        }
+        #ifdef DEBUGGING_DETAIL
+        Serial.print("working_status: ");
+        Serial.println(working_status);
+        #endif
         if (file.fileType == 1 || file.fileType == 3){
           MoveSara::rotate(component_1 , component_2, -couplingAngle);
           halo.moveTo(component_1, component_2);
         }
         else if (file.fileType == 2) {
+          #ifdef DEBUGGING_DETAIL
+          Serial.println("Se ejecutara movePolarTo: ");
+          #endif
           halo.movePolarTo(component_1, component_2 - couplingAngle);
+          #ifdef DEBUGGING_DETAIL
+          Serial.println("se ejecuto movePolarTo");
+          #endif
+        }
+        else{
+          break;
         }
       }
       #ifdef DEBUGGING_DATA
