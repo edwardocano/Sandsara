@@ -36,8 +36,8 @@ class MoveSara {
         AccelStepper stepper1;
         AccelStepper stepper2;
         MultiStepper steppers;
-        double z_current;
-        double theta_current;
+        double zCurrent;
+        double thetaCurrent;
         long maxSpeed;        
         double x_home;
         double y_home;
@@ -47,7 +47,7 @@ class MoveSara {
         MoveSara(int = 16);
         void moveTo(double x, double y);
         void movePolarTo(double , double ); //(modulo,angulo)
-        void init(double ,double );
+        void init(double = 0,double = 0);
         void goHome();
         void setHomePosition();
         void setCouplingAngle(double );
@@ -66,6 +66,7 @@ class MoveSara {
         void calculate_line_equations();
         static double normalizeAngle(double );
         double module(double , double , double , double );
+        double polarModule(double , double , double , double );
         double dk_x(double , double ) ;
         double dk_y(double , double ) ;
         void ik(double , double , double* , double* );

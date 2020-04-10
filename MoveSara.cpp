@@ -4,7 +4,6 @@ double m[no_picos * 2], b[no_picos * 2];
 /**
  * @brief es el contructor de la clase
  * @param microstepping es el microstepping que tienen los motores, por defecto es 16
- * @
  */
 MoveSara::MoveSara(int microstepping){
     this->microstepping = microstepping;
@@ -14,46 +13,48 @@ MoveSara::MoveSara(int microstepping){
     
 }
 
-void MoveSara::movePolarTo(double z_next, double theta_next) { //z must be in milimeters and theta in radians
-  long slices_factor = 1000;
-  double distance_points, delta_theta, delta_z;
-  double theta_current_aux = thetaPolar(x_current, y_current);
-  double z_current_aux = zPolar(x_current, y_current);
+/**
+ * @brief Interpola los puntos necesarios entre el punto actual y el siguiente con el objetivo que
+ * se mueva en coordenadas polares.
+ * @param zNext valor en el eje z polar, medido en milimetros.
+ * @param thetaNext valor en el eje theta polar, medido en radianes.
+ * @note es muy importante que se hayan definido las variables zCurrent y thetaCurrent antes
+ * de llamar a esta funcion porque es apartir de estas variables que se calcula cuanto se debe mover.
+ */
+void MoveSara::movePolarTo(double zNext, double thetaNext) {
+  double slicesFactor = 1000;
+  long slices;
+  double distancePoints = 100, deltaTheta, deltaZ;
+  double thetaAuxiliar, zAuxliar, xAux, yAux;
 
-  delta_theta = (theta_next - theta_current) / slices_factor;
-  delta_z = (z_next - z_current) / slices_factor;
-
-  double theta_auxiliar = theta_current_aux + delta_theta;
-  double z_auxliar = z_current_aux + delta_z;
-
-  double x_aux = z_auxliar * cos(theta_auxiliar);
-  double y_aux = z_auxliar * sin(theta_auxiliar);
-
-  distance_points = sqrt(pow(x_aux - x_current, 2) + pow(y_aux - y_current, 2));
-
-  slices_factor *= distance_points; //in order to have a distance of 1 mm;
-  if (slices_factor < 1) {
-    slices_factor = 1;
+  while (distancePoints > 0.9 && distancePoints < 1.1){
+    deltaTheta = (thetaNext - thetaCurrent) / slicesFactor;
+    deltaZ = (zNext - zCurrent) / slicesFactor;
+    thetaAuxiliar = thetaCurrent + deltaTheta;
+    zAuxliar = zCurrent + deltaZ;
+    distancePoints = polarModule(zCurrent, thetaCurrent, zAuxliar, thetaAuxiliar);
+    slicesFactor *= distancePoints;
+  }
+  slices = slicesFactor;
+  if (slices < 1) {
+    slices = 1;
   }
 
-  delta_theta = (theta_next - theta_current) / slices_factor;
-  delta_z = (z_next - z_current) / slices_factor;
+  deltaTheta = (thetaNext - thetaCurrent) / slices;
+  deltaZ = (zNext - zCurrent) / slices;
 
-  for (long i = 1; i <= slices_factor; i++) {
-    theta_auxiliar = theta_current + delta_theta * double(i);
-    z_auxliar = z_current + delta_z * double(i);
-    if (i == slices_factor) {
-      theta_auxiliar = theta_next;
-      z_auxliar = z_next;
-    }
-    x_aux = z_auxliar * cos(theta_auxiliar);
-    y_aux = z_auxliar * sin(theta_auxiliar);
-
-    moveTo(x_aux, y_aux);
+  for (long i = 1; i < slices; i++) {
+    thetaAuxiliar = thetaCurrent + deltaTheta * double(i);
+    zAuxliar = zCurrent + deltaZ * double(i);
+    xAux = zAuxliar * cos(thetaAuxiliar);
+    yAux = zAuxliar * sin(thetaAuxiliar);
+    moveTo(xAux, yAux);
   }
-
-  theta_current = theta_next;
-  z_current = z_next;
+  xAux = zNext * cos(thetaNext);
+  yAux = zNext * sin(thetaNext);
+  moveTo(xAux, yAux);
+  thetaCurrent = thetaNext;
+  zCurrent = zNext;
 }
 
 /**
@@ -201,19 +202,19 @@ void MoveSara::setCouplingAngle(double angle){
 
 /**
  * @brief moficica el miembro z_current a uno nuevo.
- * @param z es el valor que se le va a asignar a la variable miembro z_current.
+ * @param z es el valor que se le va a asignar a la variable miembro zCurrent.
  */
 void MoveSara::setZCurrent(double z){
-    z_current = z;
+    zCurrent = z;
 }
 
 /**
  * @brief moficica el miembro theta_current a uno nuevo.
- * @param theta es el valor que se le va a asignar a la variable miembro theta_current.
+ * @param theta es el valor que se le va a asignar a la variable miembro thetaCurrent.
  * @note  Esto es importante para que los archivos .thr tengan una referencia de donde empezar a moverse.
  */
 void MoveSara::setThetaCurrent(double theta){
-    theta_current = theta;
+    thetaCurrent = theta;
 }
 //----------------------------mathematics---------------------------------------------------
 
@@ -310,6 +311,23 @@ void MoveSara::rotate(double& x,double& y,double angle){
  * @return la distancia entre ambos puntos.
  */
 double MoveSara::module(double x1, double y1, double x2, double y2){
+    return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
+}
+
+/**
+ * @brief Calcula la distancia entre 2 puntos Polares.
+ * @param z1 es el valor en el eje z del primer punto.
+ * @param t1 es el valor en el eje theta del primer punto.
+ * @param z2 es el valor en el eje z del segundo punto.
+ * @param t2 es el valor en el eje theta del segundo punto.
+ * @return la distancia entre ambos puntos.
+ */
+double MoveSara::polarModule(double z1, double t1, double z2, double t2){
+    double x1, y1, x2, y2;
+    x1 = z1 * cos(t1);
+    y1 = z1 * sin(t1);
+    x2 = z2 * cos(t2);
+    y2 = z2 * sin(t2);
     return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
 }
 
