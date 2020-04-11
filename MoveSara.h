@@ -25,6 +25,19 @@
 //variables of star equations
 #define no_picos 6
 
+/**
+ * @class MoveSara
+ * @param microstepping almacena el valor de microstepping del motor
+ * @param x_current alamacena la coordenada x de la posicion actual del robot (en milimetros).
+ * @param y_current alamacena la coordenada y de la posicion actual del robot (en milimetros).
+ * @param q1_current almacena el valor actual del angulo del primer eslabon del robot (en radianes).
+ * @param q2_current almacena el valor actual del angulo del segundo eslabon del robot (en radianes).
+ * @param zCurrent se utiliza como referencia del componente  modulo para los archivos thr (en milimetros).
+ * @param thetaCurrent se utiliza como referencia del componente del angulo para los archivos thr (en radianes).
+ * @param maxSpeed se utiliza para controlar la velocidad de los motores (pasos/s).
+ * @param constantMotorSpeed Si esta variable es true, los motores se moveran a una velocidad constante siempre, si es false la velocidad
+ * dependera de la distancia recorrida de un punto a otro.
+ */
 class MoveSara {
     public:
         int microstepping;

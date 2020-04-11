@@ -68,11 +68,13 @@ void run_sandsara(File& dircurrent) {
       double couplingAngle, startRobotAngle, startFileAngle;
       FileSara file(name_file);
       double zInit = halo.getCurrentModule();
+      //se selecciona modo de lectura
       file.autoSetMode(zInit);
       startFileAngle = file.getStartAngle();
       startFileAngle = MoveSara::normalizeAngle(couplingAngle);
       startRobotAngle = halo.getCurrentAngle();
       couplingAngle = startFileAngle - startRobotAngle;
+      // si es thr, se guardan los valores del primer punto para que tenga referencia de donde empezar a moverse.
       if (file.fileType == 2) {
         #ifdef DEBUGGING_DETAIL
         Serial.println("Se ejecutara setZ y Theta current: ");
@@ -81,7 +83,9 @@ void run_sandsara(File& dircurrent) {
         halo.setZCurrent(component_1);
         halo.setThetaCurrent(component_2 - couplingAngle);
       }
+      //parara hasta que el codigo de error del archivo sea diferente de cero.
       while ( 1 ) {
+        //se obtienen los siguientes componentes
         working_status = file.getNextComponents(&component_1, &component_2);
         if (working_status != 0){
           break;
@@ -90,6 +94,7 @@ void run_sandsara(File& dircurrent) {
         Serial.print("working_status: ");
         Serial.println(working_status);
         #endif
+        //dependiendo del tipo de archivo se ejecuta la funcion correspondiente de movimiento.
         if (file.fileType == 1 || file.fileType == 3){
           MoveSara::rotate(component_1 , component_2, -couplingAngle);
           halo.moveTo(component_1, component_2);

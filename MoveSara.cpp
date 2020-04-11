@@ -115,7 +115,7 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance) { //dist
 }
 
 /**
- * @brief El robot se mueve de su posicion actual hacia una nueva posicion x,y.
+ * @brief Esta funcion hace que el robot se mueve de su posicion actual hacia una nueva posicion x,y.
  * 
  * Si las coordenadas x,y se encuentran fuera del espacio de trabajo, la funcion se encarga de limitarlas.
  * La posicion x,y se mide en milimetros.
