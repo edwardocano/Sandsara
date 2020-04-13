@@ -54,16 +54,10 @@ void MoveSara::movePolarTo(double zNext, double thetaNext) {
     zAuxliar = zCurrent + deltaZ * double(i);
     xAux = zAuxliar * cos(thetaAuxiliar);
     yAux = zAuxliar * sin(thetaAuxiliar);
-    #ifdef DEBUGGING_DETAIL
-    Serial.println("Se ejecutara moveTo dentro de movePolarTo: ");
-    #endif
     moveTo(xAux, yAux);
   }
   xAux = zNext * cos(thetaNext);
   yAux = zNext * sin(thetaNext);
-  #ifdef DEBUGGING_DETAIL
-  Serial.println("Se ejecutara ultimo moveTo dentro de movePolarTo: ");
-  #endif
   moveTo(xAux, yAux);
   thetaCurrent = thetaNext;
   zCurrent = zNext;
@@ -130,23 +124,16 @@ void MoveSara::moveTo(double x, double y) {
     long steps_of_q1, steps_of_q2;
     distance = module(x, y, x_current, y_current);
     if (distance > 1.1){
-        #ifdef DEBUGGING_DETAIL
-        Serial.println("Se ejecutara moveInterpolateTo: ");
-        #endif
         moveInterpolateTo(x, y, distance);
     }
     else if (distance > 0.5){
         if (!(x == 0 && y == 0)){
-          ik(x, y, &q1, &q2);
+          ik(x, y, &q1, &q2);          
           steps_of_q1 = calculate_steps(q1_current, q1);
           steps_of_q2 = calculate_steps(q2_current, q2);
-          #ifdef DEBUGGING_DETAIL
-          Serial.println("Se ejecutara moveSteps (Esta deshabilitado) ");
-          #endif  
           moveSteps(steps_of_q1, steps_of_q2, distance);
         }
     }
-
 }
 
 /**
@@ -165,14 +152,8 @@ void MoveSara::moveInterpolateTo(double x, double y, double distance){
     for (int i = 1; i <= intervals; i++){
         x_aux += delta_x;
         y_aux += delta_y;
-        #ifdef DEBUGGING_DETAIL
-        Serial.println("Se ejecutara moveTo dentro de moveInterpolateTo: ");
-        #endif
         moveTo(x_aux, y_aux);
     }
-    #ifdef DEBUGGING_DETAIL
-    Serial.println("Se ejecutara ultimo moveTo dentro de moveInterpolateTo: ");
-    #endif
     moveTo(x,y);
 }
 //properties----------------------------------------------------------------------------------
@@ -276,24 +257,12 @@ void MoveSara::ik(double x, double y, double *q1, double *q2) {
   double z, z_max, theta;
   int auxiliar, i;
   //calculus of z
-  z = sqrt(pow(x, 2) + pow(y, 2));
+  z = zPolar(x, y);
   //calculus of theta
-  if (x > 0)
-    theta = atan(y / x);
-  else if (x < 0)
-    theta = atan(y / x) + PI;
-  else {
-    if (y >= 0)
-      theta = PI / 2;
-    else
-      theta = 3 / 2 * PI;
-  }
+  theta = thetaPolar(x, y);
   //if x,y is out of range, z will be the maximun radius possible
   if (z > l1 + l2 )
     z = l1 + l2;
-  //theta always possitive
-  if (theta < 0)
-    theta = theta + 2 * PI;
   //Delimiter module z
   i = theta / (2 * PI / (2 * no_picos));
   z_max = abs(b[i] / (tan(theta) - m[i]) * sqrt(1 + pow(tan(theta), 2)));
@@ -308,6 +277,7 @@ void MoveSara::ik(double x, double y, double *q1, double *q2) {
   auxiliar = *q2 / (2 * PI);
   //in case q2 is greater than 2pi
   *q2 = *q2 - 2 * PI * auxiliar;
+  
 }
 
 //Operations with components -------------------------------------------------------
@@ -382,9 +352,9 @@ double MoveSara::thetaPolar(double x, double y) {
     theta = atan(y / x) + PI;
   else {
     if (y >= 0)
-      theta = PI / 2;
+      theta = PI / 2.0;
     else
-      theta = 3 / 2 * PI;
+      theta = 3.0 / 2.0 * PI;
   }
   return normalizeAngle(theta);
 }
