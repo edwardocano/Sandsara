@@ -78,13 +78,7 @@ int FileSara::getNextComponents(double* component1, double* component2) {
   int resp;
   currentRow = nextRow();
   if (currentRow == "") {
-    #ifdef DEBUGGING_DETAIL
-    Serial.println("Se ejecutara readFile: ");
-    #endif
     resp = readFile();
-    #ifdef DEBUGGING_DETAIL
-    Serial.println("Se ejecuto readFile: ");
-    #endif
     if (resp == -1) {
       statusFile = 1;
       return 1;
@@ -95,13 +89,7 @@ int FileSara::getNextComponents(double* component1, double* component2) {
     resp = getComponentsBin((dataBufferBin + pFileBin * 6), component1, component2);
   }
   else {
-    #ifdef DEBUGGING_DETAIL
-    Serial.println("Se ejecutara getComponents: ");
-    #endif
     resp = getComponents(currentRow, component1, component2);
-    #ifdef DEBUGGING_DETAIL
-    Serial.println("Se ejecuto getComponents: ");
-    #endif
   }
   if ( resp != 0 ) {
     return statusFile;
@@ -365,6 +353,8 @@ int FileSara::readFile() {
  */
 double FileSara::getStartPoint(int component, int ignoreZero){
   int stackMode = directionMode;
+  int stackPFileBin = pFileBin;
+  long stackPFile = pFile;
   directionMode = 1;
   double component1, component2, zStart, thetaStart;
   pFile = 0;
@@ -380,22 +370,18 @@ double FileSara::getStartPoint(int component, int ignoreZero){
   {
     getNextComponents(&component1, &component2);
   }
-  pFile = 0;
+  pFile = stackPFile;
+  pFileBin = stackPFileBin;
   dataBuffer = "";
   directionMode = stackMode;
 
-  if (fileType == 2){
-    if (component == 1)
-      return component1;
-    else
-      return component2;
+  if (component == 1){
+    return component1;
   }
-  zStart = MoveSara::zPolar(component1, component2);
-  thetaStart = MoveSara::thetaPolar(component1, component2);
-  if (component == 1)
-    return zStart;
   else
-    return thetaStart;
+  {
+    return component2;
+  }
 }
 
 /**
@@ -411,6 +397,8 @@ double FileSara::getStartPoint(int component, int ignoreZero){
  */
 double FileSara::getFinalPoint(int component, int ignoreZero){
   int stackMode = directionMode;
+  int stackPFileBin = pFileBin;
+  long stackPFile = pFile;
   directionMode = 0;
   double component1, component2, zFinal, thetaFinal;
   pFile = file.size();
@@ -426,22 +414,19 @@ double FileSara::getFinalPoint(int component, int ignoreZero){
   {
     getNextComponents(&component1, &component2);
   }
-  pFile = file.size();
+  pFile = stackPFile;
+  pFileBin = stackPFileBin;
   dataBuffer = "";
   directionMode = stackMode;
 
-  if (fileType == 2){
-    if (component == 1)
-      return component1;
-    else
-      return component2;
+  if (component == 1){
+    return component1;
   }
-  zFinal = MoveSara::zPolar(component1, component2);
-  thetaFinal = MoveSara::thetaPolar(component1, component2);
-  if (component == 1)
-    return zFinal;
   else
-    return thetaFinal;
+  {
+    return component2;
+  }
+  
 }
 
 /**
@@ -455,21 +440,37 @@ double FileSara::getFinalPoint(int component, int ignoreZero){
  */
 void FileSara::autoSetMode(double zCurrent){
   double startZ, finalZ, diff1, diff2;
-  startZ = getStartPoint();
-  finalZ = getFinalPoint();
+  double angle, x, y;
+  x = getStartPoint(1,0);
+  y = getStartPoint(2,0);
+  startZ = MoveSara::zPolar(x, y);
+  if (fileType == 2){
+    startZ = x;
+  }
+
+  x = getFinalPoint(1,0);
+  y = getFinalPoint(2,0);
+  finalZ = MoveSara::zPolar(x, y);
+  if (fileType == 2){
+    finalZ = x;
+  }
+
   diff1 = abs(zCurrent - startZ);
   diff2 = abs(zCurrent - finalZ);
   if (diff1 < diff2){
     directionMode = 1;
     pFile = 0;
+    pFileBin = charsToRead / 6;
   }
   else if (diff2 < diff1){
     directionMode = 0;
     pFile = file.size();
+    pFileBin = 0;
   }
   else{
     directionMode = 1;
     pFile = 0;
+    pFileBin = charsToRead / 6;
   }
 }
 
@@ -481,12 +482,32 @@ void FileSara::autoSetMode(double zCurrent){
  * @return un valor que representa un angulo en radianes pudiendo tomar cualquier valor que permita un tipo de dato double
  */
 double FileSara::getFinalAngle(){
+  double angle, x, y;
   if (directionMode == 0){
-    return getStartPoint(2, 1);
+    if (fileType == 2){
+      angle = getStartPoint(2, 0);
+      return angle;
+    }
+    else{
+      x = getStartPoint(1,1);
+      y = getStartPoint(2,1);
+      angle = MoveSara::thetaPolar(x, y);
+      return angle;
+    }
+    
   }
   else
   {
-    return getFinalPoint(2, 1);
+    if (fileType == 2){
+      angle = getFinalPoint(2, 0);
+      return angle;
+    }
+    else{
+      x = getFinalPoint(1,1);
+      y = getFinalPoint(2,1);
+      angle = MoveSara::thetaPolar(x, y);
+      return angle;
+    }    
   }
 }
 /**
@@ -495,11 +516,30 @@ double FileSara::getFinalAngle(){
  * @return un valor que representa un angulo en radianes pudiendo tomar cualquier valor que permita un tipo de dato double
  */
 double FileSara::getStartAngle(){
+  double angle, x, y;
   if (directionMode == 0){
-    return getFinalPoint(2, 1);
+    if (fileType == 2){
+      angle = getFinalPoint(2, 0);
+      return angle;
+    }
+    else{
+      x = getFinalPoint(1,1);
+      y = getFinalPoint(2,1);
+      angle = MoveSara::thetaPolar(x, y);
+      return angle;
+    }
   }
   else
   {
-    return getStartPoint(2, 1);
+    if (fileType == 2){
+      angle = getStartPoint(2, 0);
+      return angle;
+    }
+    else{
+      x = getStartPoint(1,1);
+      y = getStartPoint(2,1);
+      angle = MoveSara::thetaPolar(x, y);
+      return angle;
+    }
   }
 }
