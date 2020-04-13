@@ -3,7 +3,7 @@
 #define PROCESSING_SIMULATOR
 //#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
-#define DISABLE_MOTORS
+//#define DISABLE_MOTORS
 
 se prueba con un esp32 que manda los siguientes datos
 
