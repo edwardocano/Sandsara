@@ -65,31 +65,19 @@ void run_sandsara(File& dircurrent) {
       int working_status = 0;
       String name_file = current_file.name();
       current_file.close();
+      #ifdef PROCESSING_SIMULATOR
+      Serial.print("fileName: ");
+      Serial.println(name_file);
+      #endif
       double couplingAngle, startRobotAngle, startFileAngle;
       FileSara file(name_file);
       double zInit = halo.getCurrentModule();
       //se selecciona modo de lectura
       file.autoSetMode(zInit);
-      #ifdef DEBUGGING_DETAIL
-      Serial.print("directionMode: ");
-      Serial.println(file.directionMode);
-      #endif
       startFileAngle = file.getStartAngle();
-      #ifdef DEBUGGING_DETAIL
-      Serial.print("Antes de normalizar startFileAngle: ");
-      Serial.println(startFileAngle);
-      #endif
       startFileAngle = MoveSara::normalizeAngle(startFileAngle);
       startRobotAngle = halo.getCurrentAngle();
       couplingAngle = startFileAngle - startRobotAngle;
-      #ifdef DEBUGGING_DETAIL
-      Serial.print("startFileAngle: ");
-      Serial.println(startFileAngle);
-      Serial.print("startRobotAngle: ");
-      Serial.println(startRobotAngle);
-      Serial.print("couplingAngle: ");
-      Serial.println(couplingAngle);
-      #endif
       // si es thr, se guardan los valores del primer punto para que tenga referencia de donde empezar a moverse.
       if (file.fileType == 2) {
         file.getNextComponents(&component_1, &component_2);
@@ -97,9 +85,6 @@ void run_sandsara(File& dircurrent) {
         halo.setThetaCurrent(component_2 - couplingAngle);
       }
       //parara hasta que el codigo de error del archivo sea diferente de cero.
-      #ifdef DEBUGGING_DETAIL
-      bool onetime = true;
-      #endif
       while ( 1 ) {
         //se obtienen los siguientes componentes
         working_status = file.getNextComponents(&component_1, &component_2);
@@ -108,26 +93,7 @@ void run_sandsara(File& dircurrent) {
         }
         //dependiendo del tipo de archivo se ejecuta la funcion correspondiente de movimiento.
         if (file.fileType == 1 || file.fileType == 3){
-          #ifdef DEBUGGING_DETAIL
-          if (onetime){
-            Serial.println("Antes de rotar: ");
-            Serial.print("component_1: ");
-            Serial.print(component_1);
-            Serial.print("\t component_2: ");
-            Serial.println(component_2);
-          }
-          #endif
           MoveSara::rotate(component_1 , component_2, -couplingAngle);
-          #ifdef DEBUGGING_DETAIL
-          if (onetime){
-            Serial.println("Despues de rotar: ");
-            Serial.print("component_1: ");
-            Serial.print(component_1);
-            Serial.print("\t component_2: ");
-            Serial.println(component_2);  
-          }
-          onetime = false;
-          #endif
           halo.moveTo(component_1, component_2);
         }
         else if (file.fileType == 2) {

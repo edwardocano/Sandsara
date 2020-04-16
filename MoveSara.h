@@ -1,10 +1,10 @@
 #ifndef _MOVESARA_H_
 #define _MOVESARA_H_
 
-//#define PROCESSING_SIMULATOR
+#define PROCESSING_SIMULATOR
 //#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
-//#define DISABLE_MOTORS
+#define DISABLE_MOTORS
 
 #include <AccelStepper.h>
 #include <MultiStepper.h>
@@ -75,6 +75,7 @@ class MoveSara {
         static double zPolar(double , double );
         static double thetaPolar(double , double );
         static double normalizeAngle(double );
+        static double arcLength(double ,double , double);
     private:
         void moveInterpolateTo(double , double , double );
         void moveSteps(long, long, double);

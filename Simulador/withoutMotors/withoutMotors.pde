@@ -41,6 +41,7 @@ float radius_2 = 150*factor;
 //objects of the layers
 PGraphics boundary;
 PGraphics sandmark;
+PGraphics dataScreen;
 //mechanics
 float microstepping = 16;
 float degrees_per_step = (1.8*PI*2.0)/(6.0*180*microstepping);
@@ -69,6 +70,7 @@ void setup() {
   y = height * 0.5;
   boundary = createGraphics(width, height);
   sandmark = createGraphics(width, height);
+  dataScreen = createGraphics(width, height);
   boundary.beginDraw();
   boundary.endDraw();
   strokeWeight(40);
@@ -79,11 +81,8 @@ void setup() {
   steps_of_q[2] = 4800;
   frameRate(60);
   printArray(Serial.list());
-  mySerial = new Serial(this, "/dev/ttyUSB0", 115200);
+  mySerial = new Serial(this, "/dev/ttyUSB1", 115200);
   values = new long[3];
-  sandmark.beginDraw();
-  sandmark.fill(123,211,22);
-  sandmark.endDraw();
   
 }
 boolean stop_condition = true;
@@ -96,7 +95,7 @@ void draw() {
       if (value != null){
         print(value);
         if (value.length()>=8){
-          if (value.substring(0,6).equals("inicia")){
+          if (value.indexOf("inicia") != -1){
             println("salio");
             numberPoint = 0;
             stop_condition = false;
@@ -118,7 +117,7 @@ void draw() {
     }
     else{
       //for (int k = 0; k<2; k++){
-      background(0);
+      background(35);
       //find the greater value
       
       q1_real = steps_of_q[1] * degrees_per_step;
@@ -139,6 +138,7 @@ void draw() {
       segment(x, y, coordinates[1]);
       segment(segLength, 0, coordinates[2]);
       popMatrix();
+      image(dataScreen, 0, 0);
       translate(x , y);
       //draw cicrcle an path
       x_draw = (float)x_dk(coordinates[1],coordinates[2]);
@@ -146,7 +146,7 @@ void draw() {
       //draw_and_calculate();
       sandmark.beginDraw();
       sandmark.noStroke();
-      sandmark.fill(123,211,22);
+      sandmark.fill(134,201,18);
       sandmark.translate(x , y);
       sandmark.circle(x_draw,y_draw, shapeSize);
       if (numberPoint == 1){

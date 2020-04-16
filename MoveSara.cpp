@@ -27,7 +27,7 @@ void MoveSara::movePolarTo(double zNext, double thetaNext) {
   double distancePoints = 100, deltaTheta, deltaZ;
   double thetaAuxiliar, zAuxliar, xAux, yAux;
   int overIterates = 0;
-  while (!(distancePoints > 0.9 && distancePoints < 1.1)){
+  /*while (!(distancePoints > 0.9 && distancePoints < 1.1)){
     deltaTheta = (thetaNext - thetaCurrent) / slicesFactor;
     deltaZ = (zNext - zCurrent) / slicesFactor;
     thetaAuxiliar = thetaCurrent + deltaTheta;
@@ -42,11 +42,14 @@ void MoveSara::movePolarTo(double zNext, double thetaNext) {
       break;
     }
   }
+  slices = slicesFactor;*/
+  deltaTheta = thetaNext - thetaCurrent;
+  deltaZ = zNext - zCurrent;
+  slicesFactor = arcLength(deltaZ, deltaTheta, zCurrent);
   slices = slicesFactor;
   if (slices < 1) {
     slices = 1;
   }
-
   deltaTheta = (thetaNext - thetaCurrent) / slices;
   deltaZ = (zNext - zCurrent) / slices;
   for (long i = 1; i < slices; i++) {
@@ -373,6 +376,36 @@ double MoveSara::normalizeAngle(double angle) {
   else {
     return angle;
   }
+}
+
+/**
+ * @brief calcula la longitud de arco que se forma al girar de un punto A a un punto B en coordenadas polares.
+ * @param deltaZ es la diferencia entre la componente modulo del punto final menos la componente modulo del punto inicial.
+ * @param deltaTheta es la diferencia entre la componente angulo del punto final menos la componente angulo del punto inicial.
+ * @param zInit es la componente modulo del punto inicial.
+ */
+double MoveSara::arcLength(double deltaZ, double deltaTheta, double zInit){
+  double k, k2, a, a2, z, z2, inSqrt, inSqrt2;
+  deltaTheta = abs(deltaTheta);
+  if (deltaZ < 0){
+    zInit = zInit + deltaZ;
+    deltaZ = abs(deltaZ);
+  }
+  if (deltaZ < 1.5){
+    return deltaTheta * (zInit + deltaZ);
+  }
+  if (deltaTheta < 10.0 * PI/180.0){
+    return deltaZ;
+  }
+  k = deltaZ;
+  k2 = deltaZ * deltaZ;
+  a = deltaTheta;
+  a2 = deltaTheta * deltaTheta;
+  z = zInit;
+  z2 = zInit * zInit;
+  inSqrt2 = a2 * z2 + k2;
+  inSqrt = a2 * k2 + 2 * a2 * k * z + inSqrt2;
+  return (k + z) / (2 * k) * sqrt(inSqrt) + k/(2 * a) * log(a * (sqrt(inSqrt) + a * k + a * z)) - z / (2 * k) * sqrt(inSqrt2) - k/(2 * a) * log(a * (sqrt(inSqrt2) + a * z));
 }
 //Workspace mathematics---------------------------------------------------------------------
 //------------------------------------------------------------------------------------------
