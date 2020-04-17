@@ -79,9 +79,9 @@ int FileSara::getNextComponents(double* component1, double* component2) {
   currentRow = nextRow();
   if (currentRow == "") {
     resp = readFile();
-    if (resp == -1) {
-      statusFile = 1;
-      return 1;
+    if (resp != 0) {
+      statusFile = resp;
+      return resp;
     }
     currentRow = nextRow();
   }
@@ -268,11 +268,13 @@ String FileSara::nextRow() {
  * @brief lee no mas de 1002 bytes del archivo y los almacena.
  * 
  * Los datos los almacena en dataBuffer en el caso de archivos .txt o .thr y en dataBufferBin para archivos .bin
- * @return un codigo de error que puede significar lo siguiente
- *  0 no hubo problemas
- * -1 ya no hay datos restantes por leer
+ * @return un codigo de error que puede significar lo siguiente.
+ *  0 no hubo problemas.
+ *  1 ya no hay datos restantes por leer.
+ * -10 ya no hay mas archivos por leer por posible problema con memoria sd.
  */
 int FileSara::readFile() {
+  int bytesRead;
   if (this->directionMode == 0) {
     if (pFile >= charsToRead ) {
       pFile -= charsToRead;
@@ -280,13 +282,17 @@ int FileSara::readFile() {
     else {
       charsToRead = pFile; //check if it has to be +1
       if (pFile == 0) {
-        return -1;
+        return 1;
       }
       pFile = 0;
     }
     this->file.seek(pFile);
     //char input_char[charsToRead + 1];
-    this->file.read(dataBufferBin, charsToRead);
+    bytesRead = this->file.read(dataBufferBin, charsToRead);
+    if (bytesRead < charsToRead){
+      statusFile = -10;
+      return -10;
+    }
     *(dataBufferBin + charsToRead) = '\0';
     //<BINCASE>
     if (fileType == 3)
@@ -309,15 +315,18 @@ int FileSara::readFile() {
   {
     if (pFile >= file.size())
     {
-      return -1;
+      return 1;
     }
-
     if (pFile + charsToRead > file.size()) {
       charsToRead = file.size() - pFile; //
     }
     this->file.seek(pFile);
     //char input_char[charsToRead + 1];
-    this->file.read(dataBufferBin, charsToRead);
+    bytesRead = this->file.read(dataBufferBin, charsToRead);
+    if (bytesRead < charsToRead){
+      statusFile = -10;
+      return -10;
+    }
     *(dataBufferBin + charsToRead) = '\0';
     //<BINCASE>
     if (fileType == 3)
@@ -337,6 +346,7 @@ int FileSara::readFile() {
 
     dataBuffer = dataBuffer.substring(0, index_nl + 1);
     pFile += index_nl + 1;
+    return 0;
   }
 }
 

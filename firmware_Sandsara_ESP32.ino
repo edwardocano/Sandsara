@@ -104,6 +104,9 @@ void run_sandsara(File& dircurrent) {
         }
       }
       #ifdef PROCESSING_SIMULATOR
+      if (working_status == -10){
+        Serial.println("There were problems for reading SD");
+      }
       Serial.println("finished");
       #endif
     }
