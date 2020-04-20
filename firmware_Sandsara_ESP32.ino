@@ -35,13 +35,12 @@ void setup() {
 
 
 void loop() {
-  //halo.moveTo(50, 50);
   #ifdef DEBUGGING_DATA
   Serial.println("Iniciara la funcion runSansara");
   #endif
-  run_sandsara(root);
+  /*run_sandsara(root);
   root.rewindDirectory();
-  delay(5000);
+  delay(5000);*/
 }
 
 void run_sandsara(File& dircurrent) {
