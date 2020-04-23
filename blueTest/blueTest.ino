@@ -1,3 +1,7 @@
+#include "FS.h"
+#include "SD.h"
+#include "SPI.h"
+
 #include "BluetoothSerial.h"
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
@@ -5,10 +9,15 @@
 #endif
 
 BluetoothSerial SerialBT;
+File file;
 
 void setup() {
   Serial.begin(115200);
   SerialBT.begin("ESP32test"); //Bluetooth device name
+  if (!SD.begin()) {
+    Serial.println("Card Mount Failed");
+    return;
+  }
   Serial.println("The device started, now you can pair it with bluetooth!");
   delay(1000);
 }
@@ -36,41 +45,49 @@ void loop() {
                     fileNameBt.remove(0,1);
                 }
                 Serial.print("Nombre del archivo: ");
-                Serial.println(fileNameBt);      
-                while(true){
-                    SerialBT.println("ok");
-                    codeError = readLine(line);
-                    if (codeError != 0){
-                        SerialBT.print("error= ");
-                        SerialBT.println(codeError);
-                        break;
-                    }                
-                    if (line.indexOf("bytes=") != -1 ){
-                        indexWord = line.indexOf("bytes=");
-                        bytesToRead = line.substring(6).toInt();
-                        if (bytesToRead == 0){
-                          SerialBT.println("error= -2"); //Numero de bytes incorrecto
-                          break; //
-                        }
+                Serial.println(fileNameBt);
+                if (SD.exists("/" + fileNameBt)){
+                    SerialBT.println("error= -5"); //Ya existe el archivo
+                }
+                else{
+                    file = SD.open("/"+fileNameBt, FILE_WRITE);
+                    while(true){
                         SerialBT.println("ok");
-                        codeError = readBt(dataBt, bytesToRead);
+                        codeError = readLine(line);
                         if (codeError != 0){
                             SerialBT.print("error= ");
                             SerialBT.println(codeError);
                             break;
+                        }                
+                        if (line.indexOf("bytes=") != -1 ){
+                            indexWord = line.indexOf("bytes=");
+                            bytesToRead = line.substring(6).toInt();
+                            if (bytesToRead == 0){
+                              SerialBT.println("error= -2"); //Numero de bytes incorrecto
+                              break; //
+                            }
+                            SerialBT.println("ok");
+                            codeError = readBt(dataBt, bytesToRead);
+                            if (codeError != 0){
+                                SerialBT.print("error= ");
+                                SerialBT.println(codeError);
+                                break;
+                            }
+                            file.write(dataBt, bytesToRead);
+                            for (int i = 0; i < bytesToRead; i++){
+                                Serial.print(char(dataBt[i]));
+                            }
                         }
-                        for (int i = 0; i < bytesToRead; i++){
-                            Serial.print(char(dataBt[i]));
+                        else if(line.equals("done")){
+                            file.close();
+                            SerialBT.println("ok");
+                            Serial.println("guardado en memoria");
+                            break;
                         }
-                    }
-                    else if(line.equals("done")){
-                        SerialBT.println("ok");
-                        Serial.println("guardado en memoria");
-                        break;
-                    }
-                    else{
-                        SerialBT.println("error= -1"); //Comando incorrecto
-                        break;
+                        else{
+                            SerialBT.println("error= -1"); //Comando incorrecto
+                            break;
+                        }
                     }
                 }
             }
