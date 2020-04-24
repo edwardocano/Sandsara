@@ -6,9 +6,6 @@
 //#define DEBUGGING_DETAIL
 #define DISABLE_MOTORS
 
-#include <AccelStepper.h>
-#include <MultiStepper.h>
-
 //Speed
 #define millimeterSpeed 25;
 //variables of the geometry
@@ -24,6 +21,9 @@
 #define STEP2 27
 //variables of star equations
 #define no_picos 6
+
+#include "AccelStepper.h"
+#include "MultiStepper.h"
 
 /**
  * @class MoveSara

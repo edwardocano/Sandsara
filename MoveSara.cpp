@@ -1,4 +1,7 @@
 #include "MoveSara.h"
+#include "AccelStepper.h"
+#include "MultiStepper.h"
+
 double m[no_picos * 2], b[no_picos * 2];
 
 /**
