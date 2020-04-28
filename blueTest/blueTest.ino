@@ -15,11 +15,26 @@ int indexWord, bytesToRead;
 uint8_t dataBt[10000];
 String line;
 String fileNameBt;
+int debugCount = 0;
+
+void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
+  if(event == ESP_SPP_SRV_OPEN_EVT){
+    Serial.println("Client Connected");
+  }
+ 
+  if(event == ESP_SPP_CLOSE_EVT ){
+    Serial.println("Client disconnected");
+  }
+}
+ 
 
 void setup()
 {
     Serial.begin(115200);
     SerialBT.begin("ESP32"); //Bluetooth device name
+    
+    SerialBT.register_callback(callback);
+    
     if (!SD.begin())
     {
         Serial.println("Card Mount Failed");
@@ -55,7 +70,8 @@ void loop()
  *  0, no hay informacion disponible del bluetooth.
  * -1, no se reconoce el comando enviado.
  * -2, se quiso enviar un numero de bytes incorrecto.
- * -3, se excedio el tiempo de respuesta del transmisor (depende de la variable timeOutBt, medida en milisegundos)
+ * -3, se excedio el tiempo de respuesta del transmisor en la funcion readLine (depende de la variable timeOutBt, medida en milisegundos)
+ * -4, se excedio el tiempo de respuesta del transmisor en la funcion readBt (depende de la variable timeOutBt, medida en milisegundos)
  * -5, se intento enviar un archivo con un nombre ya existente.
  * -7, no coincide checksum.
  * -8, no se pudo crear el archivo.
@@ -94,7 +110,7 @@ int checkBlueTooth(){
                 if (!file)
                 {
                     codeError = -8;
-                    SerialBT.print("error= -8"); //no se pudo abrir el archivo
+                    SerialBT.println("error= -8"); //no se pudo abrir el archivo
                 }
                 else
                 {
@@ -112,6 +128,8 @@ int checkBlueTooth(){
                         {
                             indexWord = line.indexOf("bytes=");
                             bytesToRead = line.substring(6).toInt();
+                            Serial.print("bytesToRead: ");
+                            Serial.println(bytesToRead);
                             if (bytesToRead == 0)
                             {
                                 codeError = -2;
@@ -126,7 +144,7 @@ int checkBlueTooth(){
                                 SerialBT.println(codeError);
                                 break;
                             }
-                            SerialBT.print("request=checksum");
+                            SerialBT.println("request=checksum");
                             codeError = readLine(line);
                             if (codeError != 0)
                             {
@@ -134,7 +152,7 @@ int checkBlueTooth(){
                                 SerialBT.println(codeError);
                                 break;
                             }
-                            long timeStart = millis(), timeEnd;
+                            /*long timeStart = millis(), timeEnd;
                             String checksum = GetMD5String(dataBt, bytesToRead);
                             timeEnd = millis() - timeStart;
                             Serial.print("checksum: ");
@@ -144,14 +162,14 @@ int checkBlueTooth(){
                             if (!line.equals(checksum))
                             {
                                 codeError = -7;
-                                SerialBT.print("error= -7"); //no coincide checksum
+                                SerialBT.println("error= -7"); //no coincide checksum
                                 break;
                             }
-                            file.write(dataBt, bytesToRead);
-                            for (int i = 0; i < bytesToRead; i++)
+                            file.write(dataBt, bytesToRead);*/
+                            /*for (int i = 0; i < bytesToRead; i++)
                             {
                                 Serial.print(char(dataBt[i]));
-                            }
+                            }*/
                         }
                         else if (line.equals("done"))
                         {
@@ -179,6 +197,7 @@ int checkBlueTooth(){
         }
         else
         {
+            SerialBT.println("error= -1"); //Comando incorrecto
             codeError = -1; //comando incorrecto
         }
         
@@ -196,33 +215,32 @@ int checkBlueTooth(){
  */
 int readLine(String& line)
 {
+    Serial.println("Entro a readLine");
     line = "";
     int indexRemove;
     int byteRecived = -1;
-    unsigned long tInit = millis();
+    //unsigned long tInit = millis();
     while (char(byteRecived) != '\n')
     {
-        if (millis() - tInit < timeOutBt)
+        if (SerialBT.available())
         {
-            if (SerialBT.available())
-            {
-                byteRecived = SerialBT.read();
-                line.concat(char(byteRecived));
-            }
+            byteRecived = SerialBT.read();
+            line.concat(char(byteRecived));
         }
-        else
-        {
-            return -3; //timeOut
-        }
+        /*if (millis() - tInit > timeOutBt){
+            Serial.println("salio de readLine por timeOut");
+            return -3; //timeOut de readLine
+        }*/
     }
-    indexRemove = line.indexOf('\r');
+    /*indexRemove = line.indexOf('\r');
     if (indexRemove != -1)
     {
         line.remove(indexRemove, 1);
     }
     indexRemove = line.indexOf('\n');
     line.remove(indexRemove, 1);
-    Serial.println(line);
+    Serial.println(line);*/
+    Serial.println("salio de readLine normal");
     return 0;
 }
 
@@ -232,32 +250,40 @@ int readLine(String& line)
  * @param bytesToRead, es la cantidad de bytes que se leeran del bluetooth.
  * @return un codigo de error que puede significar lo siguiente.
  *  0, todo termino con normalidad.
- * -3, significa que ha transcurrido mas tiempo del esperado sin encontrar un '\n' (depende de la variable timeOutBt).
+ * -10, significa que ha transcurrido mas tiempo del esperado sin encontrar un '\n' (depende de la variable timeOutBt).
  * @note se intentan leer los bytes sobrantes, si es que se enviaron mas de los indicados, con la funcion while (SerialBT.available()).
  */
 int readBt(uint8_t dataBt[], int bytesToRead)
 {
+    Serial.println("Entro a readBt");
+    debugCount += 1;
     int i = 0;
-    unsigned long tInit = millis();
+    //unsigned long tInit = millis();
     while (i < bytesToRead)
     {
-        if (millis() - tInit < timeOutBt)
+        
+        if (SerialBT.available())
         {
-            if (SerialBT.available())
-            {
-                dataBt[i] = SerialBT.read();
-                i += 1;
-            }
+            Serial.write(SerialBT.read());
+            /*dataBt[i] = SerialBT.read();
+            Serial.print(char(dataBt[i]));*/
+            i += 1;
         }
-        else
-        {
-            return -3; //timeOut
-        }
+        /*if (millis() - tInit > timeOutBt){
+            SerialBT.print("bytes enviados: ");
+            SerialBT.println(i);
+            Serial.print("bytes enviados: ");
+            SerialBT.print(i);
+            Serial.println("salio de readBt por timeOut");
+            return -4; //timeOut de readBt
+        }*/
     }
-    while (SerialBT.available())
+    /*while (SerialBT.available())
     {
+        Serial.println("Entro por exceso de data tu crees");
         SerialBT.read();
-    }
+    }*/
+    Serial.println("salio de readBt normal");
     return 0;
 }
 
