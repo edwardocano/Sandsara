@@ -1,7 +1,6 @@
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
-
 #include "BluetoothSerial.h"
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
@@ -79,17 +78,19 @@ void loop()
  */
 int checkBlueTooth(){
     int codeError = 0;
+    String checksum;
     if (SerialBT.available())
     {
         codeError = readLine(line);
-        if (line.equals("transferir"))
+        if (line.indexOf("transferir") >= 0)
         {
-            SerialBT.println("request=name");
+            //SerialBT.println("request=name");
+            writeBtln("request=name");
             codeError = readLine(line);
             if (codeError != 0)
             {
-                SerialBT.print("error= ");
-                SerialBT.println(codeError);
+                writeBt("error= ");
+                writeBtln(String(codeError));
                 return codeError;
             }
             fileNameBt = line;
@@ -102,7 +103,7 @@ int checkBlueTooth(){
             if (SD.exists("/" + fileNameBt))
             {
                 codeError = -5;
-                SerialBT.println("error= -5"); //Ya existe el archivo
+                writeBtln("error= -5"); //Ya existe el archivo
             }
             else
             {
@@ -110,18 +111,21 @@ int checkBlueTooth(){
                 if (!file)
                 {
                     codeError = -8;
-                    SerialBT.println("error= -8"); //no se pudo abrir el archivo
+                    writeBtln("error= -8"); //no se pudo abrir el archivo
                 }
                 else
                 {
-                    while (true)
+                    for (int i = 0 ; i < 1000; i++)//while (true)
                     {
-                        SerialBT.println("ok");
+                        //yield();
+                        // SerialBT.println("ok");
+                        delay(500);
+                        writeBtln("ok");
                         codeError = readLine(line);
                         if (codeError != 0)
                         {
-                            SerialBT.print("error= ");
-                            SerialBT.println(codeError);
+                            writeBt("error= ");
+                            writeBtln(String(codeError));
                             break;
                         }
                         if (line.indexOf("bytes=") != -1)
@@ -133,48 +137,50 @@ int checkBlueTooth(){
                             if (bytesToRead == 0)
                             {
                                 codeError = -2;
-                                SerialBT.println("error= -2"); //Numero de bytes incorrecto
+                                writeBtln("error= -2"); //Numero de bytes incorrecto
                                 break;                         //
                             }
-                            SerialBT.println("ok");
+                            //yield();
+                            writeBtln("ok");
                             codeError = readBt(dataBt, bytesToRead);
                             if (codeError != 0)
                             {
-                                SerialBT.print("error= ");
-                                SerialBT.println(codeError);
+                                writeBt("error= ");
+                                writeBtln(String(codeError));
                                 break;
                             }
-                            SerialBT.println("request=checksum");
+                            //yield();
+                            //SerialBT.println("request=checksum");
+                            writeBtln("request=checksum");
                             codeError = readLine(line);
                             if (codeError != 0)
                             {
-                                SerialBT.print("error= ");
-                                SerialBT.println(codeError);
+                                writeBt("error= ");
+                                writeBtln(String(codeError));
                                 break;
                             }
-                            /*long timeStart = millis(), timeEnd;
-                            String checksum = GetMD5String(dataBt, bytesToRead);
-                            timeEnd = millis() - timeStart;
+                            //long timeStart = millis(), timeEnd;
+                            checksum = GetMD5String(dataBt, bytesToRead);
+                            //checksum = md5("hola");
                             Serial.print("checksum: ");
                             Serial.println(checksum);
-                            Serial.print("tiempo: ");
-                            Serial.println(timeEnd);
                             if (!line.equals(checksum))
                             {
                                 codeError = -7;
-                                SerialBT.println("error= -7"); //no coincide checksum
+                                writeBtln("error= -7"); //no coincide checksum
                                 break;
                             }
-                            file.write(dataBt, bytesToRead);*/
+                            file.write(dataBt, bytesToRead);
                             /*for (int i = 0; i < bytesToRead; i++)
                             {
                                 Serial.print(char(dataBt[i]));
                             }*/
                         }
-                        else if (line.equals("done"))
+                        //else if (line.equals("done"))
+                        else if (line.indexOf("done") >= 0)
                         {
                             file.close();
-                            SerialBT.println("ok");
+                            writeBtln("ok");
                             Serial.println("guardado en memoria");
                             codeError = 1;
                             return codeError; //se escribio archivo
@@ -182,7 +188,7 @@ int checkBlueTooth(){
                         else
                         {
                             codeError = -1;
-                            SerialBT.println("error= -1"); //Comando incorrecto
+                            writeBtln("error= -1"); //Comando incorrecto
                             break;
                         }
                     }
@@ -197,12 +203,39 @@ int checkBlueTooth(){
         }
         else
         {
-            SerialBT.println("error= -1"); //Comando incorrecto
+            writeBtln("error= -1"); //Comando incorrecto
             codeError = -1; //comando incorrecto
         }
         
         return codeError;
     }
+    return 0;
+}
+
+/**
+ * @brief envia un mensaje por bluetooth.
+ * @param msg es el mensaje que va a ser enviado por bluetooth.
+ * @return 0 cuando termina la funcion.
+ * @note es imporante usar el metodo write en lugar de print o println, si se usa uno de estos 2 ultimos puede haber comportamientos inesperados como el crasheo del programa. 
+ */
+int writeBt(String msg){
+    //Serial.println("Entro a writeBt");
+    uint8_t* msg8 = (uint8_t* ) msg.c_str();
+    SerialBT.write(msg8, msg.length());
+    SerialBT.flush();
+    delay(20);
+    //Serial.println("salio a writeBt");
+    return 0;
+}
+/**
+ * @brief envia un mensaje por bluetooth con un salto de linea.
+ * @param msg es el mensaje que va a ser enviado por bluetooth.
+ * @return 0 cuando termina la funcion.
+ * @note el salto de linea se hace con \r\n
+ */
+int writeBtln(String msg){
+    msg.concat("\r\n");
+    writeBt(msg);
     return 0;
 }
 
@@ -215,11 +248,14 @@ int checkBlueTooth(){
  */
 int readLine(String& line)
 {
-    Serial.println("Entro a readLine");
+    //yield();
+    //Serial.print("Entro a readLine ");
+    //Serial.println(ESP.getFreeHeap());
     line = "";
     int indexRemove;
     int byteRecived = -1;
     //unsigned long tInit = millis();
+    delay(20);
     while (char(byteRecived) != '\n')
     {
         if (SerialBT.available())
@@ -232,15 +268,15 @@ int readLine(String& line)
             return -3; //timeOut de readLine
         }*/
     }
-    /*indexRemove = line.indexOf('\r');
+    indexRemove = line.indexOf('\r');
     if (indexRemove != -1)
     {
         line.remove(indexRemove, 1);
     }
     indexRemove = line.indexOf('\n');
     line.remove(indexRemove, 1);
-    Serial.println(line);*/
-    Serial.println("salio de readLine normal");
+    Serial.println(line);
+    //Serial.println("salio de readLine normal");
     return 0;
 }
 
@@ -255,18 +291,20 @@ int readLine(String& line)
  */
 int readBt(uint8_t dataBt[], int bytesToRead)
 {
-    Serial.println("Entro a readBt");
+    //yield();
+    //Serial.print("Entro a readBt: ");
+    //Serial.println(debugCount);
     debugCount += 1;
     int i = 0;
     //unsigned long tInit = millis();
+    //Serial.println("Entra a while");
     while (i < bytesToRead)
     {
-        
-        if (SerialBT.available())
+        //yield();
+        while (SerialBT.available())
         {
-            Serial.write(SerialBT.read());
-            /*dataBt[i] = SerialBT.read();
-            Serial.print(char(dataBt[i]));*/
+            dataBt[i] = SerialBT.read();
+            //Serial.write(dataBt[i]);
             i += 1;
         }
         /*if (millis() - tInit > timeOutBt){
@@ -277,15 +315,18 @@ int readBt(uint8_t dataBt[], int bytesToRead)
             Serial.println("salio de readBt por timeOut");
             return -4; //timeOut de readBt
         }*/
+        delay(20);
     }
     /*while (SerialBT.available())
     {
         Serial.println("Entro por exceso de data tu crees");
         SerialBT.read();
     }*/
-    Serial.println("salio de readBt normal");
+    
+    //Serial.println("salio de readBt normal");
     return 0;
 }
+
 
 //MD5----------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------
@@ -417,7 +458,7 @@ static unsigned *MD5Hash(uint8_t *msg, int mlen)
             h[p] += abcd[p];
         os += 64;
     }
-
+    free(msg2); //ES IMPORTANTE LIBERAR EL ESPACIO PORQUE SINO HABRA OVERFLOW EN LA HEAP MEMORY
     return h;
 }
 
@@ -434,6 +475,6 @@ static String GetMD5String(uint8_t *msg, int mlen)
         sprintf(s, "%02x%02x%02x%02x", u.b[0], u.b[1], u.b[2], u.b[3]);
         str += s;
     }
-
+    //free(d);
     return str;
 }
