@@ -119,8 +119,8 @@ int checkBlueTooth(){
                     {
                         //yield();
                         // SerialBT.println("ok");
-                        delay(500);
                         writeBtln("ok");
+                        //delay(20);
                         codeError = readLine(line);
                         if (codeError != 0)
                         {
@@ -141,7 +141,7 @@ int checkBlueTooth(){
                                 break;                         //
                             }
                             //yield();
-                            writeBtln("ok");
+                            //writeBtln("ok");
                             codeError = readBt(dataBt, bytesToRead);
                             if (codeError != 0)
                             {
@@ -151,7 +151,7 @@ int checkBlueTooth(){
                             }
                             //yield();
                             //SerialBT.println("request=checksum");
-                            writeBtln("request=checksum");
+                            //writeBtln("request=checksum");
                             codeError = readLine(line);
                             if (codeError != 0)
                             {
@@ -219,12 +219,12 @@ int checkBlueTooth(){
  * @note es imporante usar el metodo write en lugar de print o println, si se usa uno de estos 2 ultimos puede haber comportamientos inesperados como el crasheo del programa. 
  */
 int writeBt(String msg){
-    //Serial.println("Entro a writeBt");
+    Serial.println("Entro a writeBt");
     uint8_t* msg8 = (uint8_t* ) msg.c_str();
     SerialBT.write(msg8, msg.length());
     SerialBT.flush();
     delay(20);
-    //Serial.println("salio a writeBt");
+    Serial.println("salio a writeBt");
     return 0;
 }
 /**
@@ -254,7 +254,7 @@ int readLine(String& line)
     line = "";
     int indexRemove;
     int byteRecived = -1;
-    //unsigned long tInit = millis();
+    unsigned long tInit = millis();
     delay(20);
     while (char(byteRecived) != '\n')
     {
@@ -263,10 +263,10 @@ int readLine(String& line)
             byteRecived = SerialBT.read();
             line.concat(char(byteRecived));
         }
-        /*if (millis() - tInit > timeOutBt){
+        if (millis() - tInit > timeOutBt){
             Serial.println("salio de readLine por timeOut");
             return -3; //timeOut de readLine
-        }*/
+        }
     }
     indexRemove = line.indexOf('\r');
     if (indexRemove != -1)
@@ -296,26 +296,26 @@ int readBt(uint8_t dataBt[], int bytesToRead)
     //Serial.println(debugCount);
     debugCount += 1;
     int i = 0;
-    //unsigned long tInit = millis();
-    //Serial.println("Entra a while");
+    unsigned long tInit = millis();
+    Serial.println("Entra a while");
+    delay(20);
     while (i < bytesToRead)
     {
         //yield();
-        while (SerialBT.available())
+        if (SerialBT.available())
         {
             dataBt[i] = SerialBT.read();
             //Serial.write(dataBt[i]);
             i += 1;
         }
-        /*if (millis() - tInit > timeOutBt){
+        if (millis() - tInit > timeOutBt){
             SerialBT.print("bytes enviados: ");
             SerialBT.println(i);
             Serial.print("bytes enviados: ");
             SerialBT.print(i);
             Serial.println("salio de readBt por timeOut");
             return -4; //timeOut de readBt
-        }*/
-        delay(20);
+        }
     }
     /*while (SerialBT.available())
     {
@@ -323,7 +323,7 @@ int readBt(uint8_t dataBt[], int bytesToRead)
         SerialBT.read();
     }*/
     
-    //Serial.println("salio de readBt normal");
+    Serial.println("salio de readBt normal");
     return 0;
 }
 
