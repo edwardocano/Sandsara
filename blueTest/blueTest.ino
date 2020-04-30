@@ -15,7 +15,7 @@ uint8_t dataBt[10000];
 String line;
 String fileNameBt;
 int debugCount = 0;
-
+const int MAX_BYTES_PER_SENDING = sizeof(dataBt);
 void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
   if(event == ESP_SPP_SRV_OPEN_EVT){
     Serial.println("Client Connected");
@@ -41,6 +41,8 @@ void setup()
     }
     Serial.println("The device started, now you can pair it with bluetooth!");
     delay(1000);
+    //Serial.print("MAX_BYTES_PER_SENDING: ");
+    //Serial.println(MAX_BYTES_PER_SENDING);
 }
 
 int codeErrorC;
@@ -74,7 +76,7 @@ void loop()
  * -5, se intento enviar un archivo con un nombre ya existente.
  * -7, no coincide checksum.
  * -8, no se pudo crear el archivo.
- * 
+ * -9, se han leido mas de X numero de caracteres sin encontrar un '\n' en la funcion readLine()
  */
 int checkBlueTooth(){
     int codeError = 0;
@@ -82,6 +84,11 @@ int checkBlueTooth(){
     if (SerialBT.available())
     {
         codeError = readLine(line);
+        if (codeError != 0){
+            writeBt("error= ");
+            writeBtln(String(codeError));
+            return codeError;
+        }
         if (line.indexOf("transferir") >= 0)
         {
             //SerialBT.println("request=name");
@@ -134,7 +141,7 @@ int checkBlueTooth(){
                             bytesToRead = line.substring(6).toInt();
                             Serial.print("bytesToRead: ");
                             Serial.println(bytesToRead);
-                            if (bytesToRead == 0)
+                            if (bytesToRead <= 0 || bytesToRead > MAX_BYTES_PER_SENDING)
                             {
                                 codeError = -2;
                                 writeBtln("error= -2"); //Numero de bytes incorrecto
@@ -245,6 +252,7 @@ int writeBtln(String msg){
  * @return un codigo de error que puede significar lo siguiente.
  *  0, todo termino con normalidad.
  * -3, significa que ha transcurrido mas tiempo del esperado sin encontrar un '\n' (depende de la variable timeOutBt).
+ * -9, significa que se han leido mas de X caracteres sin econtrar un '\n'.
  */
 int readLine(String& line)
 {
@@ -255,6 +263,7 @@ int readLine(String& line)
     int indexRemove;
     int byteRecived = -1;
     unsigned long tInit = millis();
+    int outOfRange = 0;
     delay(20);
     while (char(byteRecived) != '\n')
     {
@@ -262,10 +271,16 @@ int readLine(String& line)
         {
             byteRecived = SerialBT.read();
             line.concat(char(byteRecived));
+            outOfRange += 1;
         }
         if (millis() - tInit > timeOutBt){
             Serial.println("salio de readLine por timeOut");
             return -3; //timeOut de readLine
+        }
+        if (outOfRange > 1000){
+            Serial.println("salio de readLine por OutOfRange");
+            line = "";
+            return -9; //outOfRange de readLine
         }
     }
     indexRemove = line.indexOf('\r');
