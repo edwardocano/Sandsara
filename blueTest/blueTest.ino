@@ -63,9 +63,7 @@ void loop()
  * ---->done, significa que ya se termino de transferir los datos y entonces se guardaran en memoria;
  * 
  * tambien puede enviar los siguientes mensajes
- * ->transferir (cuando recibe la palabra transferir, puede solicitar lo que se encuentra abajo)
- * ---->request=name, solicita el nombre que va a tener el archivo
- * ---->request=checksum, solicita el checksum de los datos que, anteriormente, se enviaron
+ * ->ok indica que esta listo para recibir algun mensaje
  * @return un codigo de error que indica lo siguiente
  *  1, se escribio un nuevo archivo.
  *  0, no hay informacion disponible del bluetooth.
