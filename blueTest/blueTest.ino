@@ -15,7 +15,9 @@ uint8_t dataBt[10000];
 String line;
 String fileNameBt;
 int debugCount = 0;
+int codeErrorC;
 const int MAX_BYTES_PER_SENDING = sizeof(dataBt);
+
 void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
   if(event == ESP_SPP_SRV_OPEN_EVT){
     Serial.println("Client Connected");
@@ -30,10 +32,10 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
 void setup()
 {
     Serial.begin(115200);
-    SerialBT.begin("ESP32"); //Bluetooth device name
+    SerialBT.begin("HALO"); //Bluetooth device name
     
     SerialBT.register_callback(callback);
-    
+
     if (!SD.begin())
     {
         Serial.println("Card Mount Failed");
@@ -45,7 +47,7 @@ void setup()
     //Serial.println(MAX_BYTES_PER_SENDING);
 }
 
-int codeErrorC;
+
 
 void loop()
 {
