@@ -368,6 +368,7 @@ double FileSara::getStartPoint(int component, int ignoreZero){
   directionMode = 1;
   double component1, component2, zStart, thetaStart;
   pFile = 0;
+  pFileBin = charsToRead / 6;
   if (ignoreZero == 1 && fileType != 2){
     getNextComponents(&component1, &component2);
     while (component1 == 0 && component2 == 0){
@@ -412,6 +413,7 @@ double FileSara::getFinalPoint(int component, int ignoreZero){
   directionMode = 0;
   double component1, component2, zFinal, thetaFinal;
   pFile = file.size();
+  pFileBin = 0;
   if (ignoreZero == 1 && fileType != 2){
     getNextComponents(&component1, &component2);
     while (component1 == 0 && component2 == 0){
@@ -453,12 +455,6 @@ void FileSara::autoSetMode(double zCurrent){
   double angle, x, y;
   x = getStartPoint(1,0);
   y = getStartPoint(2,0);
-  //+++++
-  Serial.print("xi: ");
-  Serial.print(x);
-  Serial.print("\tyi: ");
-  Serial.println(y);
-  //+++++
   startZ = MoveSara::zPolar(x, y);
   if (fileType == 2){
     startZ = x;
@@ -466,10 +462,6 @@ void FileSara::autoSetMode(double zCurrent){
 
   x = getFinalPoint(1,0);
   y = getFinalPoint(2,0);
-  Serial.print("xf: ");
-  Serial.print(x);
-  Serial.print("\tyf: ");
-  Serial.println(y);
   finalZ = MoveSara::zPolar(x, y);
   if (fileType == 2){
     finalZ = x;

@@ -96,10 +96,6 @@ void run_sandsara(File& dircurrent) {
       double zInit = halo.getCurrentModule();
       //se selecciona modo de lectura
       file.autoSetMode(zInit);
-      //+++++++++
-      Serial.print("file.directionMode: ");
-      Serial.println(file.directionMode);
-      //+++++++++
       startFileAngle = file.getStartAngle();
       startFileAngle = MoveSara::normalizeAngle(startFileAngle);
       startRobotAngle = halo.getCurrentAngle();

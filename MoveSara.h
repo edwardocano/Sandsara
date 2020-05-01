@@ -4,7 +4,7 @@
 #define PROCESSING_SIMULATOR
 //#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
-#define DISABLE_MOTORS
+//#define DISABLE_MOTORS
 
 #include <AccelStepper.h>
 #include <MultiStepper.h>
