@@ -6,10 +6,6 @@
 #include "SD.h"
 #include "SPI.h"
 
-#ifndef _BLUETOOTHS_H_
-int holisjejeje;
-#endif
-
 #include <math.h>
 
 File myFile;
