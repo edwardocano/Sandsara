@@ -368,6 +368,7 @@ double FileSara::getStartPoint(int component, int ignoreZero){
   directionMode = 1;
   double component1, component2, zStart, thetaStart;
   pFile = 0;
+  pFileBin = charsToRead / 6;
   if (ignoreZero == 1 && fileType != 2){
     getNextComponents(&component1, &component2);
     while (component1 == 0 && component2 == 0){
@@ -412,6 +413,7 @@ double FileSara::getFinalPoint(int component, int ignoreZero){
   directionMode = 0;
   double component1, component2, zFinal, thetaFinal;
   pFile = file.size();
+  pFileBin = 0;
   if (ignoreZero == 1 && fileType != 2){
     getNextComponents(&component1, &component2);
     while (component1 == 0 && component2 == 0){

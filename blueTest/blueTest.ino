@@ -1,166 +1,61 @@
-#include "FileSara.h"
-#include "MoveSara.h"
-#include "bluetooth.h"
-
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
+#include "BluetoothSerial.h"
 
-#ifndef _BLUETOOTHS_H_
-int holisjejeje;
+#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
+#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
 #endif
 
-#include <math.h>
-
-File myFile;
-File root;
-
-MoveSara halo(16);
-
-void setup() {
-  Serial.begin(115200);
-  // Configure the halo
-  halo.init();
-
-  if (!SD.begin()) {
-    Serial.println("Card failed, or not present");
-    while (1);
-  }
-  myFile = SD.open("/");
-  if (!myFile) {
-    Serial.println("No se pudo abrir archivo");
-    return;
-  }
-  root = SD.open("/");
-  delay(1000);
-  #ifdef PROCESSING_SIMULATOR
-  Serial.println("inicia");
-  #endif
-  //Configuracion de bluetooth
-  //--------------------------
-  SerialBT.begin("HALO"); //Bluetooth device name
-    
-  SerialBT.register_callback(callback);
-
-  if (!SD.begin())
-  {
-      Serial.println("Card Mount Failed");
-      return;
-  }
-  #ifdef BLUECOMMENTS
-  Serial.println("The device started, now you can pair it with bluetooth!");
-  #endif
-  delay(1000);
-  //---------------------------
-  //---------------------------
-}
-
-
-void loop() {
-  #ifdef DEBUGGING_DATA
-  Serial.println("Iniciara la funcion runSansara");
-  #endif
-  run_sandsara(root);
-  checkBlueTooth();
-  root.rewindDirectory();
-  delay(5000);
-}
-
-void run_sandsara(File& dircurrent) {
-  double component_1, component_2;
-  double _z, _theta;
-  double theta_aux;
-  double x_aux, y_aux;
-  double coupling_angle;
-  while (1) {
-    #ifdef DEBUGGING_DATA
-    Serial.println("Abrira el siguiente archivo disponible");
-    #endif
-    File current_file =  dircurrent.openNextFile();
-    if (! current_file) {
-      #ifdef DEBUGGING_DATA
-      Serial.println("No hay archivo disponible");
-      #endif
-      break;
-    }
-    else if (!current_file.isDirectory()) {
-      int working_status = 0;
-      String name_file = current_file.name();
-      current_file.close();
-      #ifdef PROCESSING_SIMULATOR
-      Serial.print("fileName: ");
-      Serial.println(name_file);
-      #endif
-      double couplingAngle, startRobotAngle, startFileAngle;
-      FileSara file(name_file);
-      double zInit = halo.getCurrentModule();
-      //se selecciona modo de lectura
-      file.autoSetMode(zInit);
-      startFileAngle = file.getStartAngle();
-      startFileAngle = MoveSara::normalizeAngle(startFileAngle);
-      startRobotAngle = halo.getCurrentAngle();
-      couplingAngle = startFileAngle - startRobotAngle;
-      // si es thr, se guardan los valores del primer punto para que tenga referencia de donde empezar a moverse.
-      if (file.fileType == 2) {
-        file.getNextComponents(&component_1, &component_2);
-        halo.setZCurrent(component_1);
-        halo.setThetaCurrent(component_2 - couplingAngle);
-      }
-      //parara hasta que el codigo de error del archivo sea diferente de cero.
-      while ( 1 ) {
-        //se obtienen los siguientes componentes
-        working_status = file.getNextComponents(&component_1, &component_2);
-        if (working_status != 0){
-          break;
-        }
-        //revisar bluetooth
-        checkBlueTooth();
-        //dependiendo del tipo de archivo se ejecuta la funcion correspondiente de movimiento.
-        if (file.fileType == 1 || file.fileType == 3){
-          MoveSara::rotate(component_1 , component_2, -couplingAngle);
-          halo.moveTo(component_1, component_2);
-        }
-        else if (file.fileType == 2) {
-          halo.movePolarTo(component_1, component_2 - couplingAngle);
-        }
-        else{
-          break;
-        }
-      }
-      #ifdef PROCESSING_SIMULATOR
-      if (working_status == -10){
-        Serial.println("There were problems for reading SD");
-      }
-      Serial.println("finished");
-      #endif
-    }
-  }
-}
-
-/**************************************************************/
+BluetoothSerial SerialBT;
+File file;
+unsigned long timeOutBt = 30000;
+int indexWord, bytesToRead;
+uint8_t dataBt[10000];
+String line;
+String fileNameBt;
+int debugCount = 0;
+int codeErrorC;
+const int MAX_BYTES_PER_SENDING = sizeof(dataBt);
 
 void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
   if(event == ESP_SPP_SRV_OPEN_EVT){
-    #ifdef BLUECOMMENTS
     Serial.println("Client Connected");
-    #endif
   }
  
   if(event == ESP_SPP_CLOSE_EVT ){
-    #ifdef BLUECOMMENTS
     Serial.println("Client disconnected");
-    #endif
   }
 }
  
 
-/*void loop()
+void setup()
+{
+    Serial.begin(115200);
+    SerialBT.begin("HALO"); //Bluetooth device name
+    
+    SerialBT.register_callback(callback);
+
+    if (!SD.begin())
+    {
+        Serial.println("Card Mount Failed");
+        return;
+    }
+    Serial.println("The device started, now you can pair it with bluetooth!");
+    delay(1000);
+    //Serial.print("MAX_BYTES_PER_SENDING: ");
+    //Serial.println(MAX_BYTES_PER_SENDING);
+}
+
+
+
+void loop()
 {
     codeErrorC = checkBlueTooth();
     Serial.print("codeError in loop: ");
     Serial.println(codeErrorC);
     delay(1000);
-}*/
+}
 
 /**
  * @brief revisa si hay algo dispobible por bluetooth y lo interpreta
@@ -210,10 +105,8 @@ int checkBlueTooth(){
             {
                 fileNameBt.remove(0, 1);
             }
-            #ifdef BLUECOMMENTS
             Serial.print("Nombre del archivo: ");
             Serial.println(fileNameBt);
-            #endif
             if (SD.exists("/" + fileNameBt))
             {
                 codeError = -5;
@@ -246,10 +139,8 @@ int checkBlueTooth(){
                         {
                             indexWord = line.indexOf("bytes=");
                             bytesToRead = line.substring(6).toInt();
-                            #ifdef BLUECOMMENTS
                             Serial.print("bytesToRead: ");
                             Serial.println(bytesToRead);
-                            #endif
                             if (bytesToRead <= 0 || bytesToRead > MAX_BYTES_PER_SENDING)
                             {
                                 codeError = -2;
@@ -278,10 +169,8 @@ int checkBlueTooth(){
                             //long timeStart = millis(), timeEnd;
                             checksum = GetMD5String(dataBt, bytesToRead);
                             //checksum = md5("hola");
-                            #ifdef BLUECOMMENTS
                             Serial.print("checksum: ");
                             Serial.println(checksum);
-                            #endif
                             if (!line.equals(checksum))
                             {
                                 codeError = -7;
@@ -299,9 +188,7 @@ int checkBlueTooth(){
                         {
                             file.close();
                             writeBtln("ok");
-                            #ifdef BLUECOMMENTS
                             Serial.println("guardado en memoria");
-                            #endif
                             codeError = 1;
                             return codeError; //se escribio archivo
                         }
@@ -316,9 +203,7 @@ int checkBlueTooth(){
                     {
                         file.close();
                         SD.remove("/" + fileNameBt);
-                        #ifdef BLUECOMMENTS
                         Serial.println("transferencia cancelada");
-                        #endif
                     }
                 }
             }
@@ -341,12 +226,12 @@ int checkBlueTooth(){
  * @note es imporante usar el metodo write en lugar de print o println, si se usa uno de estos 2 ultimos puede haber comportamientos inesperados como el crasheo del programa. 
  */
 int writeBt(String msg){
-    //Serial.println("Entro a writeBt");
+    Serial.println("Entro a writeBt");
     uint8_t* msg8 = (uint8_t* ) msg.c_str();
     SerialBT.write(msg8, msg.length());
     SerialBT.flush();
     delay(20);
-    //Serial.println("salio a writeBt");
+    Serial.println("salio a writeBt");
     return 0;
 }
 /**
@@ -369,7 +254,8 @@ int writeBtln(String msg){
  * -3, significa que ha transcurrido mas tiempo del esperado sin encontrar un '\n' (depende de la variable timeOutBt).
  * -9, significa que se han leido mas de X caracteres sin econtrar un '\n'.
  */
-int readLine(String& line){
+int readLine(String& line)
+{
     //yield();
     //Serial.print("Entro a readLine ");
     //Serial.println(ESP.getFreeHeap());
@@ -388,11 +274,11 @@ int readLine(String& line){
             outOfRange += 1;
         }
         if (millis() - tInit > timeOutBt){
-            //Serial.println("salio de readLine por timeOut");
+            Serial.println("salio de readLine por timeOut");
             return -3; //timeOut de readLine
         }
         if (outOfRange > 1000){
-            //Serial.println("salio de readLine por OutOfRange");
+            Serial.println("salio de readLine por OutOfRange");
             line = "";
             return -9; //outOfRange de readLine
         }
@@ -404,9 +290,7 @@ int readLine(String& line){
     }
     indexRemove = line.indexOf('\n');
     line.remove(indexRemove, 1);
-    #ifdef BLUECOMMENTS
     Serial.println(line);
-    #endif
     //Serial.println("salio de readLine normal");
     return 0;
 }
@@ -428,7 +312,7 @@ int readBt(uint8_t dataBt[], int bytesToRead)
     debugCount += 1;
     int i = 0;
     unsigned long tInit = millis();
-    //Serial.println("Entra a while");
+    Serial.println("Entra a while");
     delay(20);
     while (i < bytesToRead)
     {
@@ -440,13 +324,11 @@ int readBt(uint8_t dataBt[], int bytesToRead)
             i += 1;
         }
         if (millis() - tInit > timeOutBt){
-            writeBt("bytes enviados: ");
-            writeBtln(String(i));
-            #ifdef BLUECOMMENTS
+            SerialBT.print("bytes enviados: ");
+            SerialBT.println(i);
             Serial.print("bytes enviados: ");
-            Serial.println(i);
-            #endif
-            //Serial.println("salio de readBt por timeOut");
+            SerialBT.print(i);
+            Serial.println("salio de readBt por timeOut");
             return -4; //timeOut de readBt
         }
     }
@@ -455,9 +337,8 @@ int readBt(uint8_t dataBt[], int bytesToRead)
         Serial.println("Entro por exceso de data tu crees");
         SerialBT.read();
     }*/
-    #ifdef BLUECOMMENTS
+    
     Serial.println("salio de readBt normal");
-    #endif
     return 0;
 }
 
