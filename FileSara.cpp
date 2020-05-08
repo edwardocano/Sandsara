@@ -70,6 +70,7 @@ FileSara::~FileSara(){
  * @return un codigo de error que puede significar lo siguiente
  *  0 no hubo problemas
  *  1 ya no hay mas lineas por leer en el archivo
+ *  3 la linea es un comentario.
  * -1 no se encontro el separador de los componentes (',' o ' ')
  * -4 no se encontro un segundo componente
  * -6 no es un tipo de archivo valido
@@ -146,10 +147,22 @@ int FileSara::getType(String name_file) {
  * @param c1 es donde se va a almacenar el valor del componente 1.
  * @param c2 es donde se va a almacenar el valor del componente 2.
  * @note los valores devuelven por medio de c1 y c2.
- * @return un codigo de error.
+ * @return un codigo de error, pudiendo ser uno de los siguientes
+ *  3, la linea es un comentario
+ * -1, no encuentra el caracter separador.
+ * -4, no encuentra el segundo componente.
+ * 
  * @see getNextComponents.
  */
 int FileSara::getComponents(String line, double* c1, double* c2) {
+    Serial.print(line);
+    if (line.charAt(0) == '/' || line.charAt(0) == '#' || line.charAt(0) == '\r' || line.charAt(0) == '\n'){
+        statusFile = 3;
+        return 3;
+    }
+    if (line.indexOf('\t') >= 0){
+        line.replace("\t", " ");
+    }
     int commaIndex = line.indexOf(this->componentSeparator);
     if (commaIndex == -1) { //no separator detected
       this->statusFile = -1;

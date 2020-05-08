@@ -1,7 +1,7 @@
 #ifndef _MOVESARA_H_
 #define _MOVESARA_H_
 
-#define PROCESSING_SIMULATOR
+//#define PROCESSING_SIMULATOR
 //#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
 #define DISABLE_MOTORS

@@ -48,10 +48,6 @@ void setup() {
   #ifdef BLUECOMMENTS
   Serial.println("The device started, now you can pair it with bluetooth!");
   #endif
-  if (creatListOfFiles("/RANDOM.txt") > 0){
-      Serial.println("Se creo el archivo");
-  }
-  delay(1000);
   //---------------------------
   //---------------------------
 }
@@ -149,15 +145,21 @@ int run_sandsara(String playList)
             // si es thr, se guardan los valores del primer punto para que tenga referencia de donde empezar a moverse.
             if (file.fileType == 2)
             {
-                file.getNextComponents(&component_1, &component_2);
+                working_status = file.getNextComponents(&component_1, &component_2);
+                while (working_status == 3){
+                    working_status = file.getNextComponents(&component_1, &component_2);
+                }
                 halo.setZCurrent(component_1);
                 halo.setThetaCurrent(component_2 - couplingAngle);
             }
             //parara hasta que el codigo de error del archivo sea diferente de cero.
-            while (1)
+            while (true)
             {
                 //se obtienen los siguientes componentes
                 working_status = file.getNextComponents(&component_1, &component_2);
+                if (working_status == 3){
+                    continue;
+                }
                 if (working_status != 0)
                 {
                     break;
