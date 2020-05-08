@@ -8,12 +8,12 @@ double m[no_picos * 2], b[no_picos * 2];
  * @brief es el contructor de la clase
  * @param microstepping es el microstepping que tienen los motores, por defecto es 16
  */
-MoveSara::MoveSara(int microstepping){
+MoveSara::MoveSara(int microstepping)
+{
     this->microstepping = microstepping;
     degrees_per_step = (littlePulleySize / bigPulleySize) * (PI / 180.0) * (1.8 / microstepping);
     stepper1 = AccelStepper(1, STEP, DIR);
     stepper2 = AccelStepper(1, STEP2, DIR2);
-    
 }
 
 /**
@@ -24,13 +24,14 @@ MoveSara::MoveSara(int microstepping){
  * @note es muy importante que se hayan definido las variables zCurrent y thetaCurrent antes
  * de llamar a esta funcion porque es apartir de estas variables que se calcula cuanto se debe mover.
  */
-void MoveSara::movePolarTo(double zNext, double thetaNext) {
-  double slicesFactor = 1000;
-  long slices;
-  double distancePoints = 100, deltaTheta, deltaZ;
-  double thetaAuxiliar, zAuxliar, xAux, yAux;
-  int overIterates = 0;
-  /*while (!(distancePoints > 0.9 && distancePoints < 1.1)){
+void MoveSara::movePolarTo(double zNext, double thetaNext)
+{
+    double slicesFactor = 1000;
+    long slices;
+    double distancePoints = 100, deltaTheta, deltaZ;
+    double thetaAuxiliar, zAuxliar, xAux, yAux;
+    int overIterates = 0;
+    /*while (!(distancePoints > 0.9 && distancePoints < 1.1)){
     deltaTheta = (thetaNext - thetaCurrent) / slicesFactor;
     deltaZ = (zNext - zCurrent) / slicesFactor;
     thetaAuxiliar = thetaCurrent + deltaTheta;
@@ -46,27 +47,29 @@ void MoveSara::movePolarTo(double zNext, double thetaNext) {
     }
   }
   slices = slicesFactor;*/
-  deltaTheta = thetaNext - thetaCurrent;
-  deltaZ = zNext - zCurrent;
-  slicesFactor = arcLength(deltaZ, deltaTheta, zCurrent);
-  slices = slicesFactor;
-  if (slices < 1) {
-    slices = 1;
-  }
-  deltaTheta = (thetaNext - thetaCurrent) / slices;
-  deltaZ = (zNext - zCurrent) / slices;
-  for (long i = 1; i < slices; i++) {
-    thetaAuxiliar = thetaCurrent + deltaTheta * double(i);
-    zAuxliar = zCurrent + deltaZ * double(i);
-    xAux = zAuxliar * cos(thetaAuxiliar);
-    yAux = zAuxliar * sin(thetaAuxiliar);
+    deltaTheta = thetaNext - thetaCurrent;
+    deltaZ = zNext - zCurrent;
+    slicesFactor = arcLength(deltaZ, deltaTheta, zCurrent);
+    slices = slicesFactor;
+    if (slices < 1)
+    {
+        slices = 1;
+    }
+    deltaTheta = (thetaNext - thetaCurrent) / slices;
+    deltaZ = (zNext - zCurrent) / slices;
+    for (long i = 1; i < slices; i++)
+    {
+        thetaAuxiliar = thetaCurrent + deltaTheta * double(i);
+        zAuxliar = zCurrent + deltaZ * double(i);
+        xAux = zAuxliar * cos(thetaAuxiliar);
+        yAux = zAuxliar * sin(thetaAuxiliar);
+        moveTo(xAux, yAux);
+    }
+    xAux = zNext * cos(thetaNext);
+    yAux = zNext * sin(thetaNext);
     moveTo(xAux, yAux);
-  }
-  xAux = zNext * cos(thetaNext);
-  yAux = zNext * sin(thetaNext);
-  moveTo(xAux, yAux);
-  thetaCurrent = thetaNext;
-  zCurrent = zNext;
+    thetaCurrent = thetaNext;
+    zCurrent = zNext;
 }
 
 /**
@@ -78,40 +81,40 @@ void MoveSara::movePolarTo(double zNext, double thetaNext) {
  * @param distance es la distancia que va a recorrer entre el punto actual y el punto despues del momimiento.
  * La distancia se mide en milimetros 
  */
-void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance) { //distance is in milimeters
+void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance)
+{ //distance is in milimeters
     long positions[2];
     if (abs(q1_steps) > abs(q2_steps + q1_steps)) //importante
         maxSpeed = abs(q1_steps) * 1L;
     else
         maxSpeed = abs(q2_steps + q1_steps) * 1L;
-    maxSpeed = (maxSpeed/distance)*millimeterSpeed;
+    maxSpeed = (maxSpeed / distance) * millimeterSpeed;
     if (maxSpeed > 150 * microstepping)
         maxSpeed = 150 * microstepping;
     if (constantMotorSpeed)
         maxSpeed = 50 * microstepping;
-    //variar velocidad
-    #ifdef PROCESSING_SIMULATOR
+//variar velocidad
+#ifdef PROCESSING_SIMULATOR
     Serial.print(q1_steps);
     Serial.print(",");
     Serial.print(q2_steps + q1_steps);
     Serial.print(",");
     Serial.println(maxSpeed);
-    #endif
+#endif
     stepper1.setMaxSpeed(maxSpeed);
     stepper2.setMaxSpeed(maxSpeed);
     positions[0] = stepper1.currentPosition() + q1_steps;
     positions[1] = stepper2.currentPosition() + q2_steps + q1_steps;
-    #ifndef DISABLE_MOTORS
+#ifndef DISABLE_MOTORS
     steppers.moveTo(positions);
     steppers.runSpeedToPosition();
-    #endif
+#endif
     q1_current += degrees_per_step * q1_steps;
     q2_current += degrees_per_step * q2_steps;
     q1_current = normalizeAngle(q1_current);
     q2_current = normalizeAngle(q2_current);
     x_current = dk_x(q1_current, q2_current);
     y_current = dk_y(q1_current, q2_current);
-
 }
 
 /**
@@ -125,19 +128,23 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance) { //dist
  * @param x es la coordenada en el eje x, medida en milimetros, hacia donde se desea avanzar.
  * @param y es la coordenada en el eje y, medida en milimetros, hacia donde se desea avanzar.
  */
-void MoveSara::moveTo(double x, double y) {
+void MoveSara::moveTo(double x, double y)
+{
     double q1, q2, distance;
     long steps_of_q1, steps_of_q2;
     distance = module(x, y, x_current, y_current);
-    if (distance > 1.1){
+    if (distance > 1.1)
+    {
         moveInterpolateTo(x, y, distance);
     }
-    else if (distance > 0.5){
-        if (!(x == 0 && y == 0)){
-          ik(x, y, &q1, &q2);          
-          steps_of_q1 = calculate_steps(q1_current, q1);
-          steps_of_q2 = calculate_steps(q2_current, q2);
-          moveSteps(steps_of_q1, steps_of_q2, distance);
+    else if (distance > 0.5)
+    {
+        if (!(x == 0 && y == 0))
+        {
+            ik(x, y, &q1, &q2);
+            steps_of_q1 = calculate_steps(q1_current, q1);
+            steps_of_q2 = calculate_steps(q2_current, q2);
+            moveSteps(steps_of_q1, steps_of_q2, distance);
         }
     }
 }
@@ -148,35 +155,39 @@ void MoveSara::moveTo(double x, double y) {
  * @param y coordenada en el eje y, medida en milimetros, a la que se desea avanzar.
  * @param distance es la distancia, medida en milimetros, entre el punto actual y el punto al que se desea avanzar.
  */
-void MoveSara::moveInterpolateTo(double x, double y, double distance){
+void MoveSara::moveInterpolateTo(double x, double y, double distance)
+{
     double alpha = atan2(y - y_current, x - x_current);
     double delta_x, delta_y;
     double x_aux = x_current, y_aux = y_current;
     delta_x = cos(alpha);
     delta_y = sin(alpha);
     int intervals = distance;
-    for (int i = 1; i <= intervals; i++){
+    for (int i = 1; i <= intervals; i++)
+    {
         x_aux += delta_x;
         y_aux += delta_y;
         moveTo(x_aux, y_aux);
     }
-    moveTo(x,y);
+    moveTo(x, y);
 }
 //properties----------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
 /**
  * @return La distancia entre el centro y la posicion actual del robot.
  */
-double MoveSara::getCurrentModule(){
-  return zPolar(x_current, y_current);
+double MoveSara::getCurrentModule()
+{
+    return zPolar(x_current, y_current);
 }
 
 /**
  * @return El angulo, medido desde la horizontal, de la posicion actual del robot.
  * @note el angulo se encuentra en el rango de [0 , 2*PI)
  */
-double MoveSara::getCurrentAngle(){
-  return thetaPolar(x_current, y_current);
+double MoveSara::getCurrentAngle()
+{
+    return thetaPolar(x_current, y_current);
 }
 
 //Configuration Methods-----------------------------------------------------------------------
@@ -187,20 +198,21 @@ double MoveSara::getCurrentAngle(){
  * @param yInit es la coordenada en el eje y, medida en milimetros, que se desea como posicion inicial.
  * @note por defecto el punto inicial es 0,0.
  */
-void MoveSara::init(double xInit, double yInit) {
-  double q1, q2;
-  stepper1.setMaxSpeed(50 * microstepping);
-  stepper2.setMaxSpeed(50 * microstepping);
-  stepper1.setCurrentPosition(0);
-  stepper2.setCurrentPosition(0);
-  steppers.addStepper(stepper1);
-  steppers.addStepper(stepper2);
-  ik(xInit, yInit, &q1, &q2);
-  q1_current = q1;
-  q2_current = q2;
-  x_current = dk_x(q1_current, q2_current);
-  y_current = dk_y(q1_current, q2_current);
-  calculate_line_equations();
+void MoveSara::init(double xInit, double yInit)
+{
+    double q1, q2;
+    stepper1.setMaxSpeed(50 * microstepping);
+    stepper2.setMaxSpeed(50 * microstepping);
+    stepper1.setCurrentPosition(0);
+    stepper2.setCurrentPosition(0);
+    steppers.addStepper(stepper1);
+    steppers.addStepper(stepper2);
+    ik(xInit, yInit, &q1, &q2);
+    q1_current = q1;
+    q2_current = q2;
+    x_current = dk_x(q1_current, q2_current);
+    y_current = dk_y(q1_current, q2_current);
+    calculate_line_equations();
 }
 
 /**
@@ -208,7 +220,8 @@ void MoveSara::init(double xInit, double yInit) {
  * @param angle el angulo que se desea como angulo de acoplamiento.
  * @note no retorna nada pero moficica la variable couplingAngle.
  */
-void MoveSara::setCouplingAngle(double angle){
+void MoveSara::setCouplingAngle(double angle)
+{
     couplingAngle = normalizeAngle(angle);
 }
 
@@ -216,7 +229,8 @@ void MoveSara::setCouplingAngle(double angle){
  * @brief moficica el miembro z_current a uno nuevo.
  * @param z es el valor que se le va a asignar a la variable miembro zCurrent.
  */
-void MoveSara::setZCurrent(double z){
+void MoveSara::setZCurrent(double z)
+{
     zCurrent = z;
 }
 
@@ -225,7 +239,8 @@ void MoveSara::setZCurrent(double z){
  * @param theta es el valor que se le va a asignar a la variable miembro thetaCurrent.
  * @note  Esto es importante para que los archivos .thr tengan una referencia de donde empezar a moverse.
  */
-void MoveSara::setThetaCurrent(double theta){
+void MoveSara::setThetaCurrent(double theta)
+{
     thetaCurrent = theta;
 }
 //----------------------------mathematics---------------------------------------------------
@@ -238,8 +253,9 @@ void MoveSara::setThetaCurrent(double theta){
  * @param q2 es el angulo del motor que mueve el segundo eslabon del robot.
  * @return la coordenada en el eje x, medida en milimetros, correspondiente a los angulos q1,q2 del robot.
  */
-double MoveSara::dk_x(double q1, double q2) {
-  return l1 * cos(q1) + l2 * cos(q1 + q2);
+double MoveSara::dk_x(double q1, double q2)
+{
+    return l1 * cos(q1) + l2 * cos(q1 + q2);
 }
 
 /**
@@ -248,8 +264,9 @@ double MoveSara::dk_x(double q1, double q2) {
  * @param q2 es el angulo del motor que mueve el segundo eslabon del robot (motor 2).
  * @return la coordenada en el eje y, medida en milimetros, correspondiente a los angulos q1,q2 del robot.
  */
-double MoveSara::dk_y(double q1, double q2) {
-  return l1 * sin(q1) + l2 * sin(q1 + q2);
+double MoveSara::dk_y(double q1, double q2)
+{
+    return l1 * sin(q1) + l2 * sin(q1 + q2);
 }
 
 /**
@@ -259,31 +276,31 @@ double MoveSara::dk_y(double q1, double q2) {
  * @param q1 el angulo correspondiente al motor 1, en la posicion segun los parametros x,y.
  * @param q1 el angulo correspondiente al motor 2, en la posicion segun los parametros x,y.
  */
-void MoveSara::ik(double x, double y, double *q1, double *q2) {
-  double z, z_max, theta;
-  int auxiliar, i;
-  //calculus of z
-  z = zPolar(x, y);
-  //calculus of theta
-  theta = thetaPolar(x, y);
-  //if x,y is out of range, z will be the maximun radius possible
-  if (z > l1 + l2 )
-    z = l1 + l2;
-  //Delimiter module z
-  i = theta / (2 * PI / (2 * no_picos));
-  z_max = abs(b[i] / (tan(theta) - m[i]) * sqrt(1 + pow(tan(theta), 2)));
-  if (z > z_max)
-    z = z_max;
-  //calculus of q1 that is always possitive
-  *q1 = theta - acos(z / (2 * l1));
-  if (*q1 < 0)
-    *q1 = *q1 + 2 * PI;
-  //calculus of q2
-  *q2 = 2 * (theta + 2 * PI - *q1);
-  auxiliar = *q2 / (2 * PI);
-  //in case q2 is greater than 2pi
-  *q2 = *q2 - 2 * PI * auxiliar;
-  
+void MoveSara::ik(double x, double y, double *q1, double *q2)
+{
+    double z, z_max, theta;
+    int auxiliar, i;
+    //calculus of z
+    z = zPolar(x, y);
+    //calculus of theta
+    theta = thetaPolar(x, y);
+    //if x,y is out of range, z will be the maximun radius possible
+    if (z > l1 + l2)
+        z = l1 + l2;
+    //Delimiter module z
+    i = theta / (2 * PI / (2 * no_picos));
+    z_max = abs(b[i] / (tan(theta) - m[i]) * sqrt(1 + pow(tan(theta), 2)));
+    if (z > z_max)
+        z = z_max;
+    //calculus of q1 that is always possitive
+    *q1 = theta - acos(z / (2 * l1));
+    if (*q1 < 0)
+        *q1 = *q1 + 2 * PI;
+    //calculus of q2
+    *q2 = 2 * (theta + 2 * PI - *q1);
+    auxiliar = *q2 / (2 * PI);
+    //in case q2 is greater than 2pi
+    *q2 = *q2 - 2 * PI * auxiliar;
 }
 
 //Operations with components -------------------------------------------------------
@@ -295,7 +312,8 @@ void MoveSara::ik(double x, double y, double *q1, double *q2) {
  * @param angle es el angulo que se desea rotar los puntos x,y.
  * @note los valores x,y se pasan por referencia.
  */
-void MoveSara::rotate(double& x,double& y,double angle){
+void MoveSara::rotate(double &x, double &y, double angle)
+{
     double z = zPolar(x, y);
     double theta = thetaPolar(x, y);
     theta += angle;
@@ -311,7 +329,8 @@ void MoveSara::rotate(double& x,double& y,double angle){
  * @param y2 es el valor en el eje y del segundo punto.
  * @return la distancia entre ambos puntos.
  */
-double MoveSara::module(double x1, double y1, double x2, double y2){
+double MoveSara::module(double x1, double y1, double x2, double y2)
+{
     return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
 }
 
@@ -323,7 +342,8 @@ double MoveSara::module(double x1, double y1, double x2, double y2){
  * @param t2 es el valor en el eje theta del segundo punto.
  * @return la distancia entre ambos puntos.
  */
-double MoveSara::polarModule(double z1, double t1, double z2, double t2){
+double MoveSara::polarModule(double z1, double t1, double z2, double t2)
+{
     double x1, y1, x2, y2;
     x1 = z1 * cos(t1);
     y1 = z1 * sin(t1);
@@ -338,8 +358,9 @@ double MoveSara::polarModule(double z1, double t1, double z2, double t2){
  * @param y es el valor en el eje y del punto.
  * @return el modulo del punto en coordenadas polares.
  */
-double MoveSara::zPolar(double x, double y) {
-  return sqrt(pow(x, 2) + pow(y, 2));
+double MoveSara::zPolar(double x, double y)
+{
+    return sqrt(pow(x, 2) + pow(y, 2));
 }
 
 /**
@@ -349,20 +370,22 @@ double MoveSara::zPolar(double x, double y) {
  * @return el angulo, medido desde la horizontal, del punto x,y.
  * @note el angulo se encuentra en el rango de [0 , 2*PI)
  */
-double MoveSara::thetaPolar(double x, double y) {
-  //calculus of theta
-  double theta;
-  if (x > 0)
-    theta = atan(y / x);
-  else if (x < 0)
-    theta = atan(y / x) + PI;
-  else {
-    if (y >= 0)
-      theta = PI / 2.0;
+double MoveSara::thetaPolar(double x, double y)
+{
+    //calculus of theta
+    double theta;
+    if (x > 0)
+        theta = atan(y / x);
+    else if (x < 0)
+        theta = atan(y / x) + PI;
     else
-      theta = 3.0 / 2.0 * PI;
-  }
-  return normalizeAngle(theta);
+    {
+        if (y >= 0)
+            theta = PI / 2.0;
+        else
+            theta = 3.0 / 2.0 * PI;
+    }
+    return normalizeAngle(theta);
 }
 
 /**
@@ -370,15 +393,18 @@ double MoveSara::thetaPolar(double x, double y) {
  *@param angle es el angulo, medido en radianes, que se desea normalizar.
  *@return un valor con el rango de [0 , 2*PI).
  */
-double MoveSara::normalizeAngle(double angle) {
-  long aux = angle / (2 * PI);
-  angle -= aux * 2 * PI;
-  if (angle < 0) {
-    return angle + 2 * PI;
-  }
-  else {
-    return angle;
-  }
+double MoveSara::normalizeAngle(double angle)
+{
+    long aux = angle / (2 * PI);
+    angle -= aux * 2 * PI;
+    if (angle < 0)
+    {
+        return angle + 2 * PI;
+    }
+    else
+    {
+        return angle;
+    }
 }
 
 /**
@@ -387,28 +413,32 @@ double MoveSara::normalizeAngle(double angle) {
  * @param deltaTheta es la diferencia entre la componente angulo del punto final menos la componente angulo del punto inicial.
  * @param zInit es la componente modulo del punto inicial.
  */
-double MoveSara::arcLength(double deltaZ, double deltaTheta, double zInit){
-  double k, k2, a, a2, z, z2, inSqrt, inSqrt2;
-  deltaTheta = abs(deltaTheta);
-  if (deltaZ < 0){
-    zInit = zInit + deltaZ;
-    deltaZ = abs(deltaZ);
-  }
-  if (deltaZ < 1.5){
-    return deltaTheta * (zInit + deltaZ);
-  }
-  if (deltaTheta < 10.0 * PI/180.0){
-    return deltaZ;
-  }
-  k = deltaZ;
-  k2 = deltaZ * deltaZ;
-  a = deltaTheta;
-  a2 = deltaTheta * deltaTheta;
-  z = zInit;
-  z2 = zInit * zInit;
-  inSqrt2 = a2 * z2 + k2;
-  inSqrt = a2 * k2 + 2 * a2 * k * z + inSqrt2;
-  return (k + z) / (2 * k) * sqrt(inSqrt) + k/(2 * a) * log(a * (sqrt(inSqrt) + a * k + a * z)) - z / (2 * k) * sqrt(inSqrt2) - k/(2 * a) * log(a * (sqrt(inSqrt2) + a * z));
+double MoveSara::arcLength(double deltaZ, double deltaTheta, double zInit)
+{
+    double k, k2, a, a2, z, z2, inSqrt, inSqrt2;
+    deltaTheta = abs(deltaTheta);
+    if (deltaZ < 0)
+    {
+        zInit = zInit + deltaZ;
+        deltaZ = abs(deltaZ);
+    }
+    if (deltaZ < 1.5)
+    {
+        return deltaTheta * (zInit + deltaZ);
+    }
+    if (deltaTheta < 10.0 * PI / 180.0)
+    {
+        return deltaZ;
+    }
+    k = deltaZ;
+    k2 = deltaZ * deltaZ;
+    a = deltaTheta;
+    a2 = deltaTheta * deltaTheta;
+    z = zInit;
+    z2 = zInit * zInit;
+    inSqrt2 = a2 * z2 + k2;
+    inSqrt = a2 * k2 + 2 * a2 * k * z + inSqrt2;
+    return (k + z) / (2 * k) * sqrt(inSqrt) + k / (2 * a) * log(a * (sqrt(inSqrt) + a * k + a * z)) - z / (2 * k) * sqrt(inSqrt2) - k / (2 * a) * log(a * (sqrt(inSqrt2) + a * z));
 }
 //Workspace mathematics---------------------------------------------------------------------
 //------------------------------------------------------------------------------------------
@@ -418,30 +448,32 @@ double MoveSara::arcLength(double deltaZ, double deltaTheta, double zInit){
  * @note m contiene las pendientes de las rectas que describen la geometria de Stelle.
  *       b contiene informacion de las rectas que describen la geometria de Stelle.
  */
-void MoveSara::calculate_line_equations() {
-  double radius_1 = 400;
-  double radius_2 = 500;
-  double z = radius_2;
-  double theta;
-  for (int i = 0; i < 2 * no_picos; i++) {
-    double x1, x2, y1, y2;
-    theta = 2 * PI / (2 * no_picos) * i;
-    if (i % 2 == 0)
-      z = radius_1;
-    else
-      z = radius_2;
-    x1 = z * cos(theta);
-    y1 = z * sin(theta);
-    if (i % 2 != 0)
-      z = radius_1;
-    else
-      z = radius_2;
-    theta = 2 * PI / (2 * no_picos) * (i + 1);
-    x2 = z * cos(theta);
-    y2 = z * sin(theta);
-    m[i] = (y2 - y1) / (x2 - x1);
-    b[i] = y2 - m[i] * x2;
-  }
+void MoveSara::calculate_line_equations()
+{
+    double radius_1 = 400;
+    double radius_2 = 500;
+    double z = radius_2;
+    double theta;
+    for (int i = 0; i < 2 * no_picos; i++)
+    {
+        double x1, x2, y1, y2;
+        theta = 2 * PI / (2 * no_picos) * i;
+        if (i % 2 == 0)
+            z = radius_1;
+        else
+            z = radius_2;
+        x1 = z * cos(theta);
+        y1 = z * sin(theta);
+        if (i % 2 != 0)
+            z = radius_1;
+        else
+            z = radius_2;
+        theta = 2 * PI / (2 * no_picos) * (i + 1);
+        x2 = z * cos(theta);
+        y2 = z * sin(theta);
+        m[i] = (y2 - y1) / (x2 - x1);
+        b[i] = y2 - m[i] * x2;
+    }
 }
 
 //Motor maths--------------------------------------------------------------------------------
@@ -453,17 +485,18 @@ void MoveSara::calculate_line_equations() {
  * @param q2 es el angulo al que se quiere llegar.
  * @return los angulos necesarios para ir de q1 a q2.
  */
-long MoveSara::calculate_steps(double q1, double q2) {
-  double steps_option_1, steps_option_2;
-  int aux1, aux2;
-  steps_option_1 = 2 * PI - q2 + q1;
-  steps_option_2 = 2 * PI - q1 + q2;
-  aux1 = steps_option_1 / (2 * PI);
-  aux2 = steps_option_2 / (2 * PI);
-  steps_option_1 = steps_option_1 - aux1 * 2 * PI;
-  steps_option_2 = steps_option_2 - aux2 * 2 * PI;
-  if (steps_option_1 <= steps_option_2)
-    return -steps_option_1 / degrees_per_step;
-  else
-    return steps_option_2 / degrees_per_step;
+long MoveSara::calculate_steps(double q1, double q2)
+{
+    double steps_option_1, steps_option_2;
+    int aux1, aux2;
+    steps_option_1 = 2 * PI - q2 + q1;
+    steps_option_2 = 2 * PI - q1 + q2;
+    aux1 = steps_option_1 / (2 * PI);
+    aux2 = steps_option_2 / (2 * PI);
+    steps_option_1 = steps_option_1 - aux1 * 2 * PI;
+    steps_option_2 = steps_option_2 - aux2 * 2 * PI;
+    if (steps_option_1 <= steps_option_2)
+        return -steps_option_1 / degrees_per_step;
+    else
+        return steps_option_2 / degrees_per_step;
 }

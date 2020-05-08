@@ -15,52 +15,56 @@ String playList = "/lista1.txt";
 //
 MoveSara halo(16);
 
-void setup() {
-  Serial.begin(115200);
-  // Configure the halo
-  halo.init();
+void setup()
+{
+    Serial.begin(115200);
+    // Configure the halo
+    halo.init();
 
-  if (!SD.begin()) {
-    Serial.println("Card failed, or not present");
-    while (1);
-  }
-  myFile = SD.open("/");
-  if (!myFile) {
-    Serial.println("No se pudo abrir archivo");
-    return;
-  }
-  root = SD.open("/");
-  delay(1000);
-  #ifdef PROCESSING_SIMULATOR
-  Serial.println("inicia");
-  #endif
-  //Configuracion de bluetooth
-  //--------------------------
-  SerialBT.begin("HALO"); //Bluetooth device name
-    
-  SerialBT.register_callback(callback);
+    if (!SD.begin())
+    {
+        Serial.println("Card failed, or not present");
+        while (1)
+            ;
+    }
+    myFile = SD.open("/");
+    if (!myFile)
+    {
+        Serial.println("No se pudo abrir archivo");
+        return;
+    }
+    root = SD.open("/");
+    delay(1000);
+#ifdef PROCESSING_SIMULATOR
+    Serial.println("inicia");
+#endif
+    //Configuracion de bluetooth
+    //--------------------------
+    SerialBT.begin("HALO"); //Bluetooth device name
 
-  if (!SD.begin())
-  {
-      Serial.println("Card Mount Failed");
-      return;
-  }
-  #ifdef BLUECOMMENTS
-  Serial.println("The device started, now you can pair it with bluetooth!");
-  #endif
-  //---------------------------
-  //---------------------------
+    SerialBT.register_callback(callback);
+
+    if (!SD.begin())
+    {
+        Serial.println("Card Mount Failed");
+        return;
+    }
+#ifdef BLUECOMMENTS
+    Serial.println("The device started, now you can pair it with bluetooth!");
+#endif
+    //---------------------------
+    //---------------------------
 }
 
-
-void loop() {
-  #ifdef DEBUGGING_DATA
-  Serial.println("Iniciara la funcion runSansara");
-  #endif
-  run_sandsara(playList);
-  checkBlueTooth();
-  root.rewindDirectory();
-  delay(5000);
+void loop()
+{
+#ifdef DEBUGGING_DATA
+    Serial.println("Iniciara la funcion runSansara");
+#endif
+    run_sandsara(playList);
+    checkBlueTooth();
+    root.rewindDirectory();
+    delay(5000);
 }
 
 int run_sandsara(String playList)
@@ -77,13 +81,15 @@ int run_sandsara(String playList)
     bool randomMode = true;
     String fileName;
 
-    if (ordenMode == 2){
+    if (ordenMode == 2)
+    {
         numberOfFiles = creatListOfFiles("/RANDOM.txt");
         playList = "/RANDOM.txt";
         Serial.print("Numero de archivos: ");
         Serial.println(numberOfFiles);
     }
-    else if (ordenMode == 3){
+    else if (ordenMode == 3)
+    {
         numberOfFiles = creatListOfFiles("/DEFAULT.txt");
         playList = "/DEFAULT.txt";
         Serial.print("Numero de archivos: ");
@@ -95,7 +101,8 @@ int run_sandsara(String playList)
 #ifdef DEBUGGING_DATA
         Serial.println("Abrira el siguiente archivo disponible");
 #endif
-        if (ordenMode == 2){
+        if (ordenMode == 2)
+        {
             pListFile = random(1, numberOfFiles + 1);
         }
         errorCode = getLineNumber(pListFile, playList, fileName);
@@ -119,7 +126,8 @@ int run_sandsara(String playList)
             pListFile += 1;
             continue;
         }
-        if (current_file.isDirectory()){
+        if (current_file.isDirectory())
+        {
             delay(1000);
             pListFile += 1;
             continue;
@@ -146,7 +154,8 @@ int run_sandsara(String playList)
             if (file.fileType == 2)
             {
                 working_status = file.getNextComponents(&component_1, &component_2);
-                while (working_status == 3){
+                while (working_status == 3)
+                {
                     working_status = file.getNextComponents(&component_1, &component_2);
                 }
                 halo.setZCurrent(component_1);
@@ -157,7 +166,8 @@ int run_sandsara(String playList)
             {
                 //se obtienen los siguientes componentes
                 working_status = file.getNextComponents(&component_1, &component_2);
-                if (working_status == 3){
+                if (working_status == 3)
+                {
                     continue;
                 }
                 if (working_status != 0)
@@ -196,18 +206,21 @@ int run_sandsara(String playList)
 
 /**************************************************************/
 
-void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param){
-  if(event == ESP_SPP_SRV_OPEN_EVT){
-    #ifdef BLUECOMMENTS
-    Serial.println("Client Connected");
-    #endif
-  }
- 
-  if(event == ESP_SPP_CLOSE_EVT ){
-    #ifdef BLUECOMMENTS
-    Serial.println("Client disconnected");
-    #endif
-  }
+void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
+{
+    if (event == ESP_SPP_SRV_OPEN_EVT)
+    {
+#ifdef BLUECOMMENTS
+        Serial.println("Client Connected");
+#endif
+    }
+
+    if (event == ESP_SPP_CLOSE_EVT)
+    {
+#ifdef BLUECOMMENTS
+        Serial.println("Client disconnected");
+#endif
+    }
 }
 //------------------------------Ordenar archivos----------------------------------
 //--------------------------------------------------------------------------------
@@ -305,7 +318,6 @@ int getLineNumber(int lineNumber, String dirFile, String &lineText)
     return 0; //termino en la linea numero lineNumber, y encontro un '\n'
 }
 
-
 /**
  * @brief Crea un archivo que almacena los nombres de los archivos en el directorio "/"
  * @param fileName es el nombre del archivo que se va a crear.
@@ -318,7 +330,7 @@ int creatListOfFiles(String fileName)
     int numberOfFiles = 0;
     root = SD.open("/");
     file = SD.open("/" + fileName, FILE_WRITE);
-    if(!file)
+    if (!file)
     {
         return -1; //no se pudo crear el archivo
     }
@@ -326,17 +338,20 @@ int creatListOfFiles(String fileName)
     while (true)
     {
         fileObj = root.openNextFile();
-        if (!fileObj){
+        if (!fileObj)
+        {
             fileObj.close();
             file.close();
             root.close();
             return numberOfFiles;
         }
-        if (!fileObj.isDirectory()){
+        if (!fileObj.isDirectory())
+        {
             String varName = fileObj.name();
             String varNameLower = varName;
             varNameLower.toLowerCase();
-            if (varNameLower.equals(fileName)){
+            if (varNameLower.equals(fileName))
+            {
                 continue;
             }
             file.print(varName.substring(1) + "\r\n");
@@ -344,8 +359,8 @@ int creatListOfFiles(String fileName)
         }
     }
 }
- //--------------Bluetooth--------------------------------------------------------
- //-------------------------------------------------------------------------------
+//--------------Bluetooth--------------------------------------------------------
+//-------------------------------------------------------------------------------
 
 /**
  * @brief revisa si hay algo dispobible por bluetooth y lo interpreta
@@ -368,13 +383,15 @@ int creatListOfFiles(String fileName)
  * -8, no se pudo crear el archivo.
  * -9, se han leido mas de X numero de caracteres sin encontrar un '\n' en la funcion readLine()
  */
-int checkBlueTooth(){
+int checkBlueTooth()
+{
     int codeError = 0;
     String checksum;
     if (SerialBT.available())
     {
         codeError = readLine(line);
-        if (codeError != 0){
+        if (codeError != 0)
+        {
             writeBt("error= ");
             writeBtln(String(codeError));
             return codeError;
@@ -395,10 +412,10 @@ int checkBlueTooth(){
             {
                 fileNameBt.remove(0, 1);
             }
-            #ifdef BLUECOMMENTS
+#ifdef BLUECOMMENTS
             Serial.print("Nombre del archivo: ");
             Serial.println(fileNameBt);
-            #endif
+#endif
             if (SD.exists("/" + fileNameBt))
             {
                 codeError = -5;
@@ -414,7 +431,7 @@ int checkBlueTooth(){
                 }
                 else
                 {
-                    for (int i = 0 ; i < 1000; i++)//while (true)
+                    for (int i = 0; i < 1000; i++) //while (true)
                     {
                         //yield();
                         // SerialBT.println("ok");
@@ -431,15 +448,15 @@ int checkBlueTooth(){
                         {
                             indexWord = line.indexOf("bytes=");
                             bytesToRead = line.substring(6).toInt();
-                            #ifdef BLUECOMMENTS
+#ifdef BLUECOMMENTS
                             Serial.print("bytesToRead: ");
                             Serial.println(bytesToRead);
-                            #endif
+#endif
                             if (bytesToRead <= 0 || bytesToRead > MAX_BYTES_PER_SENDING)
                             {
                                 codeError = -2;
                                 writeBtln("error= -2"); //Numero de bytes incorrecto
-                                break;                         //
+                                break;                  //
                             }
                             //yield();
                             //writeBtln("ok");
@@ -462,11 +479,11 @@ int checkBlueTooth(){
                             }
                             //long timeStart = millis(), timeEnd;
                             checksum = GetMD5String(dataBt, bytesToRead);
-                            //checksum = md5("hola");
-                            #ifdef BLUECOMMENTS
+//checksum = md5("hola");
+#ifdef BLUECOMMENTS
                             Serial.print("checksum: ");
                             Serial.println(checksum);
-                            #endif
+#endif
                             if (!line.equals(checksum))
                             {
                                 codeError = -7;
@@ -484,9 +501,9 @@ int checkBlueTooth(){
                         {
                             file.close();
                             writeBtln("ok");
-                            #ifdef BLUECOMMENTS
+#ifdef BLUECOMMENTS
                             Serial.println("guardado en memoria");
-                            #endif
+#endif
                             codeError = 1;
                             return codeError; //se escribio archivo
                         }
@@ -501,9 +518,9 @@ int checkBlueTooth(){
                     {
                         file.close();
                         SD.remove("/" + fileNameBt);
-                        #ifdef BLUECOMMENTS
+#ifdef BLUECOMMENTS
                         Serial.println("transferencia cancelada");
-                        #endif
+#endif
                     }
                 }
             }
@@ -511,9 +528,9 @@ int checkBlueTooth(){
         else
         {
             writeBtln("error= -1"); //Comando incorrecto
-            codeError = -1; //comando incorrecto
+            codeError = -1;         //comando incorrecto
         }
-        
+
         return codeError;
     }
     return 0;
@@ -525,9 +542,10 @@ int checkBlueTooth(){
  * @return 0 cuando termina la funcion.
  * @note es imporante usar el metodo write en lugar de print o println, si se usa uno de estos 2 ultimos puede haber comportamientos inesperados como el crasheo del programa. 
  */
-int writeBt(String msg){
+int writeBt(String msg)
+{
     //Serial.println("Entro a writeBt");
-    uint8_t* msg8 = (uint8_t* ) msg.c_str();
+    uint8_t *msg8 = (uint8_t *)msg.c_str();
     SerialBT.write(msg8, msg.length());
     SerialBT.flush();
     delay(20);
@@ -540,7 +558,8 @@ int writeBt(String msg){
  * @return 0 cuando termina la funcion.
  * @note el salto de linea se hace con \r\n
  */
-int writeBtln(String msg){
+int writeBtln(String msg)
+{
     msg.concat("\r\n");
     writeBt(msg);
     return 0;
@@ -554,7 +573,8 @@ int writeBtln(String msg){
  * -3, significa que ha transcurrido mas tiempo del esperado sin encontrar un '\n' (depende de la variable timeOutBt).
  * -9, significa que se han leido mas de X caracteres sin econtrar un '\n'.
  */
-int readLine(String& line){
+int readLine(String &line)
+{
     //yield();
     //Serial.print("Entro a readLine ");
     //Serial.println(ESP.getFreeHeap());
@@ -572,11 +592,13 @@ int readLine(String& line){
             line.concat(char(byteRecived));
             outOfRange += 1;
         }
-        if (millis() - tInit > timeOutBt){
+        if (millis() - tInit > timeOutBt)
+        {
             //Serial.println("salio de readLine por timeOut");
             return -3; //timeOut de readLine
         }
-        if (outOfRange > 1000){
+        if (outOfRange > 1000)
+        {
             //Serial.println("salio de readLine por OutOfRange");
             line = "";
             return -9; //outOfRange de readLine
@@ -589,9 +611,9 @@ int readLine(String& line){
     }
     indexRemove = line.indexOf('\n');
     line.remove(indexRemove, 1);
-    #ifdef BLUECOMMENTS
+#ifdef BLUECOMMENTS
     Serial.println(line);
-    #endif
+#endif
     //Serial.println("salio de readLine normal");
     return 0;
 }
@@ -624,28 +646,28 @@ int readBt(uint8_t dataBt[], int bytesToRead)
             //Serial.write(dataBt[i]);
             i += 1;
         }
-        if (millis() - tInit > timeOutBt){
+        if (millis() - tInit > timeOutBt)
+        {
             writeBt("bytes enviados: ");
             writeBtln(String(i));
-            #ifdef BLUECOMMENTS
+#ifdef BLUECOMMENTS
             Serial.print("bytes enviados: ");
             Serial.println(i);
-            #endif
+#endif
             //Serial.println("salio de readBt por timeOut");
             return -4; //timeOut de readBt
         }
     }
-    /*while (SerialBT.available())
+/*while (SerialBT.available())
     {
         Serial.println("Entro por exceso de data tu crees");
         SerialBT.read();
     }*/
-    #ifdef BLUECOMMENTS
+#ifdef BLUECOMMENTS
     Serial.println("salio de readBt normal");
-    #endif
+#endif
     return 0;
 }
-
 
 //MD5----------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------

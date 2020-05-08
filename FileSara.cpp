@@ -7,40 +7,46 @@
  * @param directionMode es la direccion de lectura del archivo, por defecto es 1.
  * 1 representa que se va a leer el archivo de arriba hacia abajo y 0 que se debe leer de abajo para arriba.
  */
-FileSara::FileSara(String nameF, int directionMode) {
-  fileName = nameF;
-  fileType = getType(fileName);
-  this->directionMode = directionMode;
-  #ifdef DEBUGGING_DATA
-  Serial.print("Se abrira el archivo: ");
-  Serial.println(fileName);
-  #endif
-  file = SD.open(fileName);
-  if (directionMode == 1) {
-    pFile = 0;
-  }
-  else {
-    pFile = file.size();
-  }
-  if (fileType == 2) {
-    componentSeparator = ' ';
-    lineSeparator = '\n';
-  }
-  if (fileType == 3)
-  {
-    charsToRead = 1002; //it must be a multiple of 6
-    dataBufferBin = (uint8_t* ) calloc(charsToRead + 1, 1);
-    if (directionMode == 0) {
-      pFileBin = 0;
+FileSara::FileSara(String nameF, int directionMode)
+{
+    fileName = nameF;
+    fileType = getType(fileName);
+    this->directionMode = directionMode;
+#ifdef DEBUGGING_DATA
+    Serial.print("Se abrira el archivo: ");
+    Serial.println(fileName);
+#endif
+    file = SD.open(fileName);
+    if (directionMode == 1)
+    {
+        pFile = 0;
     }
-    else {
-      pFileBin = charsToRead / 6;
+    else
+    {
+        pFile = file.size();
     }
-  }
-  else{
-    dataBufferBin = (uint8_t* ) calloc(charsToRead + 1, 1);
-  }
-
+    if (fileType == 2)
+    {
+        componentSeparator = ' ';
+        lineSeparator = '\n';
+    }
+    if (fileType == 3)
+    {
+        charsToRead = 1002; //it must be a multiple of 6
+        dataBufferBin = (uint8_t *)calloc(charsToRead + 1, 1);
+        if (directionMode == 0)
+        {
+            pFileBin = 0;
+        }
+        else
+        {
+            pFileBin = charsToRead / 6;
+        }
+    }
+    else
+    {
+        dataBufferBin = (uint8_t *)calloc(charsToRead + 1, 1);
+    }
 }
 
 /**
@@ -49,13 +55,14 @@ FileSara::FileSara(String nameF, int directionMode) {
  * se utiliza un destructor para limpiar liberar la memoria dinamica y cerrar el
  * el archivo de tipo File
  */
-FileSara::~FileSara(){
-  file.close();
-  free(dataBufferBin);
-  #ifdef DEBUGGING_DATA
-  Serial.print("Se destruyo el archivo: ");
-  Serial.println(fileName);
-  #endif
+FileSara::~FileSara()
+{
+    file.close();
+    free(dataBufferBin);
+#ifdef DEBUGGING_DATA
+    Serial.print("Se destruyo el archivo: ");
+    Serial.println(fileName);
+#endif
 }
 
 /**
@@ -75,50 +82,60 @@ FileSara::~FileSara(){
  * -4 no se encontro un segundo componente
  * -6 no es un tipo de archivo valido
  */
-int FileSara::getNextComponents(double* component1, double* component2) {
-  int resp;
-  currentRow = nextRow();
-  if (currentRow == "") {
-    resp = readFile();
-    if (resp != 0) {
-      statusFile = resp;
-      return resp;
-    }
+int FileSara::getNextComponents(double *component1, double *component2)
+{
+    int resp;
     currentRow = nextRow();
-  }
-  if (fileType == 3) {
-    resp = getComponentsBin((dataBufferBin + pFileBin * 6), component1, component2);
-  }
-  else {
-    resp = getComponents(currentRow, component1, component2);
-  }
-  if ( resp != 0 ) {
-    return statusFile;
-  }
+    if (currentRow == "")
+    {
+        resp = readFile();
+        if (resp != 0)
+        {
+            statusFile = resp;
+            return resp;
+        }
+        currentRow = nextRow();
+    }
+    if (fileType == 3)
+    {
+        resp = getComponentsBin((dataBufferBin + pFileBin * 6), component1, component2);
+    }
+    else
+    {
+        resp = getComponents(currentRow, component1, component2);
+    }
+    if (resp != 0)
+    {
+        return statusFile;
+    }
 
-  if (fileType == 1 || fileType == 3) {
-    *component1 = DISTANCIA_MAX * *component1 / RESOLUCION_MAX;
-    *component2 = DISTANCIA_MAX * *component2 / RESOLUCION_MAX;
-  }
-  else if (fileType == 2) {
-    z = *component2 * DISTANCIA_MAX;
-    theta = *component1;
-    *component1 = z;
-    *component2 = theta;
-  }
-  else{
-    statusFile = -6;
-    return -6;
-  }
-  return 0;
+    if (fileType == 1 || fileType == 3)
+    {
+        *component1 = DISTANCIA_MAX * *component1 / RESOLUCION_MAX;
+        *component2 = DISTANCIA_MAX * *component2 / RESOLUCION_MAX;
+    }
+    else if (fileType == 2)
+    {
+        z = *component2 * DISTANCIA_MAX;
+        theta = *component1;
+        *component1 = z;
+        *component2 = theta;
+    }
+    else
+    {
+        statusFile = -6;
+        return -6;
+    }
+    return 0;
 }
 
 /**
  * @return el estado actual del archivo leido
  * @see getNextComponents
  */
-int FileSara::getStatus() {
-  return this->statusFile;
+int FileSara::getStatus()
+{
+    return this->statusFile;
 }
 
 /**
@@ -128,17 +145,18 @@ int FileSara::getStatus() {
  * 2 para un .thr
  * 3 para un .bin
  */
-int FileSara::getType(String name_file) {
-  name_file = name_file.substring(name_file.lastIndexOf('.') + 1);
-  name_file.toLowerCase();
-  if (name_file == "txt")
-    return 1;
-  else if (name_file == "thr")
-    return 2;
-  else if (name_file == "bin")
-    return 3;
-  else
-    return -1;
+int FileSara::getType(String name_file)
+{
+    name_file = name_file.substring(name_file.lastIndexOf('.') + 1);
+    name_file.toLowerCase();
+    if (name_file == "txt")
+        return 1;
+    else if (name_file == "thr")
+        return 2;
+    else if (name_file == "bin")
+        return 3;
+    else
+        return -1;
 }
 
 /**
@@ -154,34 +172,38 @@ int FileSara::getType(String name_file) {
  * 
  * @see getNextComponents.
  */
-int FileSara::getComponents(String line, double* c1, double* c2) {
-    Serial.print(line);
-    if (line.charAt(0) == '/' || line.charAt(0) == '#' || line.charAt(0) == '\r' || line.charAt(0) == '\n'){
+int FileSara::getComponents(String line, double *c1, double *c2)
+{
+    if (line.charAt(0) == '/' || line.charAt(0) == '#' || line.charAt(0) == '\r' || line.charAt(0) == '\n')
+    {
         statusFile = 3;
         return 3;
     }
-    if (line.indexOf('\t') >= 0){
+    if (line.indexOf('\t') >= 0)
+    {
         line.replace("\t", " ");
     }
     int commaIndex = line.indexOf(this->componentSeparator);
-    if (commaIndex == -1) { //no separator detected
-      this->statusFile = -1;
-      return -1;
+    if (commaIndex == -1)
+    { //no separator detected
+        this->statusFile = -1;
+        return -1;
     }
-    if (commaIndex >= line.length() - 1) { //no second component detected
-      this->statusFile = -4;
-      return -4;
+    if (commaIndex >= line.length() - 1)
+    { //no second component detected
+        this->statusFile = -4;
+        return -4;
     }
     String _c1 = line.substring(0, commaIndex);
     String _c2 = line.substring(commaIndex + 1);
     if (_c1.indexOf('\r') != -1)
-      _c1.remove(_c1.indexOf('\r'), 1);
+        _c1.remove(_c1.indexOf('\r'), 1);
     if (_c2.indexOf('\r') != -1)
-      _c2.remove(_c2.indexOf('\r'), 1);
+        _c2.remove(_c2.indexOf('\r'), 1);
     if (_c1.indexOf('\n') != -1)
-      _c1.remove(_c1.indexOf('\n'), 1);
+        _c1.remove(_c1.indexOf('\n'), 1);
     if (_c2.indexOf('\n') != -1)
-      _c2.remove(_c2.indexOf('\n'), 1);
+        _c2.remove(_c2.indexOf('\n'), 1);
     *c1 = _c1.toDouble();
     *c2 = _c2.toDouble();
     this->statusFile = 0;
@@ -197,15 +219,17 @@ int FileSara::getComponents(String line, double* c1, double* c2) {
  * @return un codigo de error.
  * @see getNextComponents.
  */
-int FileSara::getComponentsBin(uint8_t* line, double* c1, double* c2){
-    if ( *(line + 2) != ',') {
-      statusFile = -1;
-      return -1;
+int FileSara::getComponentsBin(uint8_t *line, double *c1, double *c2)
+{
+    if (*(line + 2) != ',')
+    {
+        statusFile = -1;
+        return -1;
     }
-    int16_t* puint16;
-    puint16 = (int16_t* )line;
+    int16_t *puint16;
+    puint16 = (int16_t *)line;
     xbin = *puint16;
-    puint16 = (int16_t* )(line + 3);
+    puint16 = (int16_t *)(line + 3);
     ybin = *puint16;
     *c1 = double(xbin);
     *c2 = double(ybin);
@@ -220,61 +244,73 @@ int FileSara::getComponentsBin(uint8_t* line, double* c1, double* c2){
  * @note En el caso de estar leyendo un .bin se modificara la variable pFileBin la cual
  * representa el el numero de linea siguiente.
  */
-String FileSara::nextRow() {
-  String return_str;
-  int index_separator;
+String FileSara::nextRow()
+{
+    String return_str;
+    int index_separator;
 
-  if (this->directionMode == 0) {
-    //<BINCASE>
-    if (fileType == 3) {
-      pFileBin -= 1;
-      if (pFileBin < 0) {
-        return "";
-      }
-      return "nonStop";
+    if (this->directionMode == 0)
+    {
+        //<BINCASE>
+        if (fileType == 3)
+        {
+            pFileBin -= 1;
+            if (pFileBin < 0)
+            {
+                return "";
+            }
+            return "nonStop";
+        }
+        //</BINCASE>
+        index_separator = this->dataBuffer.lastIndexOf(this->lineSeparator);
+        if (index_separator == -1)
+        {
+            return this->dataBuffer;
+        }
+        if (index_separator >= this->dataBuffer.length() - 2)
+        { // -2 is because the end of a line can be \r\n or \n\r
+            index_separator = this->dataBuffer.lastIndexOf(this->lineSeparator, index_separator - 1);
+            if (index_separator == -1)
+            {
+                return_str = this->dataBuffer;
+                this->dataBuffer = "";
+                return return_str;
+            }
+            return_str = this->dataBuffer.substring(index_separator + 1);
+            this->dataBuffer.remove(index_separator + 1);
+            return return_str;
+        }
+        else
+        {
+            return_str = this->dataBuffer.substring(index_separator + 1);
+            this->dataBuffer.remove(index_separator + 1);
+            return return_str;
+        }
     }
-    //</BINCASE>
-    index_separator = this->dataBuffer.lastIndexOf(this->lineSeparator);
-    if (index_separator == -1) {
-      return this->dataBuffer;
-    }
-    if (index_separator >= this->dataBuffer.length() - 2) { // -2 is because the end of a line can be \r\n or \n\r
-      index_separator = this->dataBuffer.lastIndexOf(this->lineSeparator, index_separator - 1);
-      if (index_separator == -1) {
-        return_str = this->dataBuffer;
-        this->dataBuffer = "";
+    else
+    {
+        //<BINCASE>
+        if (fileType == 3)
+        {
+            pFileBin += 1;
+            if (pFileBin > charsToRead / 6 - 1)
+            {
+                return "";
+            }
+            return "nonStop";
+        }
+        //</BINCASE>
+        index_separator = this->dataBuffer.indexOf(this->lineSeparator);
+        if (index_separator == -1 || index_separator == this->dataBuffer.length() - 1)
+        {
+            return_str = this->dataBuffer;
+            this->dataBuffer = "";
+            return return_str;
+        }
+        return_str = this->dataBuffer.substring(0, index_separator + 1);
+        this->dataBuffer = this->dataBuffer.substring(index_separator + 1);
         return return_str;
-      }
-      return_str = this->dataBuffer.substring(index_separator + 1);
-      this->dataBuffer.remove(index_separator + 1);
-      return return_str;
     }
-    else {
-      return_str = this->dataBuffer.substring(index_separator + 1);
-      this->dataBuffer.remove(index_separator + 1);
-      return return_str;
-    }
-  }
-  else {
-    //<BINCASE>
-    if (fileType == 3) {
-      pFileBin += 1;
-      if (pFileBin > charsToRead / 6 - 1) {
-        return "";
-      }
-      return "nonStop";
-    }
-    //</BINCASE>
-    index_separator = this->dataBuffer.indexOf(this->lineSeparator);
-    if (index_separator == -1 || index_separator == this->dataBuffer.length() - 1) {
-      return_str = this->dataBuffer;
-      this->dataBuffer = "";
-      return return_str;
-    }
-    return_str = this->dataBuffer.substring(0, index_separator + 1);
-    this->dataBuffer = this->dataBuffer.substring(index_separator + 1);
-    return return_str;
-  }
 }
 
 /**
@@ -286,81 +322,90 @@ String FileSara::nextRow() {
  *  1 ya no hay datos restantes por leer.
  * -10 ya no hay mas archivos por leer por posible problema con memoria sd.
  */
-int FileSara::readFile() {
-  int bytesRead;
-  if (this->directionMode == 0) {
-    if (pFile >= charsToRead ) {
-      pFile -= charsToRead;
-    }
-    else {
-      charsToRead = pFile; //check if it has to be +1
-      if (pFile == 0) {
-        return 1;
-      }
-      pFile = 0;
-    }
-    this->file.seek(pFile);
-    //char input_char[charsToRead + 1];
-    bytesRead = this->file.read(dataBufferBin, charsToRead);
-    if (bytesRead < charsToRead){
-      statusFile = -10;
-      return -10;
-    }
-    *(dataBufferBin + charsToRead) = '\0';
-    //<BINCASE>
-    if (fileType == 3)
+int FileSara::readFile()
+{
+    int bytesRead;
+    if (this->directionMode == 0)
     {
-      pFileBin = charsToRead / 6;
-      return 0;
-    }
-    //</BINCASE>
+        if (pFile >= charsToRead)
+        {
+            pFile -= charsToRead;
+        }
+        else
+        {
+            charsToRead = pFile; //check if it has to be +1
+            if (pFile == 0)
+            {
+                return 1;
+            }
+            pFile = 0;
+        }
+        this->file.seek(pFile);
+        //char input_char[charsToRead + 1];
+        bytesRead = this->file.read(dataBufferBin, charsToRead);
+        if (bytesRead < charsToRead)
+        {
+            statusFile = -10;
+            return -10;
+        }
+        *(dataBufferBin + charsToRead) = '\0';
+        //<BINCASE>
+        if (fileType == 3)
+        {
+            pFileBin = charsToRead / 6;
+            return 0;
+        }
+        //</BINCASE>
 
-    dataBuffer = String((char* )dataBufferBin);
-    if (pFile == 0) {
-      return 0;
+        dataBuffer = String((char *)dataBufferBin);
+        if (pFile == 0)
+        {
+            return 0;
+        }
+        int index_nl = dataBuffer.indexOf(this->lineSeparator);
+        dataBuffer = dataBuffer.substring(index_nl + 1);
+        pFile += index_nl + 1;
+        return 0;
     }
-    int index_nl = dataBuffer.indexOf(this->lineSeparator);
-    dataBuffer = dataBuffer.substring(index_nl + 1);
-    pFile += index_nl + 1;
-    return 0;
-  }
-  else
-  {
-    if (pFile >= file.size())
+    else
     {
-      return 1;
-    }
-    if (pFile + charsToRead > file.size()) {
-      charsToRead = file.size() - pFile; //
-    }
-    this->file.seek(pFile);
-    //char input_char[charsToRead + 1];
-    bytesRead = this->file.read(dataBufferBin, charsToRead);
-    if (bytesRead < charsToRead){
-      statusFile = -10;
-      return -10;
-    }
-    *(dataBufferBin + charsToRead) = '\0';
-    //<BINCASE>
-    if (fileType == 3)
-    {
-      pFile += charsToRead;
-      pFileBin = -1;
-      return 0;
-    }
-    //</BINCASE>
-    dataBuffer = String((char* ) dataBufferBin);
-    int index_nl = dataBuffer.lastIndexOf(this->lineSeparator);
-    if (index_nl == -1)
-    {
-      pFile = file.size();
-      return 0;
-    }
+        if (pFile >= file.size())
+        {
+            return 1;
+        }
+        if (pFile + charsToRead > file.size())
+        {
+            charsToRead = file.size() - pFile; //
+        }
+        this->file.seek(pFile);
+        //char input_char[charsToRead + 1];
+        bytesRead = this->file.read(dataBufferBin, charsToRead);
+        if (bytesRead < charsToRead)
+        {
+            statusFile = -10;
+            return -10;
+        }
+        *(dataBufferBin + charsToRead) = '\0';
+        //<BINCASE>
+        if (fileType == 3)
+        {
+            pFile += charsToRead;
+            pFileBin = -1;
+            return 0;
+        }
+        //</BINCASE>
+        dataBuffer = String((char *)dataBufferBin);
+        int index_nl = dataBuffer.lastIndexOf(this->lineSeparator);
+        if (index_nl == -1)
+        {
+            pFile = file.size();
+            return 0;
+        }
 
-    dataBuffer = dataBuffer.substring(0, index_nl + 1);
-    pFile += index_nl + 1;
-    return 0;
-  }
+        dataBuffer = dataBuffer.substring(0, index_nl + 1);
+        pFile += index_nl + 1;
+        return 0;
+    }
 }
 
 /**
@@ -374,38 +419,52 @@ int FileSara::readFile() {
  * si es un archivo .thr este parametro no aplica.
  * @return el componente deseado del primer punto del archivo.
  */
-double FileSara::getStartPoint(int component, int ignoreZero){
-  int stackMode = directionMode;
-  int stackPFileBin = pFileBin;
-  long stackPFile = pFile;
-  directionMode = 1;
-  double component1, component2, zStart, thetaStart;
-  pFile = 0;
-  pFileBin = charsToRead / 6;
-  if (ignoreZero == 1 && fileType != 2){
-    getNextComponents(&component1, &component2);
-    while (component1 == 0 && component2 == 0){
-      if (getNextComponents(&component1, &component2) == 1){
-        break;
-      }      
+double FileSara::getStartPoint(int component, int ignoreZero)
+{
+    int resp;
+    int stackMode = directionMode;
+    int stackPFileBin = pFileBin;
+    long stackPFile = pFile;
+    directionMode = 1;
+    double component1, component2, zStart, thetaStart;
+    pFile = 0;
+    pFileBin = charsToRead / 6;
+    if (ignoreZero == 1 && fileType != 2)
+    {
+        resp = getNextComponents(&component1, &component2);
+        while (resp == 3)
+        {
+            resp = getNextComponents(&component1, &component2);
+        }
+        while (component1 == 0 && component2 == 0)
+        {
+            if (getNextComponents(&component1, &component2) == 1)
+            {
+                break;
+            }
+        }
     }
-  }
-  else
-  {
-    getNextComponents(&component1, &component2);
-  }
-  pFile = stackPFile;
-  pFileBin = stackPFileBin;
-  dataBuffer = "";
-  directionMode = stackMode;
+    else
+    {
+        resp = getNextComponents(&component1, &component2);
+        while (resp == 3)
+        {
+            resp = getNextComponents(&component1, &component2);
+        }
+    }
+    pFile = stackPFile;
+    pFileBin = stackPFileBin;
+    dataBuffer = "";
+    directionMode = stackMode;
 
-  if (component == 1){
-    return component1;
-  }
-  else
-  {
-    return component2;
-  }
+    if (component == 1)
+    {
+        return component1;
+    }
+    else
+    {
+        return component2;
+    }
 }
 
 /**
@@ -419,39 +478,52 @@ double FileSara::getStartPoint(int component, int ignoreZero){
  * si es un archivo .thr este parametro no aplica.
  * @return el componente deseado del ultimo punto del archivo.
  */
-double FileSara::getFinalPoint(int component, int ignoreZero){
-  int stackMode = directionMode;
-  int stackPFileBin = pFileBin;
-  long stackPFile = pFile;
-  directionMode = 0;
-  double component1, component2, zFinal, thetaFinal;
-  pFile = file.size();
-  pFileBin = 0;
-  if (ignoreZero == 1 && fileType != 2){
-    getNextComponents(&component1, &component2);
-    while (component1 == 0 && component2 == 0){
-      if (getNextComponents(&component1, &component2) == 1){
-        break;
-      }
+double FileSara::getFinalPoint(int component, int ignoreZero)
+{
+    int resp;
+    int stackMode = directionMode;
+    int stackPFileBin = pFileBin;
+    long stackPFile = pFile;
+    directionMode = 0;
+    double component1, component2, zFinal, thetaFinal;
+    pFile = file.size();
+    pFileBin = 0;
+    if (ignoreZero == 1 && fileType != 2)
+    {
+        resp = getNextComponents(&component1, &component2);
+        while (resp == 3)
+        {
+            resp = getNextComponents(&component1, &component2);
+        }
+        while (component1 == 0 && component2 == 0)
+        {
+            if (getNextComponents(&component1, &component2) == 1)
+            {
+                break;
+            }
+        }
     }
-  }
-  else
-  {
-    getNextComponents(&component1, &component2);
-  }
-  pFile = stackPFile;
-  pFileBin = stackPFileBin;
-  dataBuffer = "";
-  directionMode = stackMode;
+    else
+    {
+        resp = getNextComponents(&component1, &component2);
+        while (resp == 3)
+        {
+            resp = getNextComponents(&component1, &component2);
+        }
+    }
+    pFile = stackPFile;
+    pFileBin = stackPFileBin;
+    dataBuffer = "";
+    directionMode = stackMode;
 
-  if (component == 1){
-    return component1;
-  }
-  else
-  {
-    return component2;
-  }
-  
+    if (component == 1)
+    {
+        return component1;
+    }
+    else
+    {
+        return component2;
+    }
 }
 
 /**
@@ -463,40 +535,46 @@ double FileSara::getFinalPoint(int component, int ignoreZero){
  * @param zCurrent Es la distancia actual del centro a la punta del robot
  * @note No regresa nada, pero cambia el valor de la variable directionMode
  */
-void FileSara::autoSetMode(double zCurrent){
-  double startZ, finalZ, diff1, diff2;
-  double angle, x, y;
-  x = getStartPoint(1,0);
-  y = getStartPoint(2,0);
-  startZ = MoveSara::zPolar(x, y);
-  if (fileType == 2){
-    startZ = x;
-  }
+void FileSara::autoSetMode(double zCurrent)
+{
+    double startZ, finalZ, diff1, diff2;
+    double angle, x, y;
+    x = getStartPoint(1, 0);
+    y = getStartPoint(2, 0);
+    startZ = MoveSara::zPolar(x, y);
+    if (fileType == 2)
+    {
+        startZ = x;
+    }
 
-  x = getFinalPoint(1,0);
-  y = getFinalPoint(2,0);
-  finalZ = MoveSara::zPolar(x, y);
-  if (fileType == 2){
-    finalZ = x;
-  }
+    x = getFinalPoint(1, 0);
+    y = getFinalPoint(2, 0);
+    finalZ = MoveSara::zPolar(x, y);
+    if (fileType == 2)
+    {
+        finalZ = x;
+    }
 
-  diff1 = abs(zCurrent - startZ);
-  diff2 = abs(zCurrent - finalZ);
-  if (diff1 < diff2){
-    directionMode = 1;
-    pFile = 0;
-    pFileBin = charsToRead / 6;
-  }
-  else if (diff2 < diff1){
-    directionMode = 0;
-    pFile = file.size();
-    pFileBin = 0;
-  }
-  else{
-    directionMode = 1;
-    pFile = 0;
-    pFileBin = charsToRead / 6;
-  }
+    diff1 = abs(zCurrent - startZ);
+    diff2 = abs(zCurrent - finalZ);
+    if (diff1 < diff2)
+    {
+        directionMode = 1;
+        pFile = 0;
+        pFileBin = charsToRead / 6;
+    }
+    else if (diff2 < diff1)
+    {
+        directionMode = 0;
+        pFile = file.size();
+        pFileBin = 0;
+    }
+    else
+    {
+        directionMode = 1;
+        pFile = 0;
+        pFileBin = charsToRead / 6;
+    }
 }
 
 /**
@@ -506,65 +584,76 @@ void FileSara::autoSetMode(double zCurrent){
  * las variables pFile y dataBuffer, y despues de haber asignado un valor a directionMode
  * @return un valor que representa un angulo en radianes pudiendo tomar cualquier valor que permita un tipo de dato double
  */
-double FileSara::getFinalAngle(){
-  double angle, x, y;
-  if (directionMode == 0){
-    if (fileType == 2){
-      angle = getStartPoint(2, 0);
-      return angle;
+double FileSara::getFinalAngle()
+{
+    double angle, x, y;
+    if (directionMode == 0)
+    {
+        if (fileType == 2)
+        {
+            angle = getStartPoint(2, 0);
+            return angle;
+        }
+        else
+        {
+            x = getStartPoint(1, 1);
+            y = getStartPoint(2, 1);
+            angle = MoveSara::thetaPolar(x, y);
+            return angle;
+        }
     }
-    else{
-      x = getStartPoint(1,1);
-      y = getStartPoint(2,1);
-      angle = MoveSara::thetaPolar(x, y);
-      return angle;
+    else
+    {
+        if (fileType == 2)
+        {
+            angle = getFinalPoint(2, 0);
+            return angle;
+        }
+        else
+        {
+            x = getFinalPoint(1, 1);
+            y = getFinalPoint(2, 1);
+            angle = MoveSara::thetaPolar(x, y);
+            return angle;
+        }
     }
-    
-  }
-  else
-  {
-    if (fileType == 2){
-      angle = getFinalPoint(2, 0);
-      return angle;
-    }
-    else{
-      x = getFinalPoint(1,1);
-      y = getFinalPoint(2,1);
-      angle = MoveSara::thetaPolar(x, y);
-      return angle;
-    }    
-  }
 }
 /**
  * @brief la funcion encuentra el angulo del primer punto que va a ser leido, esto
  * depende de la dirección de lectura (directionMode)
  * @return un valor que representa un angulo en radianes pudiendo tomar cualquier valor que permita un tipo de dato double
  */
-double FileSara::getStartAngle(){
-  double angle, x, y;
-  if (directionMode == 0){
-    if (fileType == 2){
-      angle = getFinalPoint(2, 0);
-      return angle;
+double FileSara::getStartAngle()
+{
+    double angle, x, y;
+    if (directionMode == 0)
+    {
+        if (fileType == 2)
+        {
+            angle = getFinalPoint(2, 0);
+            return angle;
+        }
+        else
+        {
+            x = getFinalPoint(1, 1);
+            y = getFinalPoint(2, 1);
+            angle = MoveSara::thetaPolar(x, y);
+            return angle;
+        }
     }
-    else{
-      x = getFinalPoint(1,1);
-      y = getFinalPoint(2,1);
-      angle = MoveSara::thetaPolar(x, y);
-      return angle;
+    else
+    {
+        if (fileType == 2)
+        {
+            angle = getStartPoint(2, 0);
+            return angle;
+        }
+        else
+        {
+            x = getStartPoint(1, 1);
+            y = getStartPoint(2, 1);
+            angle = MoveSara::thetaPolar(x, y);
+            return angle;
+        }
     }
-  }
-  else
-  {
-    if (fileType == 2){
-      angle = getStartPoint(2, 0);
-      return angle;
-    }
-    else{
-      x = getStartPoint(1,1);
-      y = getStartPoint(2,1);
-      angle = MoveSara::thetaPolar(x, y);
-      return angle;
-    }
-  }
 }
