@@ -63,6 +63,8 @@ class FileSara {
         double getFinalPoint(int = 1, int = 0);
         double getFinalAngle();
         double getStartAngle();
+        static int creatListOfFiles(String );
+        static int getLineNumber(int , String , String& );
     private:
         int getType(String);
         int getComponents(String , double* , double*);

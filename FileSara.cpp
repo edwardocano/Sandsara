@@ -657,3 +657,141 @@ double FileSara::getStartAngle()
         }
     }
 }
+
+//------------------------------Ordenar archivos----------------------------------
+//--------------------------------------------------------------------------------
+/**
+ * @brief devuelve la linea lineNumber del archivo dirFile.
+ * @param lineNumber es el numero de la linea que se desea leer, para la primera linea este parametro debe ser 1, no 0.
+ * @param dirFile es la direccion del archivo, empezando con '/'.
+ * @param lineText es la variable donde se va a aguardar el contenido de la linea leida.
+ * @return un codigo de error, pudiendo ser alguno de los siguientes.
+ * 0, Encontro la linea lineNumber y esta linea termina con un '\n'.
+ * 1, Encontro la linea lineNumber, pero no termina con '\n'.
+ * 2, No encontro la linea lineNumber y no se encontro un '\n' al final de esta linea, por lo que en lineText esta guardada la ultima linea del archivo.
+ * 3, No encontro la linea lineNumber y sí se encontro un '\n' al final de esta linea, por lo que en lineText esta guardada la ultima linea del archivo.
+ * -1, No se pudo abrir el archivo con la direccion dirFile.
+ * -2, El archivo abierto es un directorio.
+ * -3, La linea que se desea leer no es valida.
+ */
+int FileSara::getLineNumber(int lineNumber, String dirFile, String &lineText)
+{
+    File file = SD.open(dirFile);
+    long index = 0, lineN, count = 0;
+    int character = 1;
+
+    lineText = "";
+    if (lineNumber < 1)
+    {
+        return -3; //La linea que se desea leer no es valida
+    }
+    if (!file)
+    {
+        return -1; //dirFile no se pudo abrir
+    }
+    if (file.isDirectory())
+    {
+        return -2; //el archivo es un directorio
+    }
+    for (int number = 1; number < lineNumber; number++)
+    {
+        character = 1;
+        while (character != '\n')
+        {
+            character = file.read();
+            if (character == -1)
+            {
+                break;
+            }
+            count += 1;
+        }
+        if (character == -1)
+        {
+            file.seek(index);
+            while (character != '\n')
+            {
+                character = file.read();
+                if (character == -1)
+                {
+                    if (lineText.indexOf('\r') != 1)
+                    {
+                        lineText.remove(lineText.indexOf('\r'), 1);
+                    }
+                    return 2; //termino sin encontrar la linea numero lineNumber y no encontro un '\n'
+                }
+                lineText.concat(char(character));
+            }
+            lineText.remove(lineText.indexOf('\n'), 1);
+            if (lineText.indexOf('\r') != 1)
+            {
+                lineText.remove(lineText.indexOf('\r'), 1);
+            }
+            return 3; //termino sin llegar a la linea numero lineNumber, y encontro un '\n'
+        }
+        index = count;
+    }
+    character = 1;
+    file.seek(index);
+    while (character != '\n')
+    {
+        character = file.read();
+        if (character == -1)
+        {
+            if (lineText.indexOf('\r') != 1)
+            {
+                lineText.remove(lineText.indexOf('\r'), 1);
+            }
+            return 1; //termino en la linea numero lineNumber, pero no encontro un '\n'
+        }
+        lineText.concat(char(character));
+    }
+    lineText.remove(lineText.indexOf('\n'), 1);
+    if (lineText.indexOf('\r') != 1)
+    {
+        lineText.remove(lineText.indexOf('\r'), 1);
+    }
+    file.close();
+    return 0; //termino en la linea numero lineNumber, y encontro un '\n'
+}
+
+/**
+ * @brief Crea un archivo que almacena los nombres de los archivos en el directorio "/"
+ * @param fileName es el nombre del archivo que se va a crear.
+ * @return el numero de archivos que encontro y registro.
+ * o -1 si no se pudo crear el archivo.
+ */
+int FileSara::creatListOfFiles(String fileName)
+{
+    File file, root, fileObj;
+    int numberOfFiles = 0;
+    root = SD.open("/");
+    file = SD.open("/" + fileName, FILE_WRITE);
+    if (!file)
+    {
+        return -1; //no se pudo crear el archivo
+    }
+    fileName.toLowerCase();
+    while (true)
+    {
+        fileObj = root.openNextFile();
+        if (!fileObj)
+        {
+            fileObj.close();
+            file.close();
+            root.close();
+            return numberOfFiles;
+        }
+        if (!fileObj.isDirectory())
+        {
+            String varName = fileObj.name();
+            String varNameLower = varName;
+            varNameLower.toLowerCase();
+            if (varNameLower.equals(fileName))
+            {
+                continue;
+            }
+            file.print(varName.substring(1) + "\r\n");
+            numberOfFiles += 1;
+        }
+    }
+}

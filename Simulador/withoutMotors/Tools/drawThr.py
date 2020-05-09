@@ -17,9 +17,9 @@ from os.path import isfile, join
 mpl.rcParams['figure.dpi'] = 108
 
 dirPath = os.getcwd()
-dirPath = dir_path.replace("\\" , "/")
+dirPath = dirPath.replace("\\" , "/")
 
-print (dir_path)
+print (dirPath)
 
 x = []
 y = []
@@ -117,11 +117,13 @@ for fileName in onlyfiles:
     if (fileName.find(".thr") > 0):
         thrFiles.append(fileName)
     
+'''' 
 for name in thrFiles:
     drawThr(name)
 
+'''
 
-
+drawThr("dougs3.thr")
 
 
 

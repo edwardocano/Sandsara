@@ -19,10 +19,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def drawThr():
-    with open("../Archivos Thr/THR e imagenes/Spiral1.thr") as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=' ')
-        line_count = 0
-        theta, z = zip(*csv_reader)
+    with open("../Archivos Thr/THR e imagenes/dougs3.thr") as csv_file:
+        csv_reader = csv.reader(csv_file)
+        onlyValidLines = []
+        for line in csv_reader:
+            
+            if (len(line) > 0):
+                line[0] = line[0].replace('\t', ' ')
+                lineStr = line[0].replace(' ', '', line[0].count(' ') - 1)
+                lineList = lineStr.split(' ')
+                if (len(lineList) > 1):
+                    if (isfloat(lineList[0]) and isfloat(lineList[1])):
+                        onlyValidLines.append(lineList)
+        try:
+            theta, z = zip(*onlyValidLines)
+        except ValueError:
+            print("Error en: {}".format(name))
+            return
         
     theta = np.array(theta, dtype = 'double')
     z = np.array(z, dtype = 'double')
@@ -30,8 +43,8 @@ def drawThr():
     x = z * np.cos(theta)
     y = z * np.sin(theta)
     
-    plt.plot(x[:], y[:], '.-', markersize = 0.01, color = 'y', linewidth=0.5)
-    plt.plot(x[:], y[:], '.', markersize = 1, color = 'm')
+    #plt.plot(x[:], y[:], '.-', markersize = 0.01, color = 'y', linewidth=0.5)
+    plt.plot(x[:], y[:], '.', markersize = 0.2, color = 'm')
     plt.show()
 
 def drawInterpolate(ti, zi, tf, zf, slices):
