@@ -664,7 +664,7 @@ double FileSara::getStartAngle()
  * @brief devuelve la linea lineNumber del archivo dirFile.
  * @param lineNumber es el numero de la linea que se desea leer, para la primera linea este parametro debe ser 1, no 0.
  * @param dirFile es la direccion del archivo, empezando con '/'.
- * @param lineText es la variable donde se va a aguardar el contenido de la linea leida.
+ * @param lineText es la variable donde se va a guardar el contenido de la linea leida.
  * @return un codigo de error, pudiendo ser alguno de los siguientes.
  * 0, Encontro la linea lineNumber y esta linea termina con un '\n'.
  * 1, Encontro la linea lineNumber, pero no termina con '\n'.

@@ -13,14 +13,14 @@
 #endif
 /**
  * @class BlueSara es la clase que se encarga de manejar el bluetooth
- * 
- * 
+ * @param timeOutBt es el tiempo, en milisegundos, que se va a esperar para recibir respuesta del dispositivo bluetooth conectado.
+ * @param dataBt es donde se va a almacenar la informacion recibida.
  */
 class BlueSara {
     private:
         BluetoothSerial SerialBT;
         File file;
-        unsigned long timeOutBt = 10000;
+        unsigned long timeOutBt = 20000;
         //int debugCount = 0;
         //int codeErrorC;
         int indexWord, bytesToRead;
@@ -28,6 +28,9 @@ class BlueSara {
         const int MAX_BYTES_PER_SENDING = sizeof(dataBt);
         String line;
         String fileNameBt;
+        //datos enviados por bluetooth
+        String playList = "";
+        int ordenMode;
     public:
         BlueSara();
         int init(String );
@@ -37,7 +40,8 @@ class BlueSara {
         int readLine(String &);
         int readBt(uint8_t [], int );
         static String GetMD5String(uint8_t *msg, int mlen);
-        
+        String getPlaylist();
+        int getOrdenMode();
 };
 
 #endif

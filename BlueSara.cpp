@@ -48,6 +48,8 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * @return un codigo de error que indica lo siguiente
  *  1, se escribio un nuevo archivo.
  *  0, no hay informacion disponible del bluetooth.
+ * 10, se solicito un cambio de playlist, para recuperar el nombre llamar a la funcion getPlaylist().
+ * 20, se solicito un cambio en ordenMode, para recuperar el numero llamar a la funcion getOrdenMode().
  * -1, no se reconoce el comando enviado.
  * -2, se quiso enviar un numero de bytes incorrecto.
  * -3, se excedio el tiempo de respuesta del transmisor en la funcion readLine (depende de la variable timeOutBt, medida en milisegundos)
@@ -199,6 +201,34 @@ int BlueSara::checkBlueTooth()
                 }
             }
         }
+        else if (line.indexOf("changePlaylist") >= 0)
+        {
+            writeBtln("request= new playList");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            playList = line;
+            writeBtln("ok");
+            return 10; //Se solicita el cambio de playlista
+        }
+        else if (line.indexOf("changeOrdenMode") >= 0)
+        {
+            writeBtln("request = new ordenMode");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            ordenMode = line.toInt();
+            writeBtln("ok");
+            return 20; //Se solicita el cambio de playlista
+        }
         else
         {
             writeBtln("error= -1"); //Comando incorrecto
@@ -208,6 +238,22 @@ int BlueSara::checkBlueTooth()
         return codeError;
     }
     return 0;
+}
+
+/**
+ * @brief recupera el nombre de la ultima playlist solicitada a ser reproducida.
+ * @return el nombre de la ultima playlist que se solicito por bluetooth.
+ */
+String BlueSara::getPlaylist(){
+    return playList;
+}
+
+/**
+ * @brief recupera el orden de la ultima solicitud de cambio de orden de reproduccion que se realizo.
+ * @return el ultimo numero referente al oreden de reproduccion que se solicito por bluetooth.
+ */
+int BlueSara::getOrdenMode(){
+    return ordenMode;
 }
 
 /**

@@ -11,10 +11,13 @@
 File myFile;
 File root;
 //variables para ordenar secuencia de archivos
-String playList = "/lista1.txt";
+String playListGlobal;
+int ordenModeGlobal = 1;
 //
 MoveSara halo(16);
 BlueSara haloBt;
+
+int errorCode;
 
 void setup()
 {
@@ -41,7 +44,7 @@ void setup()
 #ifdef PROCESSING_SIMULATOR
     Serial.println("inicia");
 #endif
-
+    playListGlobal = "/lista1.txt";
 }
 
 void loop()
@@ -49,13 +52,25 @@ void loop()
 #ifdef DEBUGGING_DATA
     Serial.println("Iniciara la funcion runSansara");
 #endif
-    run_sandsara(playList);
-    haloBt.checkBlueTooth();
+    errorCode = run_sandsara(playListGlobal, ordenModeGlobal);
+    Serial.print("errorCode de run: ");
+    Serial.println(errorCode);
+    errorCode = haloBt.checkBlueTooth();
+    if (errorCode == 10){
+        playListGlobal = "/" + haloBt.getPlaylist();
+        Serial.print("Cambiar a: ");
+        Serial.println(playListGlobal);
+    }
+    else if (errorCode == 20){
+        ordenModeGlobal = haloBt.getOrdenMode();
+        Serial.print("Cambiar orden a: ");
+        Serial.println(ordenModeGlobal);
+    }
     //root.rewindDirectory();
-    delay(5000);
+    delay(3000);
 }
 
-int run_sandsara(String playList)
+int run_sandsara(String playList, int ordenMode)
 {
     double component_1, component_2;
     double _z, _theta;
@@ -63,9 +78,7 @@ int run_sandsara(String playList)
     double x_aux, y_aux;
     double coupling_angle;
     int pListFile = 1;
-    int errorCode;
     int numberOfFiles;
-    int ordenMode = 3;
     bool randomMode = true;
     String fileName;
 
@@ -163,7 +176,23 @@ int run_sandsara(String playList)
                     break;
                 }
                 //revisar bluetooth
-                haloBt.checkBlueTooth();
+                errorCode = haloBt.checkBlueTooth();
+                if (errorCode == 10){
+                    playListGlobal = "/" + haloBt.getPlaylist();
+#ifdef PROCESSING_SIMULATOR
+                    Serial.println("finished");
+#endif
+                    return 1; //cambio de playlist
+                }
+                else if (errorCode == 20){
+                    ordenModeGlobal = haloBt.getOrdenMode();
+                    Serial.print("Cambiar orden a: ");
+                    Serial.println(ordenModeGlobal);
+#ifdef PROCESSING_SIMULATOR
+                    Serial.println("finished");
+#endif
+                    return 2; //cambio de ordenMode
+                }
                 //dependiendo del tipo de archivo se ejecuta la funcion correspondiente de movimiento.
                 if (file.fileType == 1 || file.fileType == 3)
                 {
