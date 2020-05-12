@@ -8,11 +8,15 @@
 
 #include <math.h>
 
+#include <EEPROM.h>
+
+#define EEPROM_SIZE 512
+
 File myFile;
 File root;
 //variables para ordenar secuencia de archivos
 String playListGlobal;
-int ordenModeGlobal = 1;
+int ordenModeGlobal;
 //
 MoveSara halo(16);
 BlueSara haloBt;
@@ -44,7 +48,20 @@ void setup()
 #ifdef PROCESSING_SIMULATOR
     Serial.println("inicia");
 #endif
-    playListGlobal = "/lista1.txt";
+    //recuperar valores de playlist y ordenMode
+    EEPROM.begin(EEPROM_SIZE);
+    delay(500);
+    playListGlobal = romGetPlaylist();
+    ordenModeGlobal = romGetOrdenMode();
+    Serial.print("lista guardada: ");
+    Serial.println(playListGlobal);
+    Serial.print("ordenMode guardado: ");
+    Serial.println(ordenModeGlobal);
+    //si existe el archivos llamado playlist.playlist se ejecutara esa playlist
+    if (SD.exists("/playlist.playlist")){
+        playListGlobal = "/playlist.playlist";
+        ordenModeGlobal = 1;
+    }
 }
 
 void loop()
@@ -58,18 +75,25 @@ void loop()
     errorCode = haloBt.checkBlueTooth();
     if (errorCode == 10){
         playListGlobal = "/" + haloBt.getPlaylist();
-        Serial.print("Cambiar a: ");
-        Serial.println(playListGlobal);
+        romSetPlaylist(playListGlobal);
     }
     else if (errorCode == 20){
         ordenModeGlobal = haloBt.getOrdenMode();
-        Serial.print("Cambiar orden a: ");
-        Serial.println(ordenModeGlobal);
+        romSetOrdenMode(ordenModeGlobal);
     }
     //root.rewindDirectory();
     delay(3000);
 }
 
+/**
+ * @brief
+ * @param playlist el nombre de la playlist a ejecutar, ejemplo "/animales.playlist"
+ * @param ordenMode el tipo de reproduccion pudiendo ser
+ * 1, se ejecuta en orden desendente segun la playlist.
+ * 2, se ejecutan todos los archivos contenidos en el directorio principal de la SD en orden aleatorio.
+ * 3, se ejecutan todos los archivos contenidos en el directorio principal de la SD en el orden que la sd los acomoda.
+ * 4, se ejecutan los archivos de la playlist en orden aleatorio (no implementado).
+ */
 int run_sandsara(String playList, int ordenMode)
 {
     double component_1, component_2;
@@ -109,8 +133,9 @@ int run_sandsara(String playList, int ordenMode)
         errorCode = FileSara::getLineNumber(pListFile, playList, fileName);
         if (errorCode < 0)
         {
+            //playList no valida asi que regresa
             delay(1000);
-            return errorCode; //playList no valida
+            return errorCode;
         }
         if (!(ordenMode == 2) && (errorCode == 2 || errorCode == 3))
         {
@@ -179,6 +204,7 @@ int run_sandsara(String playList, int ordenMode)
                 errorCode = haloBt.checkBlueTooth();
                 if (errorCode == 10){
                     playListGlobal = "/" + haloBt.getPlaylist();
+                    romSetPlaylist(playListGlobal);
 #ifdef PROCESSING_SIMULATOR
                     Serial.println("finished");
 #endif
@@ -186,8 +212,7 @@ int run_sandsara(String playList, int ordenMode)
                 }
                 else if (errorCode == 20){
                     ordenModeGlobal = haloBt.getOrdenMode();
-                    Serial.print("Cambiar orden a: ");
-                    Serial.println(ordenModeGlobal);
+                    romSetOrdenMode(ordenModeGlobal);
 #ifdef PROCESSING_SIMULATOR
                     Serial.println("finished");
 #endif
@@ -221,3 +246,76 @@ int run_sandsara(String playList, int ordenMode)
     return 0;
 }
 
+//------------Guardar variables importantes en FLASH----
+#define ADDRESSPLAYLIST 0
+#define ADDRESSPOSITION 41
+#define ADDRESSORDENMODE 50
+
+#define MAX_CHARS_PLAYLIST 40
+
+int romSetPlaylist(String str){
+    if (str.charAt(0) == '/')
+    {
+        str.remove(0,1);
+    }
+    if (str.indexOf(".playlist") >= 0)
+    {
+        str.remove(str.indexOf(".playlist"));
+    }
+    if (str.length() > MAX_CHARS_PLAYLIST){
+        return -1;
+    }
+    int i = 0;
+    for ( ; i < str.length(); i++){
+        EEPROM.write(ADDRESSPLAYLIST + i, str.charAt(i));
+    }
+    EEPROM.write(ADDRESSPLAYLIST + i, '\0');
+    EEPROM.commit();
+    return 0;
+}
+
+String romGetPlaylist(){
+    String str = "/";
+    char chr;
+    for (int i = 0; i < MAX_CHARS_PLAYLIST; i++){
+        chr = EEPROM.read(ADDRESSPLAYLIST + i);
+        if (chr == '\0')
+        {
+            str.concat(".playlist");
+            return str;
+        }
+        str.concat( chr );
+    }
+    return "/";
+}
+
+int romSetOrdenMode(int ordenMode){
+    uint8_t Mode = ordenMode;
+    EEPROM.write(ADDRESSORDENMODE, Mode);
+    EEPROM.commit();
+    return 0;
+}
+
+int romGetOrdenMode(){
+    uint8_t ordenMode;
+    ordenMode = EEPROM.read(ADDRESSORDENMODE);
+    return ordenMode;
+}
+
+int romSetPosition(int pos){
+    uint8_t* p = (uint8_t* ) &pos;
+    for (int i = 0; i < sizeof(pos); i++){
+        EEPROM.write(ADDRESSPOSITION + i, *(p + i));
+    }
+    EEPROM.commit();
+    return 0;
+}
+
+int romGetPosition(){
+    int ordenMode;
+    uint8_t* p = (uint8_t* ) &ordenMode;
+    for (int i = 0; i < sizeof(ordenMode); i++){
+        *(p + i) = EEPROM.read(ADDRESSPOSITION + i);
+    }
+    return ordenMode;
+}
