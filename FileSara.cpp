@@ -795,3 +795,28 @@ int FileSara::creatListOfFiles(String fileName)
         }
     }
 }
+
+/**
+ * @brief calcula el numero de lineas de un archivo
+ * @param dir es la direccion en la sd del archivo, debe contener un '/', ejemplo "/archivo.thr".
+ * @return el numero de lineas que contiene el archivo
+ */
+int FileSara::numberOfLines(String dir){
+    File f;
+    int character, count = 1;
+    f = SD.open(dir);
+    if (!f){
+        return 0;
+    }
+    while(true)
+    {
+        character = f.read();
+        if (character == '\n'){
+            count += 1;
+        }
+        else if (character == -1){
+            break;
+        }
+    }
+    return count;
+}

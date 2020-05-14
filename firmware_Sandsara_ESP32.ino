@@ -106,6 +106,10 @@ int run_sandsara(String playList, int ordenMode)
     bool randomMode = true;
     String fileName;
 
+    numberOfFiles = FileSara::numberOfLines(playList);
+    Serial.print("Numero de archivos: ");
+    Serial.println(numberOfFiles);
+    
     if (ordenMode == 2)
     {
         numberOfFiles = FileSara::creatListOfFiles("/RANDOM.txt");
@@ -126,7 +130,7 @@ int run_sandsara(String playList, int ordenMode)
 #ifdef DEBUGGING_DATA
         Serial.println("Abrira el siguiente archivo disponible");
 #endif
-        if (ordenMode == 2)
+        if (ordenMode == 2 || ordenMode == 4)
         {
             pListFile = random(1, numberOfFiles + 1);
         }
@@ -137,7 +141,7 @@ int run_sandsara(String playList, int ordenMode)
             delay(1000);
             return errorCode;
         }
-        if (!(ordenMode == 2) && (errorCode == 2 || errorCode == 3))
+        if (!(ordenMode == 2 || ordenMode == 4) && (errorCode == 2 || errorCode == 3))
         {
             delay(1000);
             break;
@@ -253,6 +257,12 @@ int run_sandsara(String playList, int ordenMode)
 
 #define MAX_CHARS_PLAYLIST 40
 
+/**
+ * @brief actualiza el valor, en la ROM/FLASH, el nombre de la lista de reproduccion.
+ * @param str es la direccion del archivo de lista de reproduccion, ejemplo "/animales.playlist"
+ * @note unicamente guarda el nombre, ignorando '/' y ".playlist", ejemplo si str es "/animales.playlist" solo guarda "animales"
+ *       pero la funcion romGetPlaylist la devuelve como "/animales.playList" 
+ */
 int romSetPlaylist(String str){
     if (str.charAt(0) == '/')
     {
@@ -274,6 +284,11 @@ int romSetPlaylist(String str){
     return 0;
 }
 
+/**
+ * @brief recupera el nombre de la playlist guardada en rom
+ * @return la direccion del archivo, ejemplo "/animales.playlist"
+ * @note regresa siempre un nombre con terminacion ".playlist"
+ */
 String romGetPlaylist(){
     String str = "/";
     char chr;
@@ -289,6 +304,11 @@ String romGetPlaylist(){
     return "/";
 }
 
+/**
+ * @brief guarda el tipo de orden de reporduccion en la memoria rom
+ * @param ordenMode el valor que corresponde al orden de reproduccion que va a ser almacenado en ROM.
+ * @return 0
+ */
 int romSetOrdenMode(int ordenMode){
     uint8_t Mode = ordenMode;
     EEPROM.write(ADDRESSORDENMODE, Mode);
@@ -296,12 +316,21 @@ int romSetOrdenMode(int ordenMode){
     return 0;
 }
 
+/**
+ * @brief recupera el valor correspondiente al tipo de reporduccion guardado en la memoria ROM/FLASH.
+ * @return el valor correspondiente al tipo de orden de reporduccion guardado en la ROM/FLASH.
+ */
 int romGetOrdenMode(){
     uint8_t ordenMode;
     ordenMode = EEPROM.read(ADDRESSORDENMODE);
     return ordenMode;
 }
 
+/**
+ * @brief guarda, en la ROM/FLASH, la posicion en la que va la lista de reproduccion actual.
+ * @param pos es el la posicion en la que va la lista de reproduccion que se desea guardar en ROM/FLASH.
+ * @return 0 
+ */
 int romSetPosition(int pos){
     uint8_t* p = (uint8_t* ) &pos;
     for (int i = 0; i < sizeof(pos); i++){
@@ -311,6 +340,10 @@ int romSetPosition(int pos){
     return 0;
 }
 
+/**
+ * @brief recupera, de la ROM/FLASH, la ultima posicion guardada en la que iba la lista de reproduccion.
+ * @return la ultima posicion guardada, en ROM/FLASH, en la que iba la lista de reproduccion. 
+ */
 int romGetPosition(){
     int ordenMode;
     uint8_t* p = (uint8_t* ) &ordenMode;
