@@ -71,6 +71,8 @@ class MoveSara {
         double getCurrentAngle();
         void setZCurrent(double );
         void setThetaCurrent(double );
+        double getZCurrent();
+        double getThetaCurrent();
         static void rotate(double& ,double& ,double );
         static double zPolar(double , double );
         static double thetaPolar(double , double );

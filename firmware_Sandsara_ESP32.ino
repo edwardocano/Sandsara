@@ -224,27 +224,12 @@ int run_sandsara(String playList, int ordenMode)
                 }
                 //revisar bluetooth
                 errorCode = haloBt.checkBlueTooth();
+                executeCode(errorCode);
                 if (errorCode == 10){
-                    playListGlobal = "/" + haloBt.getPlaylist();
-                    romSetPlaylist(playListGlobal);
-#ifdef PROCESSING_SIMULATOR
-                    Serial.println("finished");
-#endif
                     return 1; //cambio de playlist
                 }
                 else if (errorCode == 20){
-                    ordenModeGlobal = haloBt.getOrdenMode();
-                    romSetOrdenMode(ordenModeGlobal);
-#ifdef PROCESSING_SIMULATOR
-                    Serial.println("finished");
-#endif
                     return 2; //cambio de ordenMode
-                }
-                else if (errorCode == 30){
-                    ledModeGlobal = haloBt.getLedMode();
-                    Serial.print("ledmode = ");
-                    Serial.println(ledModeGlobal);
-                    Neo_Pixel(ledModeGlobal);
                 }
                 //dependiendo del tipo de archivo se ejecuta la funcion correspondiente de movimiento.
                 if (file.fileType == 1 || file.fileType == 3)
@@ -254,7 +239,46 @@ int run_sandsara(String playList, int ordenMode)
                 }
                 else if (file.fileType == 2)
                 {
-                    halo.movePolarTo(component_1, component_2 - couplingAngle);
+                    double zNext = component_1;
+                    double thetaNext = component_2 - couplingAngle;
+                    double thetaCurrent = halo.getThetaCurrent();
+                    double zCurrent = halo.getZCurrent();
+                    double slicesFactor;
+                    long slices;
+                    double distancePoints = 100, deltaTheta, deltaZ;
+                    double thetaAuxiliar, zAuxliar, xAux, yAux;
+                    int overIterates = 0;
+                    deltaTheta = thetaNext - thetaCurrent;
+                    deltaZ = zNext - zCurrent;
+                    slicesFactor = halo.arcLength(deltaZ, deltaTheta, zCurrent);
+                    slices = slicesFactor;
+                    if (slices < 1)
+                    {
+                        slices = 1;
+                    }
+                    deltaTheta = (thetaNext - thetaCurrent) / slices;
+                    deltaZ = (zNext - zCurrent) / slices;
+                    for (long i = 1; i < slices; i++)
+                    {
+                        thetaAuxiliar = thetaCurrent + deltaTheta * double(i);
+                        zAuxliar = zCurrent + deltaZ * double(i);
+                        xAux = zAuxliar * cos(thetaAuxiliar);
+                        yAux = zAuxliar * sin(thetaAuxiliar);
+                        halo.moveTo(xAux, yAux);
+                        errorCode = haloBt.checkBlueTooth();
+                        executeCode(errorCode);
+                        if (errorCode == 10){
+                            return 1; //cambio de playlist
+                        }
+                        else if (errorCode == 20){
+                            return 2; //cambio de ordenMode
+                        }
+                    }
+                    xAux = zNext * cos(thetaNext);
+                    yAux = zNext * sin(thetaNext);
+                    halo.moveTo(xAux, yAux);
+                    halo.setThetaCurrent(thetaNext);
+                    halo.setZCurrent(zNext);
                 }
                 else
                 {
@@ -272,6 +296,30 @@ int run_sandsara(String playList, int ordenMode)
         pListFile += 1;
     }
     return 0;
+}
+
+//===========================
+void executeCode(int errorCode){
+    if (errorCode == 10){
+        playListGlobal = "/" + haloBt.getPlaylist();
+        romSetPlaylist(playListGlobal);
+#ifdef PROCESSING_SIMULATOR
+        Serial.println("finished");
+#endif
+    }
+    else if (errorCode == 20){
+        ordenModeGlobal = haloBt.getOrdenMode();
+        romSetOrdenMode(ordenModeGlobal);
+#ifdef PROCESSING_SIMULATOR
+        Serial.println("finished");
+#endif
+    }
+    else if (errorCode == 30){
+        ledModeGlobal = haloBt.getLedMode();
+        Serial.print("ledmode = ");
+        Serial.println(ledModeGlobal);
+        Neo_Pixel(ledModeGlobal);
+    }
 }
 
 //------------Guardar variables importantes en FLASH----------------

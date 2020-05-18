@@ -31,22 +31,6 @@ void MoveSara::movePolarTo(double zNext, double thetaNext)
     double distancePoints = 100, deltaTheta, deltaZ;
     double thetaAuxiliar, zAuxliar, xAux, yAux;
     int overIterates = 0;
-    /*while (!(distancePoints > 0.9 && distancePoints < 1.1)){
-    deltaTheta = (thetaNext - thetaCurrent) / slicesFactor;
-    deltaZ = (zNext - zCurrent) / slicesFactor;
-    thetaAuxiliar = thetaCurrent + deltaTheta;
-    zAuxliar = zCurrent + deltaZ;
-    distancePoints = polarModule(zCurrent, thetaCurrent, zAuxliar, thetaAuxiliar);
-    slicesFactor *= distancePoints;
-    overIterates += 1;
-    if (slicesFactor == 0){
-      break;
-    }
-    if (overIterates > 10){
-      break;
-    }
-  }
-  slices = slicesFactor;*/
     deltaTheta = thetaNext - thetaCurrent;
     deltaZ = zNext - zCurrent;
     slicesFactor = arcLength(deltaZ, deltaTheta, zCurrent);
@@ -188,6 +172,24 @@ double MoveSara::getCurrentModule()
 double MoveSara::getCurrentAngle()
 {
     return thetaPolar(x_current, y_current);
+}
+
+//==================funciones Get======================
+
+/**
+ * @brief regresa el miembro privado zCurrent
+ * @return zCurrent
+ */
+double MoveSara::getZCurrent(){
+    return zCurrent;
+}
+
+/**
+ * @brief regresa el miembro privado thetaCurrent
+ * @return thetaCurrent
+ */
+double MoveSara::getThetaCurrent(){
+    return thetaCurrent;
 }
 
 //Configuration Methods-----------------------------------------------------------------------
