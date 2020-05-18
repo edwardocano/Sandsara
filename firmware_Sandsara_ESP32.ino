@@ -1,6 +1,7 @@
 #include "FileSara.h"
 #include "MoveSara.h"
 #include "BlueSara.h"
+#include <Adafruit_NeoPixel.h>
 
 #include "FS.h"
 #include "SD.h"
@@ -22,6 +23,14 @@ MoveSara halo(16);
 BlueSara haloBt;
 
 int errorCode;
+
+//Neopixel==========================================
+#define PIN 15 
+#define NUMPIXELS 30 // numero de pixels en la tira
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+#define DELAYVAL 1
+int ledModeGlobal;
+//==================================================
 
 void setup()
 {
@@ -62,6 +71,9 @@ void setup()
         playListGlobal = "/playlist.playlist";
         ordenModeGlobal = 1;
     }
+//======Neopixel=============================================
+    pixels.begin(); // Inicializa NeoPixel
+//===========================================================
 }
 
 void loop()
@@ -80,6 +92,12 @@ void loop()
     else if (errorCode == 20){
         ordenModeGlobal = haloBt.getOrdenMode();
         romSetOrdenMode(ordenModeGlobal);
+    }
+    else if (errorCode == 30){
+        ledModeGlobal = haloBt.getLedMode();
+        Serial.print("ledmode = ");
+        Serial.println(ledModeGlobal);
+        Neo_Pixel(ledModeGlobal);
     }
     //root.rewindDirectory();
     delay(3000);
@@ -222,6 +240,12 @@ int run_sandsara(String playList, int ordenMode)
 #endif
                     return 2; //cambio de ordenMode
                 }
+                else if (errorCode == 30){
+                    ledModeGlobal = haloBt.getLedMode();
+                    Serial.print("ledmode = ");
+                    Serial.println(ledModeGlobal);
+                    Neo_Pixel(ledModeGlobal);
+                }
                 //dependiendo del tipo de archivo se ejecuta la funcion correspondiente de movimiento.
                 if (file.fileType == 1 || file.fileType == 3)
                 {
@@ -250,7 +274,7 @@ int run_sandsara(String playList, int ordenMode)
     return 0;
 }
 
-//------------Guardar variables importantes en FLASH----
+//------------Guardar variables importantes en FLASH----------------
 #define ADDRESSPLAYLIST 0
 #define ADDRESSPOSITION 41
 #define ADDRESSORDENMODE 50
@@ -351,4 +375,44 @@ int romGetPosition(){
         *(p + i) = EEPROM.read(ADDRESSPOSITION + i);
     }
     return ordenMode;
+}
+
+//------------------------------Leds------------------------
+//----------------------------------------------------------
+void Neo_Pixel(int color)
+{
+
+    for (int i = 0; i < NUMPIXELS; i++)
+    { // Va recorriendo cada pixel
+
+        if (color == 1) //se alterna el color verde y rojo en los leds, uso el operador modulo para alternar los leds
+        {
+            if ((i % 2) == 0)
+            {
+                pixels.setPixelColor(i, pixels.Color(0, 150, 0));
+                pixels.show();
+            }
+            else
+            {
+                pixels.setPixelColor(i, pixels.Color(255, 0, 0)); //i maneja el led a encender pixel.Color permite configurar el color
+                pixels.show();                                    // Envia la señal al led que tomara el color RGB seleccionado
+            }
+        }
+        if (color == 2) //pone todos los leds en color rojo
+        {
+            pixels.setPixelColor(i, pixels.Color(255, 0, 0)); //i maneja el led a encender pixel.Color permite configurar el color
+            pixels.show();                                    // Envia la señal al led que tomara el color RGB seleccionado
+        }
+        if (color == 3) //los leds toman colores aleatorios
+        {
+            pixels.setPixelColor(i, rainbow()); //i maneja el led a encender
+            pixels.show();                      // Envia la señal al led que tomara el color RGB seleccionado
+        }
+    }
+    pixels.clear(); //
+}
+//Función para leds de color aleatorio
+uint32_t rainbow()
+{
+    return pixels.Color(random(0, 255), random(0, 255), random(0, 255));
 }

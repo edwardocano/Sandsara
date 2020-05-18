@@ -50,6 +50,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  *  0, no hay informacion disponible del bluetooth.
  * 10, se solicito un cambio de playlist, para recuperar el nombre llamar a la funcion getPlaylist().
  * 20, se solicito un cambio en ordenMode, para recuperar el numero llamar a la funcion getOrdenMode().
+ * 30, se solicito un cambio en ledMode, para recueperar el numero llamar a la funcion getLedMode().
  * -1, no se reconoce el comando enviado.
  * -2, se quiso enviar un numero de bytes incorrecto.
  * -3, se excedio el tiempo de respuesta del transmisor en la funcion readLine (depende de la variable timeOutBt, medida en milisegundos)
@@ -58,6 +59,10 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * -7, no coincide checksum.
  * -8, no se pudo crear el archivo.
  * -9, se han leido mas de X numero de caracteres sin encontrar un '\n' en la funcion readLine()
+ * @note interpreta los siguientes mensajes
+ * code01, significa que va a transferer un archivo.
+ * code02, significa que se esta solicitando el cambio de playlist.
+ * code03, significa que se esta solicitando el cambio de orden de reproduccion.
  */
 int BlueSara::checkBlueTooth()
 {
@@ -72,10 +77,10 @@ int BlueSara::checkBlueTooth()
             writeBtln(String(codeError));
             return codeError;
         }
-        if (line.indexOf("transferir") >= 0)
+        if (line.indexOf("code01") >= 0)
         {
             //SerialBT.println("request=name");
-            writeBtln("request=name");
+            writeBtln("request-name");
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -201,9 +206,9 @@ int BlueSara::checkBlueTooth()
                 }
             }
         }
-        else if (line.indexOf("changePlaylist") >= 0)
+        else if (line.indexOf("code02") >= 0)
         {
-            writeBtln("request= new playList");
+            writeBtln("request-playList");
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -215,9 +220,9 @@ int BlueSara::checkBlueTooth()
             writeBtln("ok");
             return 10; //Se solicita el cambio de playlista
         }
-        else if (line.indexOf("changeOrdenMode") >= 0)
+        else if (line.indexOf("code03") >= 0)
         {
-            writeBtln("request = new ordenMode");
+            writeBtln("request-ordenMode");
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -228,6 +233,20 @@ int BlueSara::checkBlueTooth()
             ordenMode = line.toInt();
             writeBtln("ok");
             return 20; //Se solicita el cambio de playlista
+        }
+        else if (line.indexOf("code04") >= 0)
+        {
+            writeBtln("request-ledmode");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            ledMode = line.toInt();
+            writeBtln("ok");
+            return 30; //Se solicita el cambio de leds
         }
         else
         {
@@ -240,6 +259,13 @@ int BlueSara::checkBlueTooth()
     return 0;
 }
 
+/**
+ * @brief recupera el ultimo modo de encendido de los leds (un entero) que se recibio por bluetooth.
+ * @return el ultimo modo de encendido de los leds (un entero) recibio por bluetooth.
+ */
+int BlueSara::getLedMode(){
+    return ledMode;
+}
 /**
  * @brief recupera el nombre de la ultima playlist solicitada a ser reproducida.
  * @return el nombre de la ultima playlist que se solicito por bluetooth.

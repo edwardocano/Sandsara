@@ -31,6 +31,7 @@ class BlueSara {
         //datos enviados por bluetooth
         String playList = "";
         int ordenMode;
+        int ledMode;
     public:
         BlueSara();
         int init(String );
@@ -42,6 +43,7 @@ class BlueSara {
         static String GetMD5String(uint8_t *msg, int mlen);
         String getPlaylist();
         int getOrdenMode();
+        int getLedMode();
 };
 
 #endif
