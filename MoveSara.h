@@ -24,6 +24,7 @@
 
 #include "AccelStepper.h"
 #include "MultiStepper.h"
+#include "BlueSara.h"
 
 /**
  * @class MoveSara
@@ -47,7 +48,7 @@ class MoveSara {
         double y_current;
         double q1_current;
         double q2_current;
-        
+
     private:
         AccelStepper stepper1;
         AccelStepper stepper2;
@@ -78,13 +79,13 @@ class MoveSara {
         static double thetaPolar(double , double );
         static double normalizeAngle(double );
         static double arcLength(double ,double , double);
+        double module(double , double , double , double );
     private:
         void moveInterpolateTo(double , double , double );
         void moveSteps(long, long, double);
         //mathematics methods
         long calculate_steps(double , double );
         void calculate_line_equations();
-        double module(double , double , double , double );
         double polarModule(double , double , double , double );
         double dk_x(double , double ) ;
         double dk_y(double , double ) ;

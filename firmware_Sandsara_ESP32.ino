@@ -114,7 +114,7 @@ void loop()
  */
 int run_sandsara(String playList, int ordenMode)
 {
-    double component_1, component_2;
+    double component_1, component_2, distance;
     double _z, _theta;
     double theta_aux;
     double x_aux, y_aux;
@@ -209,6 +209,7 @@ int run_sandsara(String playList, int ordenMode)
                 halo.setZCurrent(component_1);
                 halo.setThetaCurrent(component_2 - couplingAngle);
             }
+
             //parara hasta que el codigo de error del archivo sea diferente de cero.
             while (true)
             {
@@ -235,7 +236,18 @@ int run_sandsara(String playList, int ordenMode)
                 if (file.fileType == 1 || file.fileType == 3)
                 {
                     MoveSara::rotate(component_1, component_2, -couplingAngle);
-                    halo.moveTo(component_1, component_2);
+                    distance = halo.module(component_1, component_2, halo.x_current, halo.y_current);
+                    if (distance > 1.1)
+                    {
+                        errorCode = moveInterpolateTo(component_1, component_2, distance);
+                        if (errorCode != 0){
+                            return errorCode;
+                        }
+                    }
+                    else
+                    {
+                        halo.moveTo(component_1, component_2);
+                    }
                 }
                 else if (file.fileType == 2)
                 {
@@ -264,14 +276,25 @@ int run_sandsara(String playList, int ordenMode)
                         zAuxliar = zCurrent + deltaZ * double(i);
                         xAux = zAuxliar * cos(thetaAuxiliar);
                         yAux = zAuxliar * sin(thetaAuxiliar);
-                        halo.moveTo(xAux, yAux);
-                        errorCode = haloBt.checkBlueTooth();
-                        executeCode(errorCode);
-                        if (errorCode == 10){
-                            return 1; //cambio de playlist
+                        distance = halo.module(xAux, yAux, halo.x_current, halo.y_current);
+                        if (distance > 1.1)
+                        {
+                            errorCode = moveInterpolateTo(xAux, yAux, distance);
+                            if (errorCode != 0){
+                                return errorCode;
+                            }
                         }
-                        else if (errorCode == 20){
-                            return 2; //cambio de ordenMode
+                        else
+                        {
+                            halo.moveTo(xAux, yAux);
+                            errorCode = haloBt.checkBlueTooth();
+                            executeCode(errorCode);
+                            if (errorCode == 10){
+                                return 1; //cambio de playlist
+                            }
+                            else if (errorCode == 20){
+                                return 2; //cambio de ordenMode
+                            }
                         }
                     }
                     xAux = zNext * cos(thetaNext);
@@ -298,6 +321,39 @@ int run_sandsara(String playList, int ordenMode)
     return 0;
 }
 
+//=========================================================
+/**
+ * @brief Se usa esta funcion para avanzar de la posicion actual a un punto nuevo en linea recta por medio de puntos equidistantes a un 1 mm.
+ * @param x coordenada en el eje x, medida en milimetros, a la que se desea avanzar.
+ * @param y coordenada en el eje y, medida en milimetros, a la que se desea avanzar.
+ * @param distance es la distancia, medida en milimetros, entre el punto actual y el punto al que se desea avanzar.
+ * @return un codigo de error referente al bluetooth.
+ */
+int moveInterpolateTo(double x, double y, double distance)
+{
+    double alpha = atan2(y - halo.y_current, x - halo.x_current);
+    double delta_x, delta_y;
+    double x_aux = halo.x_current, y_aux = halo.y_current;
+    delta_x = cos(alpha);
+    delta_y = sin(alpha);
+    int intervals = distance;
+    for (int i = 1; i <= intervals; i++)
+    {
+        x_aux += delta_x;
+        y_aux += delta_y;
+        halo.moveTo(x_aux, y_aux);
+        errorCode = haloBt.checkBlueTooth();
+        executeCode(errorCode);
+        if (errorCode == 10){
+            return 1; //cambio de playlist
+        }
+        else if (errorCode == 20){
+            return 2; //cambio de ordenMode
+        }
+    }
+    halo.moveTo(x, y);
+    return 0;
+}
 //===========================
 void executeCode(int errorCode){
     if (errorCode == 10){
