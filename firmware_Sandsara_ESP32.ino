@@ -47,10 +47,14 @@ extern CRGBPalette16 myRedWhiteBluePalette;
 extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
 
 unsigned long timeLeds;
-int periodLeds = 300;
+int periodLeds = 20;
 uint8_t startIndex = 0;
 
 //==================================================
+
+//==========Thred=========
+TaskHandle_t Task1;
+//========================
 
 void setup()
 {
@@ -92,8 +96,6 @@ void setup()
     root = SD.open("/");
     delay(1000);
     //============================================================
-
-    //=========New Task==============
     
 #ifdef PROCESSING_SIMULATOR
     Serial.println("inicia");
@@ -115,6 +117,19 @@ void setup()
         ordenModeGlobal = 1;
     }
     //=====================================================================================
+    Serial.print("Task1 running on core ");
+    Serial.println(xPortGetCoreID());
+    //======new task==========
+    xTaskCreatePinnedToCore(
+                    ledsFunc,   /* Task function. */
+                    "Task1",     /* name of task. */
+                    10000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    1,           /* priority of the task */
+                    &Task1,      /* Task handle to keep track of created task */
+                    0);          /* pin task to core 0 */                  
+    delay(500); 
+    //===============================================
 }
 
 void loop()
@@ -273,7 +288,7 @@ int run_sandsara(String playList, int ordenMode)
                 else if (errorCode == 20){
                     return 2; //cambio de ordenMode
                 }
-                ledsFunc();
+                //ledsFunc();
                 //dependiendo del tipo de archivo se ejecuta la funcion correspondiente de movimiento.
                 if (file.fileType == 1 || file.fileType == 3)
                 {
@@ -319,7 +334,7 @@ int run_sandsara(String playList, int ordenMode)
                         xAux = zAuxliar * cos(thetaAuxiliar);
                         yAux = zAuxliar * sin(thetaAuxiliar);
                         distance = halo.module(xAux, yAux, halo.x_current, halo.y_current);
-                        ledsFunc();
+                        //ledsFunc();
                         if (distance > 1.1)
                         {
                             errorCode = moveInterpolateTo(xAux, yAux, distance);
@@ -382,7 +397,7 @@ int moveInterpolateTo(double x, double y, double distance)
     int intervals = distance;
     for (int i = 1; i <= intervals; i++)
     {
-        ledsFunc();
+        //ledsFunc();
         x_aux += delta_x;
         y_aux += delta_y;
         halo.moveTo(x_aux, y_aux);
@@ -671,12 +686,14 @@ const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
     CRGB::Black
 };
 
-void ledsFunc(){
-    if (millis() - timeLeds> periodLeds){
-        Serial.println(millis() - timeLeds);
-        FillLEDsFromPaletteColors(startIndex);
-        FastLED.show();
-        startIndex += 3;
-        timeLeds = millis();
-    }
+void ledsFunc( void * pvParameters ){
+    for(;;){
+        if (millis() - timeLeds> periodLeds){
+            Serial.println(millis() - timeLeds);
+            FillLEDsFromPaletteColors(startIndex);
+            FastLED.show();
+            startIndex += 3;
+            timeLeds = millis();
+        }
+    } 
 }

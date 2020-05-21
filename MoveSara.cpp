@@ -3,7 +3,7 @@
 #include "MultiStepper.h"
 #include "BlueSara.h"
 
-extern void ledsFunc();
+//extern void ledsFunc();
 double m[no_picos * 2], b[no_picos * 2];
 
 /**
@@ -117,7 +117,7 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance)
         p[1] += delta2;
         pL[0] = p[0];
         pL[1] = p[1];
-        ledsFunc();
+        //ledsFunc();
         steppers.moveTo(pL);
         steppers.runSpeedToPosition();
     }
