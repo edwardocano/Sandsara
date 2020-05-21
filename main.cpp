@@ -1,8 +1,10 @@
+#include <Arduino.h>
 #include "FileSara.h"
 #include "MoveSara.h"
 #include "BlueSara.h"
 #include <Adafruit_NeoPixel.h>
 #include <FastLED.h>
+#include "CalibMotor.h"
 
 #include "FS.h"
 #include "SD.h"
@@ -25,6 +27,25 @@ BlueSara haloBt;
 
 int errorCode;
 
+//=================prototipos de funciones=========
+int moveInterpolateTo(double x, double y, double distance);
+void executeCode(int );
+int romSetPlaylist(String );
+String romGetPlaylist();
+int romSetOrdenMode(int );
+int romGetOrdenMode();
+int romSetPosition(int );
+int romGetPosition();
+void Neo_Pixel(int );
+uint32_t rainbow();
+void FillLEDsFromPaletteColors( uint8_t );
+void ChangePalettePeriodically();
+void SetupTotallyRandomPalette();
+void SetupBlackAndWhiteStripedPalette();
+void SetupPurpleAndGreenPalette();
+void ledsFunc( void * );
+int run_sandsara(String ,int );
+//=====================================
 //=============Variable leds========================
 //Neopixel==========================================
 #define PIN 15 
@@ -56,12 +77,16 @@ uint8_t startIndex = 0;
 TaskHandle_t Task1;
 //========================
 
+//========Calibracion=====
+CalibMotor haloCalib;
+//========================
+
 void setup()
 {
     //=====Configurar fastled=======================
      delay( 3000 ); // power-up safety delay
     FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
-    FastLED.setBrightness(  BRIGHTNESS );
+    FastLED.setBrightness( BRIGHTNESS );
     
     currentPalette = RainbowColors_p;
     currentBlending = LINEARBLEND;
@@ -74,6 +99,11 @@ void setup()
     //=====Configurar Serial========================
     Serial.begin(115200);
     //==============================================
+    
+    //==========Calibrar=========
+    haloCalib.init();
+    haloCalib.start();
+    //================
 
     //====Configure the halo========================
     halo.init();
