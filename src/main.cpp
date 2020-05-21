@@ -48,13 +48,13 @@ int run_sandsara(String ,int );
 //=====================================
 //=============Variable leds========================
 //Neopixel==========================================
-#define PIN 15 
+#define PIN 15
 #define NUMPIXELS 30 // numero de pixels en la tira
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 #define DELAYVAL 50
 int ledModeGlobal;
 
-#define LED_PIN     15
+#define LED_PIN     32
 #define NUM_LEDS    30
 #define BRIGHTNESS  64
 #define LED_TYPE    WS2812B
