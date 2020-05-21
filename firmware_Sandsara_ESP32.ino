@@ -2,6 +2,7 @@
 #include "MoveSara.h"
 #include "BlueSara.h"
 #include <Adafruit_NeoPixel.h>
+#include <FastLED.h>
 
 #include "FS.h"
 #include "SD.h"
@@ -24,21 +25,58 @@ BlueSara haloBt;
 
 int errorCode;
 
+//=============Variable leds========================
 //Neopixel==========================================
 #define PIN 15 
 #define NUMPIXELS 30 // numero de pixels en la tira
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-#define DELAYVAL 1
+#define DELAYVAL 50
 int ledModeGlobal;
+
+#define LED_PIN     15
+#define NUM_LEDS    30
+#define BRIGHTNESS  64
+#define LED_TYPE    WS2812B
+#define COLOR_ORDER GRB
+CRGB leds[NUM_LEDS];
+
+CRGBPalette16 currentPalette;
+TBlendType    currentBlending;
+
+extern CRGBPalette16 myRedWhiteBluePalette;
+extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
+
+unsigned long timeLeds;
+int periodLeds = 300;
+uint8_t startIndex = 0;
+
 //==================================================
 
 void setup()
 {
+    //=====Configurar fastled=======================
+     delay( 3000 ); // power-up safety delay
+    FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+    FastLED.setBrightness(  BRIGHTNESS );
+    
+    currentPalette = RainbowColors_p;
+    currentBlending = LINEARBLEND;
+    //==============================================
+
+    //======Neopixel=============================================
+    //pixels.begin(); // Inicializa NeoPixel
+    //===========================================================
+    
+    //=====Configurar Serial========================
     Serial.begin(115200);
-    // Configure the halo
+    //==============================================
+
+    //====Configure the halo========================
     halo.init();
     haloBt.init("Halo");
+    //==============================================
 
+    //=====Inicializar SD===========================================
     if (!SD.begin())
     {
         Serial.println("Card failed, or not present");
@@ -53,11 +91,14 @@ void setup()
     }
     root = SD.open("/");
     delay(1000);
+    //============================================================
 
+    //=========New Task==============
+    
 #ifdef PROCESSING_SIMULATOR
     Serial.println("inicia");
 #endif
-    //recuperar valores de playlist y ordenMode
+    //====recuperar valores de playlist y ordenMode===============
     EEPROM.begin(EEPROM_SIZE);
     delay(500);
     playListGlobal = romGetPlaylist();
@@ -66,14 +107,14 @@ void setup()
     Serial.println(playListGlobal);
     Serial.print("ordenMode guardado: ");
     Serial.println(ordenModeGlobal);
-    //si existe el archivos llamado playlist.playlist se ejecutara esa playlist
+    //============================================================
+
+    //=====si existe el archivos llamado playlist.playlist se ejecutara esa playlist=======
     if (SD.exists("/playlist.playlist")){
         playListGlobal = "/playlist.playlist";
         ordenModeGlobal = 1;
     }
-//======Neopixel=============================================
-    pixels.begin(); // Inicializa NeoPixel
-//===========================================================
+    //=====================================================================================
 }
 
 void loop()
@@ -97,7 +138,7 @@ void loop()
         ledModeGlobal = haloBt.getLedMode();
         Serial.print("ledmode = ");
         Serial.println(ledModeGlobal);
-        Neo_Pixel(ledModeGlobal);
+        //Neo_Pixel(ledModeGlobal);
     }
     //root.rewindDirectory();
     delay(3000);
@@ -198,7 +239,7 @@ int run_sandsara(String playList, int ordenMode)
             startFileAngle = MoveSara::normalizeAngle(startFileAngle);
             startRobotAngle = halo.getCurrentAngle();
             couplingAngle = startFileAngle - startRobotAngle;
-            // si es thr, se guardan los valores del primer punto para que tenga referencia de donde empezar a moverse.
+            //si es thr, se guardan los valores del primer punto para que tenga referencia de donde empezar a moverse.
             if (file.fileType == 2)
             {
                 working_status = file.getNextComponents(&component_1, &component_2);
@@ -232,6 +273,7 @@ int run_sandsara(String playList, int ordenMode)
                 else if (errorCode == 20){
                     return 2; //cambio de ordenMode
                 }
+                ledsFunc();
                 //dependiendo del tipo de archivo se ejecuta la funcion correspondiente de movimiento.
                 if (file.fileType == 1 || file.fileType == 3)
                 {
@@ -277,6 +319,7 @@ int run_sandsara(String playList, int ordenMode)
                         xAux = zAuxliar * cos(thetaAuxiliar);
                         yAux = zAuxliar * sin(thetaAuxiliar);
                         distance = halo.module(xAux, yAux, halo.x_current, halo.y_current);
+                        ledsFunc();
                         if (distance > 1.1)
                         {
                             errorCode = moveInterpolateTo(xAux, yAux, distance);
@@ -339,6 +382,7 @@ int moveInterpolateTo(double x, double y, double distance)
     int intervals = distance;
     for (int i = 1; i <= intervals; i++)
     {
+        ledsFunc();
         x_aux += delta_x;
         y_aux += delta_y;
         halo.moveTo(x_aux, y_aux);
@@ -374,7 +418,7 @@ void executeCode(int errorCode){
         ledModeGlobal = haloBt.getLedMode();
         Serial.print("ledmode = ");
         Serial.println(ledModeGlobal);
-        Neo_Pixel(ledModeGlobal);
+        //Neo_Pixel(ledModeGlobal);
     }
 }
 
@@ -481,8 +525,8 @@ int romGetPosition(){
     return ordenMode;
 }
 
-//------------------------------Leds------------------------
-//----------------------------------------------------------
+//=======================================Leds========================================
+//===================================================================================
 void Neo_Pixel(int color)
 {
 
@@ -519,4 +563,120 @@ void Neo_Pixel(int color)
 uint32_t rainbow()
 {
     return pixels.Color(random(0, 255), random(0, 255), random(0, 255));
+}
+
+//====================Libreria fastled==========================
+void FillLEDsFromPaletteColors( uint8_t colorIndex)
+{
+    uint8_t brightness = 255;
+    
+    for( int i = 0; i < NUM_LEDS; i++) {
+        leds[i] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
+        colorIndex += 3;
+    }
+}
+
+
+// There are several different palettes of colors demonstrated here.
+//
+// FastLED provides several 'preset' palettes: RainbowColors_p, RainbowStripeColors_p,
+// OceanColors_p, CloudColors_p, LavaColors_p, ForestColors_p, and PartyColors_p.
+//
+// Additionally, you can manually define your own color palettes, or you can write
+// code that creates color palettes on the fly.  All are shown here.
+
+void ChangePalettePeriodically()
+{
+    uint8_t secondHand = (millis() / 1000) % 60;
+    static uint8_t lastSecond = 99;
+    
+    if( lastSecond != secondHand) {
+        lastSecond = secondHand;
+        if( secondHand ==  0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
+        if( secondHand == 10)  { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;  }
+        if( secondHand == 15)  { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND; }
+        if( secondHand == 20)  { SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND; }
+        if( secondHand == 25)  { SetupTotallyRandomPalette();              currentBlending = LINEARBLEND; }
+        if( secondHand == 30)  { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND; }
+        if( secondHand == 35)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
+        if( secondHand == 40)  { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND; }
+        if( secondHand == 45)  { currentPalette = PartyColors_p;           currentBlending = LINEARBLEND; }
+        if( secondHand == 50)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = NOBLEND;  }
+        if( secondHand == 55)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND; }
+    }
+}
+
+// This function fills the palette with totally random colors.
+void SetupTotallyRandomPalette()
+{
+    for( int i = 0; i < 16; i++) {
+        currentPalette[i] = CHSV( random8(), 255, random8());
+    }
+}
+
+// This function sets up a palette of black and white stripes,
+// using code.  Since the palette is effectively an array of
+// sixteen CRGB colors, the various fill_* functions can be used
+// to set them up.
+void SetupBlackAndWhiteStripedPalette()
+{
+    // 'black out' all 16 palette entries...
+    fill_solid( currentPalette, 16, CRGB::Black);
+    // and set every fourth one to white.
+    currentPalette[0] = CRGB::White;
+    currentPalette[4] = CRGB::White;
+    currentPalette[8] = CRGB::White;
+    currentPalette[12] = CRGB::White;
+    
+}
+
+// This function sets up a palette of purple and green stripes.
+void SetupPurpleAndGreenPalette()
+{
+    CRGB purple = CHSV( HUE_PURPLE, 255, 255);
+    CRGB green  = CHSV( HUE_GREEN, 255, 255);
+    CRGB black  = CRGB::Black;
+    
+    currentPalette = CRGBPalette16(
+                                   green,  green,  black,  black,
+                                   purple, purple, black,  black,
+                                   green,  green,  black,  black,
+                                   purple, purple, black,  black );
+}
+
+
+// This example shows how to set up a static color palette
+// which is stored in PROGMEM (flash), which is almost always more
+// plentiful than RAM.  A static PROGMEM palette like this
+// takes up 64 bytes of flash.
+const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
+{
+    CRGB::Red,
+    CRGB::Gray, // 'white' is too bright compared to red and blue
+    CRGB::Blue,
+    CRGB::Black,
+    
+    CRGB::Red,
+    CRGB::Gray,
+    CRGB::Blue,
+    CRGB::Black,
+    
+    CRGB::Red,
+    CRGB::Red,
+    CRGB::Gray,
+    CRGB::Gray,
+    CRGB::Blue,
+    CRGB::Blue,
+    CRGB::Black,
+    CRGB::Black
+};
+
+void ledsFunc(){
+    if (millis() - timeLeds> periodLeds){
+        Serial.println(millis() - timeLeds);
+        FillLEDsFromPaletteColors(startIndex);
+        FastLED.show();
+        startIndex += 3;
+        timeLeds = millis();
+    }
 }

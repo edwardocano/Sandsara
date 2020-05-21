@@ -1,13 +1,13 @@
 #ifndef _MOVESARA_H_
 #define _MOVESARA_H_
 
-#define PROCESSING_SIMULATOR
+//#define PROCESSING_SIMULATOR
 //#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
 //#define DISABLE_MOTORS
 
 //Speed
-#define millimeterSpeed 25;
+#define millimeterSpeed 1;
 //variables of the geometry
 #define l1 76
 #define l2 76
