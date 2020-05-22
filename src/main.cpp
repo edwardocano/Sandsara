@@ -16,6 +16,9 @@
 
 #define EEPROM_SIZE 512
 
+extern TMC2209Stepper driver;
+extern TMC2209Stepper driver2;
+
 File myFile;
 File root;
 //variables para ordenar secuencia de archivos
@@ -78,11 +81,27 @@ TaskHandle_t Task1;
 //========================
 
 //========Calibracion=====
-//CalibMotor haloCalib;
+CalibMotor haloCalib;
 //========================
 
 void setup()
 {
+    //=====Configurar Serial========================
+    Serial.begin(115200);
+    //==============================================
+    
+    //==========Calibrar=========
+    Serial.println("init func");
+    haloCalib.init();
+    Serial.println("start func");
+    haloCalib.start();
+    Serial.println("Salio de start");
+    pinMode(EN_PIN, OUTPUT);
+    pinMode(EN_PIN2, OUTPUT);
+    digitalWrite(EN_PIN, LOW);
+    digitalWrite(EN_PIN2, LOW);
+    //================
+
     //=====Configurar fastled=======================
      delay( 3000 ); // power-up safety delay
     FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
@@ -96,15 +115,7 @@ void setup()
     //pixels.begin(); // Inicializa NeoPixel
     //===========================================================
     
-    //=====Configurar Serial========================
-    Serial.begin(115200);
-    //==============================================
     
-    //==========Calibrar=========
-    //haloCalib.init();
-    //haloCalib.start();
-    //================
-
     //====Configure the halo========================
     halo.init();
     haloBt.init("Halo");
@@ -317,6 +328,9 @@ int run_sandsara(String playList, int ordenMode)
             //parara hasta que el codigo de error del archivo sea diferente de cero.
             while (true)
             {
+                Serial.println(driver.rms_current());
+                Serial.println(driver2.rms_current());
+                
                 //se obtienen los siguientes componentes
                 working_status = file.getNextComponents(&component_1, &component_2);
                 if (working_status == 3)

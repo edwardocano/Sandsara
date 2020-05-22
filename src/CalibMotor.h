@@ -10,7 +10,7 @@
 #define encoder           39
 #define hall              36
 
-#define DIAG_PIN            12 //STALL motor 1
+#define DIAG_PIN            13 //STALL motor 1
 #define EN_PIN              14 // Enable motor 1
 #define DIR_PIN             33  // Direction
 #define STEP_PIN            25 // Step

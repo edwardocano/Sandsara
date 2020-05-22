@@ -1,24 +1,24 @@
 #ifndef _MOVESARA_H_
 #define _MOVESARA_H_
 
-#define PROCESSING_SIMULATOR
+//#define PROCESSING_SIMULATOR
 //#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
-#define DISABLE_MOTORS
+//#define DISABLE_MOTORS
 
 //Speed
-#define millimeterSpeed 1;
+#define millimeterSpeed 15;
 //variables of the geometry
 #define l1 76
 #define l2 76
-#define bigPulleySize 6.0
+#define bigPulleySize 4.0
 #define littlePulleySize 2.0
 #define maximun_radius 100.0
 //variables of steppers pin
 #define DIR 33
 #define STEP 25
-#define DIR2 26
-#define STEP2 27
+#define DIR2 21
+#define STEP2 15
 //variables of star equations
 #define no_picos 6
 

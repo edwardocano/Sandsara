@@ -99,16 +99,13 @@ int CalibMotor::start(){
 ////////////////////////////WITH STALLGUARD///////////////////////////
     giro_normal();
     delay(100);
-
+    while(true){
     if (digitalRead(DIAG_PIN) == 1){
         Serial.println("conflicto");
-
         flag = 1; 
-
     //Back a little  first arm
         digitalWrite(DIR_PIN,HIGH);
         mover(300,1);
-
 
     //Move second arm 90 degrees.    
         digitalWrite(EN_PIN,LOW);
@@ -160,11 +157,9 @@ int CalibMotor::start(){
             mean = meanFilter.AddValue(analogRead(hall));
             flag = 3;
             //Serial.println(driver2.SG_RESULT(), DEC);
-
             /////////////////Secuencia donde se encuentra entre ambos picos
             delay(50);                            
             if(digitalRead(DIAG_PIN2) == 1 and avoid2 == 1){
-            
                 flag = 1;
                 //secuencia donde el brazo se encuentra entre ambos picos//regresa main 30 grados, el otro gira 90, y ambos se mueven juntos.
                 //main arm 30 degree
@@ -216,13 +211,15 @@ int CalibMotor::start(){
             s_dir = 1;
         }
         slow_Calibration(s_dir);
-        digitalWrite(EN_PIN,HIGH);
-        digitalWrite(EN_PIN2,HIGH); 
         Serial.println("Done without stallGuard");
         avoid = 1;
-        
+        driver.rms_current(600); 
+        driver2.rms_current(600); 
+        return 0;
+        digitalWrite(EN_PIN,HIGH);
+        digitalWrite(EN_PIN2,HIGH);         
     }
-    
+    }
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////END_LOOP////////////////////////////////
 }
@@ -403,8 +400,8 @@ void slow_Calibration(int s_dir){
     media = (pasos_ini - pasos_fin)/2;
     pas = (300 - pasos_ini)+media;
     mover(pas,2);
-    delay(2000);
-    delay(50000);
+    //delay(2000);
+    //delay(50000);
 }
 
 
