@@ -78,7 +78,7 @@ TaskHandle_t Task1;
 //========================
 
 //========Calibracion=====
-CalibMotor haloCalib;
+//CalibMotor haloCalib;
 //========================
 
 void setup()
@@ -101,8 +101,8 @@ void setup()
     //==============================================
     
     //==========Calibrar=========
-    haloCalib.init();
-    haloCalib.start();
+    //haloCalib.init();
+    //haloCalib.start();
     //================
 
     //====Configure the halo========================
@@ -275,15 +275,33 @@ int run_sandsara(String playList, int ordenMode)
             Serial.print("fileName: ");
             Serial.println(fileName);
 #endif
-            double couplingAngle, startRobotAngle, startFileAngle;
+            double couplingAngle, startRobotAngle, startRobotModule, startFileAngle, endFileAngle;
+            bool inBorder;
             FileSara file(fileName);
             double zInit = halo.getCurrentModule();
             //se selecciona modo de lectura
             file.autoSetMode(zInit);
             startFileAngle = file.getStartAngle();
             startFileAngle = MoveSara::normalizeAngle(startFileAngle);
+            endFileAngle = file.getFinalAngle();
+            endFileAngle = MoveSara::normalizeAngle(endFileAngle);
             startRobotAngle = halo.getCurrentAngle();
-            couplingAngle = startFileAngle - startRobotAngle;
+            startRobotModule = halo.getCurrentModule();
+            
+            if (startRobotModule > 150.0*0.9){
+                inBorder = true;
+            }
+            else
+            {
+                inBorder = false;
+            }
+            if (inBorder){
+                couplingAngle = startFileAngle;
+            }
+            else{
+                couplingAngle = endFileAngle;
+            }
+            
             //si es thr, se guardan los valores del primer punto para que tenga referencia de donde empezar a moverse.
             if (file.fileType == 2)
             {
@@ -719,7 +737,6 @@ const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
 void ledsFunc( void * pvParameters ){
     for(;;){
         if (millis() - timeLeds> periodLeds){
-            Serial.println(millis() - timeLeds);
             FillLEDsFromPaletteColors(startIndex);
             FastLED.show();
             startIndex += 3;
