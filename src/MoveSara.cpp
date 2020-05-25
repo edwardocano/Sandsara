@@ -143,7 +143,7 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance)
  * @param x es la coordenada en el eje x, medida en milimetros, hacia donde se desea avanzar.
  * @param y es la coordenada en el eje y, medida en milimetros, hacia donde se desea avanzar.
  */
-void MoveSara::moveTo(double x, double y)
+void MoveSara::moveTo(double x, double y, bool littleMovement)
 {
     double q1, q2, distance;
     long steps_of_q1, steps_of_q2;
@@ -152,7 +152,7 @@ void MoveSara::moveTo(double x, double y)
     {
         moveInterpolateTo(x, y, distance);
     }
-    else if (distance > 0.5)
+    else if (distance > 0.5 || littleMovement)
     {
         if (!(x == 0 && y == 0))
         {
@@ -205,6 +205,21 @@ double MoveSara::getCurrentAngle()
     return thetaPolar(x_current, y_current);
 }
 
+int MoveSara::position(){
+    double robotModule = getCurrentModule();
+    int pos;
+    if (robotModule >= l1 + l2 - 2){
+        pos = 2;
+    }
+    else if (robotModule <= 0.2)
+    {
+        pos = 0;
+    }
+    else{
+        pos = 1;
+    }
+    return pos;
+}
 //==================funciones Get======================
 
 /**

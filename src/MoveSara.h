@@ -1,10 +1,10 @@
 #ifndef _MOVESARA_H_
 #define _MOVESARA_H_
 
-//#define PROCESSING_SIMULATOR
+#define PROCESSING_SIMULATOR
 //#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
-//#define DISABLE_MOTORS
+#define DISABLE_MOTORS
 
 //Speed
 #define millimeterSpeed 15;
@@ -62,7 +62,7 @@ class MoveSara {
 
     public:
         MoveSara(int = 16);
-        void moveTo(double x, double y);
+        void moveTo(double x, double y, bool = false);
         void movePolarTo(double , double ); //(modulo,angulo)
         void init(double = 0,double = 0);
         void goHome();
@@ -80,6 +80,7 @@ class MoveSara {
         static double normalizeAngle(double );
         static double arcLength(double ,double , double);
         double module(double , double , double , double );
+        int position();
     private:
         void moveInterpolateTo(double , double , double );
         void moveSteps(long, long, double);

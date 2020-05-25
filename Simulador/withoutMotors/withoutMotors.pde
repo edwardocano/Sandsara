@@ -44,7 +44,7 @@ PGraphics sandmark;
 PGraphics dataScreen;
 //mechanics
 float microstepping = 16;
-float degrees_per_step = (1.8*PI*2.0)/(6.0*180*microstepping);
+float degrees_per_step = (1.8*PI*2.0)/(4.0*180*microstepping);
 float q1_real = 0, q2_real = PI;
 int motor_working = 0;
 long[] steps_of_q;

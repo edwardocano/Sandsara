@@ -48,6 +48,7 @@ void SetupBlackAndWhiteStripedPalette();
 void SetupPurpleAndGreenPalette();
 void ledsFunc( void * );
 int run_sandsara(String ,int );
+int movePolarTo(double ,double ,double, bool = false);
 //=====================================
 //=============Variable leds========================
 //Neopixel==========================================
@@ -94,7 +95,7 @@ void setup()
     Serial.println("init func");
     haloCalib.init();
     Serial.println("start func");
-    haloCalib.start();
+    //haloCalib.start();
     Serial.println("Salio de start");
     pinMode(EN_PIN, OUTPUT);
     pinMode(EN_PIN2, OUTPUT);
@@ -212,13 +213,8 @@ void loop()
 int run_sandsara(String playList, int ordenMode)
 {
     double component_1, component_2, distance;
-    double _z, _theta;
-    double theta_aux;
-    double x_aux, y_aux;
-    double coupling_angle;
     int pListFile = 1;
     int numberOfFiles;
-    bool randomMode = true;
     String fileName;
 
     numberOfFiles = FileSara::numberOfLines(playList);
@@ -286,8 +282,8 @@ int run_sandsara(String playList, int ordenMode)
             Serial.print("fileName: ");
             Serial.println(fileName);
 #endif
-            double couplingAngle, startRobotAngle, startRobotModule, startFileAngle, endFileAngle;
-            bool inBorder;
+            double couplingAngle, startFileAngle, endFileAngle;
+            int posisionCase;
             FileSara file(fileName);
             double zInit = halo.getCurrentModule();
             //se selecciona modo de lectura
@@ -296,18 +292,13 @@ int run_sandsara(String playList, int ordenMode)
             startFileAngle = MoveSara::normalizeAngle(startFileAngle);
             endFileAngle = file.getFinalAngle();
             endFileAngle = MoveSara::normalizeAngle(endFileAngle);
-            startRobotAngle = halo.getCurrentAngle();
-            startRobotModule = halo.getCurrentModule();
             
-            if (startRobotModule > 150.0*0.9){
-                inBorder = true;
-            }
-            else
-            {
-                inBorder = false;
-            }
-            if (inBorder){
+            posisionCase = halo.position();
+            if (posisionCase == 2){
                 couplingAngle = startFileAngle;
+            }
+            else if (posisionCase == 0){
+                couplingAngle = endFileAngle;
             }
             else{
                 couplingAngle = endFileAngle;
@@ -323,14 +314,52 @@ int run_sandsara(String playList, int ordenMode)
                 }
                 halo.setZCurrent(component_1);
                 halo.setThetaCurrent(component_2 - couplingAngle);
+
+                /*working_status = file.getNextComponents(&component_1, &component_2);
+                while (working_status == 3)
+                {
+                    working_status = file.getNextComponents(&component_1, &component_2);
+                }
+                errorCode = movePolarTo(component_1, component_2, couplingAngle);
+                if (errorCode != 0){
+                    return errorCode;
+                }*/
             }
+            else{
+                double zA, thetaA, thetaF;
+                working_status = file.getNextComponents(&component_1, &component_2);
+                while (working_status == 3)
+                {
+                    working_status = file.getNextComponents(&component_1, &component_2);
+                }
+                MoveSara::rotate(component_1, component_2, -couplingAngle);
+
+                zA = MoveSara::zPolar(component_1, component_2);
+                thetaA = MoveSara::thetaPolar(component_1, component_2);
+
+                halo.setZCurrent(halo.getCurrentModule());
+                halo.setThetaCurrent(halo.getCurrentAngle());
+
+                if (abs (thetaA - halo.getCurrentAngle()) > PI){
+                    thetaF = 2*PI + thetaA;
+                }
+                else{
+                    thetaF = 2*thetaA - halo.getCurrentAngle();
+                }
+
+                errorCode = movePolarTo(zA, thetaF, 0);
+                if (errorCode != 0){
+                    return errorCode;
+                }
+            }
+            
+            
+            
+            
 
             //parara hasta que el codigo de error del archivo sea diferente de cero.
             while (true)
             {
-                Serial.println(driver.rms_current());
-                Serial.println(driver2.rms_current());
-                
                 //se obtienen los siguientes componentes
                 working_status = file.getNextComponents(&component_1, &component_2);
                 if (working_status == 3)
@@ -370,69 +399,37 @@ int run_sandsara(String playList, int ordenMode)
                 }
                 else if (file.fileType == 2)
                 {
-                    double zNext = component_1;
-                    double thetaNext = component_2 - couplingAngle;
-                    double thetaCurrent = halo.getThetaCurrent();
-                    double zCurrent = halo.getZCurrent();
-                    double slicesFactor;
-                    long slices;
-                    double distancePoints = 100, deltaTheta, deltaZ;
-                    double thetaAuxiliar, zAuxliar, xAux, yAux;
-                    int overIterates = 0;
-                    deltaTheta = thetaNext - thetaCurrent;
-                    deltaZ = zNext - zCurrent;
-                    slicesFactor = halo.arcLength(deltaZ, deltaTheta, zCurrent);
-                    slices = slicesFactor;
-                    if (slices < 1)
-                    {
-                        slices = 1;
+                    errorCode = movePolarTo(component_1, component_2, couplingAngle);
+                    if (errorCode != 0){
+                        return errorCode;
                     }
-                    deltaTheta = (thetaNext - thetaCurrent) / slices;
-                    deltaZ = (zNext - zCurrent) / slices;
-                    for (long i = 1; i < slices; i++)
-                    {
-                        thetaAuxiliar = thetaCurrent + deltaTheta * double(i);
-                        zAuxliar = zCurrent + deltaZ * double(i);
-                        xAux = zAuxliar * cos(thetaAuxiliar);
-                        yAux = zAuxliar * sin(thetaAuxiliar);
-                        distance = halo.module(xAux, yAux, halo.x_current, halo.y_current);
-                        //ledsFunc();
-                        if (distance > 1.1)
-                        {
-                            errorCode = moveInterpolateTo(xAux, yAux, distance);
-                            if (errorCode != 0){
-                                return errorCode;
-                            }
-                        }
-                        else
-                        {
-                            halo.moveTo(xAux, yAux);
-                            errorCode = haloBt.checkBlueTooth();
-                            executeCode(errorCode);
-                            if (errorCode == 10){
-                                return 1; //cambio de playlist
-                            }
-                            else if (errorCode == 20){
-                                return 2; //cambio de ordenMode
-                            }
-                        }
-                    }
-                    xAux = zNext * cos(thetaNext);
-                    yAux = zNext * sin(thetaNext);
-                    halo.moveTo(xAux, yAux);
-                    halo.setThetaCurrent(thetaNext);
-                    halo.setZCurrent(zNext);
                 }
                 else
                 {
                     break;
                 }
             }
-#ifdef PROCESSING_SIMULATOR
             if (working_status == -10)
             {
                 Serial.println("There were problems for reading SD");
             }
+
+            halo.setZCurrent(halo.getCurrentModule());
+            if (halo.getCurrentAngle() > PI){
+                halo.setThetaCurrent(halo.getCurrentAngle() - 2*PI);
+            }
+            else{
+                halo.setThetaCurrent(halo.getCurrentAngle());
+            }
+            
+            posisionCase = halo.position();            
+            if (posisionCase == 2){
+                movePolarTo(DISTANCIA_MAX, 0, 0, true);
+            }
+            else if (posisionCase == 0){
+                movePolarTo(0, 0, 0);
+            }
+#ifdef PROCESSING_SIMULATOR
             Serial.println("finished");
 #endif
         }
@@ -473,6 +470,70 @@ int moveInterpolateTo(double x, double y, double distance)
         }
     }
     halo.moveTo(x, y);
+    return 0;
+}
+
+/**
+ * @brief Interpola los puntos necesarios entre el punto actual y el siguiente con el objetivo que
+ * se mueva en coordenadas polares como lo hace sisyphus.
+ * @param component_1 valor en el eje z polar, medido en milimetros.
+ * @param component_2 valor en el eje theta polar, medido en radianes.
+ * @param couplingAngle es el angulo que se va a rotar el punto con coordenadas polares component_1, component_2 (modulo y angulo, respectivamente).
+ * @note es muy importante que se hayan definido las variables zCurrent y thetaCurrent antes.
+ * de llamar a esta funcion porque es apartir de estas variables que se calcula cuanto se debe mover.
+ */
+int movePolarTo(double component_1, double component_2, double couplingAngle, bool littleMovement){
+    double zNext = component_1;
+    double thetaNext = component_2 - couplingAngle;
+    double thetaCurrent = halo.getThetaCurrent();
+    double zCurrent = halo.getZCurrent();
+    double slicesFactor, distance;
+    long slices;
+    double deltaTheta, deltaZ;
+    double thetaAuxiliar, zAuxliar, xAux, yAux;
+    deltaTheta = thetaNext - thetaCurrent;
+    deltaZ = zNext - zCurrent;
+    slicesFactor = halo.arcLength(deltaZ, deltaTheta, zCurrent);
+    slices = slicesFactor;
+    if (slices < 1)
+    {
+        slices = 1;
+    }
+    deltaTheta = (thetaNext - thetaCurrent) / slices;
+    deltaZ = (zNext - zCurrent) / slices;
+    for (long i = 1; i < slices; i++)
+    {
+        thetaAuxiliar = thetaCurrent + deltaTheta * double(i);
+        zAuxliar = zCurrent + deltaZ * double(i);
+        xAux = zAuxliar * cos(thetaAuxiliar);
+        yAux = zAuxliar * sin(thetaAuxiliar);
+        distance = halo.module(xAux, yAux, halo.x_current, halo.y_current);
+        //ledsFunc();
+        if (distance > 1.1)
+        {
+            errorCode = moveInterpolateTo(xAux, yAux, distance);
+            if (errorCode != 0){
+                return errorCode;
+            }
+        }
+        else
+        {
+            halo.moveTo(xAux, yAux, littleMovement);
+            errorCode = haloBt.checkBlueTooth();
+            executeCode(errorCode);
+            if (errorCode == 10){
+                return 1; //cambio de playlist
+            }
+            else if (errorCode == 20){
+                return 2; //cambio de ordenMode
+            }
+        }
+    }
+    xAux = zNext * cos(thetaNext);
+    yAux = zNext * sin(thetaNext);
+    halo.moveTo(xAux, yAux, littleMovement);
+    halo.setThetaCurrent(thetaNext);
+    halo.setZCurrent(zNext);
     return 0;
 }
 //===========================

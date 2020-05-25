@@ -5,7 +5,7 @@
 #include "SD.h"
 #include "SPI.h"
 
-#define DISTANCIA_MAX 150.0
+#define DISTANCIA_MAX 152.0
 #define RESOLUCION_MAX 32768.0
 
 /**
