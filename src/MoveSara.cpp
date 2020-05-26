@@ -154,7 +154,7 @@ void MoveSara::moveTo(double x, double y, bool littleMovement)
     }
     else if (distance > 0.5 || littleMovement)
     {
-        if (!(x == 0 && y == 0))
+        if (true)//!(x == 0 && y == 0) || littleMovement)
         {
             ik(x, y, &q1, &q2);
             steps_of_q1 = calculate_steps(q1_current, q1);
@@ -205,8 +205,17 @@ double MoveSara::getCurrentAngle()
     return thetaPolar(x_current, y_current);
 }
 
+/**
+ * @brief devuelve un valor para saber en donde se encuentra la bola.
+ * @return un entero que puede significar lo siguiente.
+ * 0, se encuentra en el centro o a 2 mm.
+ * 1, no se encuentra ni en el centro ni en la orilla.
+ * 2, se cuentra
+ */
 int MoveSara::position(){
     double robotModule = getCurrentModule();
+    Serial.print("robotModule: ");
+    Serial.println(robotModule);
     int pos;
     if (robotModule >= l1 + l2 - 2){
         pos = 2;

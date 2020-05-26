@@ -331,10 +331,6 @@ int run_sandsara(String playList, int ordenMode)
                         thetaFinal = thetaf;
                     }
                 }
-                Serial.print("zf: ");
-                Serial.println(zf);
-                Serial.print("thetaFinal: ");
-                Serial.println(thetaFinal);
                 errorCode = movePolarTo(zf, thetaFinal, 0);
                 if (errorCode != 0){
                     return errorCode;
@@ -417,12 +413,15 @@ int run_sandsara(String playList, int ordenMode)
                 halo.setThetaCurrent(halo.getCurrentAngle());
             }
             
-            posisionCase = halo.position();            
+            posisionCase = halo.position(); 
+            Serial.print("posisionCase: ");
+            Serial.println(posisionCase);
             if (posisionCase == 2){
                 movePolarTo(DISTANCIA_MAX, 0, 0, true);
             }
             else if (posisionCase == 0){
-                movePolarTo(0, 0, 0);
+                Serial.println("Se mandara a cero");
+                movePolarTo(0, 0, 0, true);
             }
 #ifdef PROCESSING_SIMULATOR
             Serial.println("finished");
