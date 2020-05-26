@@ -78,7 +78,7 @@ void setup() {
   //draw_and_calculate();
   steps_of_q = new long[3];
   steps_of_q[1] = 0;
-  steps_of_q[2] = 4800;
+  steps_of_q[2] = 3200;
   frameRate(60);
   printArray(Serial.list());
   mySerial = new Serial(this, "COM3", 115200);

@@ -658,6 +658,40 @@ double FileSara::getStartAngle()
     }
 }
 
+double FileSara::getStartModule(){
+    double module, x, y;
+    if (directionMode == 0)
+    {
+        if (fileType == 2)
+        {
+            module = getFinalPoint(1, 0);
+            return module;
+        }
+        else
+        {
+            x = getFinalPoint(1, 1);
+            y = getFinalPoint(2, 1);
+            module = MoveSara::zPolar(x, y);
+            return module;
+        }
+    }
+    else
+    {
+        if (fileType == 2)
+        {
+            module = getStartPoint(1, 0);
+            return module;
+        }
+        else
+        {
+            x = getStartPoint(1, 1);
+            y = getStartPoint(2, 1);
+            module = MoveSara::zPolar(x, y);
+            return module;
+        }
+    }
+}
+
 //------------------------------Ordenar archivos----------------------------------
 //--------------------------------------------------------------------------------
 /**

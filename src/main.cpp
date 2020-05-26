@@ -303,72 +303,53 @@ int run_sandsara(String playList, int ordenMode)
             else{
                 couplingAngle = endFileAngle;
             }
-            
+            if (true){
+                double zf, thetaf, zi, thetai, zFinal, thetaFinal;
+                thetaf = MoveSara::normalizeAngle(file.getStartAngle() - couplingAngle);
+                zf = file.getStartModule();
+                thetai = halo.getCurrentAngle();
+                zi = halo.getCurrentModule();
+                halo.setZCurrent(zi);
+                halo.setThetaCurrent(thetai);
+                Serial.print("zi: ");
+                Serial.println(zi);
+                Serial.print("thetai: ");
+                Serial.println(thetai);
+                if (thetai > thetaf){
+                    if (thetai - thetaf > PI){
+                        thetaFinal = thetai + (2*PI - (thetai - thetaf));
+                    }
+                    else{
+                        thetaFinal = thetaf;
+                    }
+                }
+                else{
+                    if (thetaf - thetai> PI){
+                        thetaFinal = thetai - (2*PI - (thetaf - thetai));
+                    }
+                    else{
+                        thetaFinal = thetaf;
+                    }
+                }
+                Serial.print("zf: ");
+                Serial.println(zf);
+                Serial.print("thetaFinal: ");
+                Serial.println(thetaFinal);
+                errorCode = movePolarTo(zf, thetaFinal, 0);
+                if (errorCode != 0){
+                    return errorCode;
+                }
+            }
             //si es thr, se guardan los valores del primer punto para que tenga referencia de donde empezar a moverse.
             if (file.fileType == 2)
             {
-                double zA, thetaA, thetaF;
-
                 working_status = file.getNextComponents(&component_1, &component_2);
                 while (working_status == 3)
                 {
                     working_status = file.getNextComponents(&component_1, &component_2);
                 }
-
-                /*component_2 = file.getStartAngle() - couplingAngle;
-                thetaA = MoveSara::normalizeAngle(component_2);
-
-                if (abs (thetaA - halo.getCurrentAngle()) > PI){
-                    thetaF = component_2 - 2*PI + thetaA - halo.getCurrentAngle();
-                }
-                else{
-                    thetaF = component_2 - thetaA + halo.getCurrentAngle();
-                }
-
-                thetaF = component_2 - halo.getCurrentAngle();
-
-                halo.setZCurrent(halo.getCurrentModule());
-                halo.setThetaCurrent(thetaF);*/
-
                 halo.setZCurrent(component_1);
                 halo.setThetaCurrent(component_2 - couplingAngle);
-
-                /*working_status = file.getNextComponents(&component_1, &component_2);
-                while (working_status == 3)
-                {
-                    working_status = file.getNextComponents(&component_1, &component_2);
-                }
-                errorCode = movePolarTo(component_1, component_2, couplingAngle);
-                if (errorCode != 0){
-                    return errorCode;
-                }*/
-            }
-            else{
-                double zA, thetaA, thetaF;
-                working_status = file.getNextComponents(&component_1, &component_2);
-                while (working_status == 3)
-                {
-                    working_status = file.getNextComponents(&component_1, &component_2);
-                }
-                MoveSara::rotate(component_1, component_2, -couplingAngle);
-
-                zA = MoveSara::zPolar(component_1, component_2);
-                thetaA = MoveSara::thetaPolar(component_1, component_2);
-
-                halo.setZCurrent(halo.getCurrentModule());
-                halo.setThetaCurrent(halo.getCurrentAngle());
-
-                if (abs (thetaA - halo.getCurrentAngle()) > PI){
-                    thetaF = 2*PI + thetaA;
-                }
-                else{
-                    thetaF = 2*thetaA - halo.getCurrentAngle();
-                }
-
-                errorCode = movePolarTo(zA, thetaF, 0);
-                if (errorCode != 0){
-                    return errorCode;
-                }
             }
 
             //parara hasta que el codigo de error del archivo sea diferente de cero.

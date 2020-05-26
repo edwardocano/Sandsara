@@ -21,6 +21,10 @@ void data(long[] dvalor){
         segment(x, y, coordinates[1]);
         segment(segLength, 0, coordinates[2]);
         popMatrix();*/
+        pushMatrix();
+        segment(x, y, coordinates[1]);
+        segment(segLength, 0, coordinates[2]);
+        popMatrix();
         dataScreen.beginDraw();
         dataScreen.textSize(14);
         dataScreen.fill(255,0,0);
@@ -46,7 +50,7 @@ void data(long[] dvalor){
         noFill();
         strokeWeight(3);
         stroke(255);
-        circle(0, 0, 304*factor);
+        circle(0, 0, 310*factor);
         numberPoint = 0;
         save(picture_number + ".png");
         println("guardo el archivo: " + picture_number);
