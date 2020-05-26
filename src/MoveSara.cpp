@@ -276,6 +276,7 @@ void MoveSara::setCouplingAngle(double angle)
 /**
  * @brief moficica el miembro z_current a uno nuevo.
  * @param z es el valor que se le va a asignar a la variable miembro zCurrent.
+ * @note  Esto es importante para que los archivos .thr tengan una referencia de donde empezar a moverse.
  */
 void MoveSara::setZCurrent(double z)
 {

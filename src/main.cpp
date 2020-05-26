@@ -307,11 +307,29 @@ int run_sandsara(String playList, int ordenMode)
             //si es thr, se guardan los valores del primer punto para que tenga referencia de donde empezar a moverse.
             if (file.fileType == 2)
             {
+                double zA, thetaA, thetaF;
+
                 working_status = file.getNextComponents(&component_1, &component_2);
                 while (working_status == 3)
                 {
                     working_status = file.getNextComponents(&component_1, &component_2);
                 }
+
+                /*component_2 = file.getStartAngle() - couplingAngle;
+                thetaA = MoveSara::normalizeAngle(component_2);
+
+                if (abs (thetaA - halo.getCurrentAngle()) > PI){
+                    thetaF = component_2 - 2*PI + thetaA - halo.getCurrentAngle();
+                }
+                else{
+                    thetaF = component_2 - thetaA + halo.getCurrentAngle();
+                }
+
+                thetaF = component_2 - halo.getCurrentAngle();
+
+                halo.setZCurrent(halo.getCurrentModule());
+                halo.setThetaCurrent(thetaF);*/
+
                 halo.setZCurrent(component_1);
                 halo.setThetaCurrent(component_2 - couplingAngle);
 
@@ -352,10 +370,6 @@ int run_sandsara(String playList, int ordenMode)
                     return errorCode;
                 }
             }
-            
-            
-            
-            
 
             //parara hasta que el codigo de error del archivo sea diferente de cero.
             while (true)
