@@ -42,13 +42,15 @@ int romGetPosition();
 void Neo_Pixel(int );
 uint32_t rainbow();
 void FillLEDsFromPaletteColors( uint8_t );
-void ChangePalettePeriodically();
+void changePalette(int );
 void SetupTotallyRandomPalette();
 void SetupBlackAndWhiteStripedPalette();
 void SetupPurpleAndGreenPalette();
 void ledsFunc( void * );
 int run_sandsara(String ,int );
 int movePolarTo(double ,double ,double, bool = false);
+int romSetPallete(int );
+int romGetPallete();
 //=====================================
 //=============Variable leds========================
 //Neopixel==========================================
@@ -147,6 +149,7 @@ void setup()
     delay(500);
     playListGlobal = romGetPlaylist();
     ordenModeGlobal = romGetOrdenMode();
+    changePalette(romGetPallete());
     Serial.print("lista guardada: ");
     Serial.println(playListGlobal);
     Serial.print("ordenMode guardado: ");
@@ -422,6 +425,7 @@ int run_sandsara(String playList, int ordenMode)
             else if (posisionCase == 0){
                 Serial.println("Se mandara a cero");
                 movePolarTo(0, 0, 0, true);
+                haloCalib.verificacion_cal();
             }
 #ifdef PROCESSING_SIMULATOR
             Serial.println("finished");
@@ -548,8 +552,8 @@ void executeCode(int errorCode){
     }
     else if (errorCode == 30){
         ledModeGlobal = haloBt.getLedMode();
-        Serial.print("ledmode = ");
-        Serial.println(ledModeGlobal);
+        changePalette(ledModeGlobal);
+        romSetPallete(ledModeGlobal);
         //Neo_Pixel(ledModeGlobal);
     }
 }
@@ -558,6 +562,7 @@ void executeCode(int errorCode){
 #define ADDRESSPLAYLIST 0
 #define ADDRESSPOSITION 41
 #define ADDRESSORDENMODE 50
+#define ADDRESSPALLETE 60
 
 #define MAX_CHARS_PLAYLIST 40
 
@@ -657,6 +662,32 @@ int romGetPosition(){
     return ordenMode;
 }
 
+/**
+ * @brief guarda la paleta de colores en rom
+ * @param pallete es un numero entero que indica la paleta de colres actual
+ * @return 0
+ */
+int romSetPallete(int pallete){
+    uint8_t* p = (uint8_t* ) &pallete;
+    for (int i = 0; i < sizeof(pallete); i++){
+        EEPROM.write(ADDRESSPALLETE + i, *(p + i));
+    }
+    EEPROM.commit();
+    return 0;
+}
+
+/**
+ * @brief recupera, de la ROM/FLASH, la ultima palleta de colores guardada.
+ * @return un numero entero que indaca una paleta de colores. 
+ */
+int romGetPallete(){
+    int pallete;
+    uint8_t* p = (uint8_t* ) &pallete;
+    for (int i = 0; i < sizeof(pallete); i++){
+        *(p + i) = EEPROM.read(ADDRESSPALLETE + i);
+    }
+    return pallete;
+}
 //=======================================Leds========================================
 //===================================================================================
 void Neo_Pixel(int color)
@@ -717,25 +748,20 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
 // Additionally, you can manually define your own color palettes, or you can write
 // code that creates color palettes on the fly.  All are shown here.
 
-void ChangePalettePeriodically()
+void changePalette(int pallet)
 {
-    uint8_t secondHand = (millis() / 1000) % 60;
-    static uint8_t lastSecond = 99;
-    
-    if( lastSecond != secondHand) {
-        lastSecond = secondHand;
-        if( secondHand ==  0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
-        if( secondHand == 10)  { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;  }
-        if( secondHand == 15)  { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND; }
-        if( secondHand == 20)  { SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND; }
-        if( secondHand == 25)  { SetupTotallyRandomPalette();              currentBlending = LINEARBLEND; }
-        if( secondHand == 30)  { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND; }
-        if( secondHand == 35)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
-        if( secondHand == 40)  { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND; }
-        if( secondHand == 45)  { currentPalette = PartyColors_p;           currentBlending = LINEARBLEND; }
-        if( secondHand == 50)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = NOBLEND;  }
-        if( secondHand == 55)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND; }
-    }
+    if( pallet ==  0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
+    else if( pallet == 1)  { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;  }
+    else if( pallet == 2)  { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND; }
+    else if( pallet == 3)  { SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND; }
+    else if( pallet == 4)  { SetupTotallyRandomPalette();              currentBlending = LINEARBLEND; }
+    else if( pallet == 5)  { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND; }
+    else if( pallet == 6)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
+    else if( pallet == 7)  { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND; }
+    else if( pallet == 8)  { currentPalette = PartyColors_p;           currentBlending = LINEARBLEND; }
+    else if( pallet == 9)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = NOBLEND;  }
+    else if( pallet == 10)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND; }
+    else {currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;}
 }
 
 // This function fills the palette with totally random colors.
@@ -803,6 +829,10 @@ const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
     CRGB::Black
 };
 
+/**
+ * @brief se encarga de animar la secuencia de leds
+ * 
+ */
 void ledsFunc( void * pvParameters ){
     for(;;){
         if (millis() - timeLeds> periodLeds){
