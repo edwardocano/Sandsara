@@ -196,8 +196,8 @@ void loop()
     }
     else if (errorCode == 30){
         ledModeGlobal = haloBt.getLedMode();
-        Serial.print("ledmode = ");
-        Serial.println(ledModeGlobal);
+        changePalette(ledModeGlobal);
+        romSetPallete(ledModeGlobal);
         //Neo_Pixel(ledModeGlobal);
     }
     //root.rewindDirectory();

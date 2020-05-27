@@ -63,6 +63,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * code01, significa que va a transferer un archivo.
  * code02, significa que se esta solicitando el cambio de playlist.
  * code03, significa que se esta solicitando el cambio de orden de reproduccion.
+ * code04, significa que se esta solicitando el cambio de paleta de leds.
  */
 int BlueSara::checkBlueTooth()
 {
