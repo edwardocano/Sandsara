@@ -17,8 +17,8 @@
 //variables of steppers pin
 #define DIR 33
 #define STEP 25
-#define DIR2 21
-#define STEP2 15
+#define DIR2 4
+#define STEP2 21
 //variables of star equations
 #define no_picos 6
 
