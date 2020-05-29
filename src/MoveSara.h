@@ -1,30 +1,13 @@
 #ifndef _MOVESARA_H_
 #define _MOVESARA_H_
 
-#define PROCESSING_SIMULATOR
-//#define DEBUGGING_DATA
-//#define DEBUGGING_DETAIL
-//#define DISABLE_MOTORS
-
 //Speed
 #define millimeterSpeed 15;
-//variables of the geometry
-#define l1 76
-#define l2 76
-#define bigPulleySize 4.0
-#define littlePulleySize 2.0
-#define maximun_radius 100.0
-//variables of steppers pin
-#define DIR 33
-#define STEP 25
-#define DIR2 4
-#define STEP2 21
-//variables of star equations
-#define no_picos 6
 
 #include "AccelStepper.h"
 #include "MultiStepper.h"
 #include "BlueSara.h"
+#include "config.h"
 
 /**
  * @class MoveSara
@@ -61,7 +44,7 @@ class MoveSara {
         bool constantMotorSpeed = false;
 
     public:
-        MoveSara(int = 16);
+        MoveSara();
         void moveTo(double x, double y, bool = false);
         void movePolarTo(double , double ); //(modulo,angulo)
         void init(double = 0,double = 0);

@@ -10,12 +10,12 @@ double m[no_picos * 2], b[no_picos * 2];
  * @brief es el contructor de la clase
  * @param microstepping es el microstepping que tienen los motores, por defecto es 16
  */
-MoveSara::MoveSara(int microstepping)
+MoveSara::MoveSara()
 {
-    this->microstepping = microstepping;
+    this->microstepping = MICROSTEPPING;
     degrees_per_step = (littlePulleySize / bigPulleySize) * (PI / 180.0) * (1.8 / microstepping);
-    stepper1 = AccelStepper(1, STEP, DIR);
-    stepper2 = AccelStepper(1, STEP2, DIR2);
+    stepper1 = AccelStepper(1, STEP_PIN, DIR_PIN);
+    stepper2 = AccelStepper(1, STEP_PIN2, DIR_PIN2);
 }
 
 /**

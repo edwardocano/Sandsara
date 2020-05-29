@@ -25,7 +25,7 @@ File root;
 String playListGlobal;
 int ordenModeGlobal;
 //
-MoveSara halo(16);
+MoveSara halo;
 BlueSara haloBt;
 
 int errorCode;

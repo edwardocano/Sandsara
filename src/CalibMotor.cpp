@@ -23,7 +23,7 @@ int dato3[200];
 int maximo;
 
 TMC2209Stepper driver(&SERIAL_PORT, R_SENSE, DRIVER_ADDRESS);
-TMC2209Stepper driver2(&SERIAL_PORT2, R_SENSE2, DRIVER_ADDRESS2);
+TMC2209Stepper driver2(&SERIAL_PORT2, R_SENSE, DRIVER_ADDRESS2);
 
 void giro_normal();
 void mover(int , int );
@@ -80,7 +80,7 @@ int CalibMotor::init(){
     driver.toff(4);
     driver.blank_time(24);
     driver.rms_current(500); 
-    driver.microsteps(16);
+    driver.microsteps(MICROSTEPPING);
     driver.TCOOLTHRS(0xFFFFF); // 20bit max
     driver.semin(0);
     //driver.semax(2);
@@ -93,7 +93,7 @@ int CalibMotor::init(){
     driver2.toff(4);
     driver2.blank_time(24);
     driver2.rms_current(500); 
-    driver2.microsteps(16);
+    driver2.microsteps(MICROSTEPPING);
     driver2.TCOOLTHRS(0xFFFFF); // 20bit max
     driver2.semin(0);
     //driver.semax(2);
