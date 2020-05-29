@@ -97,7 +97,7 @@ void setup()
     Serial.println("init func");
     haloCalib.init();
     Serial.println("start func");
-    //haloCalib.start();
+    haloCalib.start();
     Serial.println("Salio de start");
     pinMode(EN_PIN, OUTPUT);
     pinMode(EN_PIN2, OUTPUT);
