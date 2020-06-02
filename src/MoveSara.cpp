@@ -5,6 +5,7 @@
 
 //extern void ledsFunc();
 double m[no_picos * 2], b[no_picos * 2];
+extern bool productType;
 
 //====Prototipos de funcion====
 double dkX(double , double );
@@ -353,7 +354,7 @@ void MoveSara::ik(double x, double y, double *q1, double *q2)
     if (z > l1 + l2)
         z = l1 + l2;
     //Delimiter module z
-    if (true){
+    if (!productType){
         i = theta / (2 * PI / (2 * no_picos));
         z_max = abs(b[i] / (tan(theta) - m[i]) * sqrt(1 + pow(tan(theta), 2)));
         if (z > z_max){

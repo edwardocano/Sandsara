@@ -76,6 +76,8 @@ extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
 unsigned long timeLeds;
 int periodLeds = 20;
 uint8_t startIndex = 0;
+//====Product Type====
+bool productType;
 
 //==================================================
 
@@ -93,6 +95,10 @@ void setup()
     Serial.begin(115200);
     //==============================================
     
+    //====Seleccionar tipo de producto====
+    pinMode(PIN_ProducType, INPUT);
+    delay(1000);
+    productType = digitalRead(PIN_ProducType);
     //==========Calibrar=========
     Serial.println("init func");
     haloCalib.init();

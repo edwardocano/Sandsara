@@ -90,3 +90,5 @@
 
 #define radius_1 152.0
 #define radius_2 100.0
+
+#define PIN_ProducType 35
