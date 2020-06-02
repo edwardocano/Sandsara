@@ -87,3 +87,6 @@
 
 #define SERIAL_PORT2        Serial2 // TMC2208/TMC2224 HardwareSerial port
 #define DRIVER_ADDRESS2     0b00 // TMC2209 Driver address according to MS1 and MS2
+
+#define radius_1 152.0
+#define radius_2 100.0

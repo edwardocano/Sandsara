@@ -71,8 +71,6 @@ class MoveSara {
         long calculate_steps(double , double );
         void calculate_line_equations();
         double polarModule(double , double , double , double );
-        double dk_x(double , double ) ;
-        double dk_y(double , double ) ;
         void ik(double , double , double* , double* );
 };
 

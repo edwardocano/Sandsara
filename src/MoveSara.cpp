@@ -6,6 +6,10 @@
 //extern void ledsFunc();
 double m[no_picos * 2], b[no_picos * 2];
 
+//====Prototipos de funcion====
+double dkX(double , double );
+double dkY(double , double );
+
 /**
  * @brief es el contructor de la clase
  * @param microstepping es el microstepping que tienen los motores, por defecto es 16
@@ -128,8 +132,8 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance)
     q2_current += degrees_per_step * q2_steps;
     q1_current = normalizeAngle(q1_current);
     q2_current = normalizeAngle(q2_current);
-    x_current = dk_x(q1_current, q2_current);
-    y_current = dk_y(q1_current, q2_current);
+    x_current = dkX(q1_current, q2_current);
+    y_current = dkY(q1_current, q2_current);
 }
 
 /**
@@ -147,6 +151,9 @@ void MoveSara::moveTo(double x, double y, bool littleMovement)
 {
     double q1, q2, distance;
     long steps_of_q1, steps_of_q2;
+    ik(x, y, &q1, &q2);
+    x = dkX(q1, q2);
+    y = dkY(q1, q2);
     distance = module(x, y, x_current, y_current);
     if (distance > 1.1)
     {
@@ -267,8 +274,8 @@ void MoveSara::init(double xInit, double yInit)
     ik(xInit, yInit, &q1, &q2);
     q1_current = q1;
     q2_current = q2;
-    x_current = dk_x(q1_current, q2_current);
-    y_current = dk_y(q1_current, q2_current);
+    x_current = dkX(q1_current, q2_current);
+    y_current = dkY(q1_current, q2_current);
     calculate_line_equations();
 }
 
@@ -311,7 +318,7 @@ void MoveSara::setThetaCurrent(double theta)
  * @param q2 es el angulo del motor que mueve el segundo eslabon del robot.
  * @return la coordenada en el eje x, medida en milimetros, correspondiente a los angulos q1,q2 del robot.
  */
-double MoveSara::dk_x(double q1, double q2)
+double dkX(double q1, double q2)
 {
     return l1 * cos(q1) + l2 * cos(q1 + q2);
 }
@@ -322,7 +329,7 @@ double MoveSara::dk_x(double q1, double q2)
  * @param q2 es el angulo del motor que mueve el segundo eslabon del robot (motor 2).
  * @return la coordenada en el eje y, medida en milimetros, correspondiente a los angulos q1,q2 del robot.
  */
-double MoveSara::dk_y(double q1, double q2)
+double dkY(double q1, double q2)
 {
     return l1 * sin(q1) + l2 * sin(q1 + q2);
 }
@@ -346,10 +353,14 @@ void MoveSara::ik(double x, double y, double *q1, double *q2)
     if (z > l1 + l2)
         z = l1 + l2;
     //Delimiter module z
-    i = theta / (2 * PI / (2 * no_picos));
-    z_max = abs(b[i] / (tan(theta) - m[i]) * sqrt(1 + pow(tan(theta), 2)));
-    if (z > z_max)
-        z = z_max;
+    if (true){
+        i = theta / (2 * PI / (2 * no_picos));
+        z_max = abs(b[i] / (tan(theta) - m[i]) * sqrt(1 + pow(tan(theta), 2)));
+        if (z > z_max){
+            z = z_max;
+        }
+    }
+    
     //calculus of q1 that is always possitive
     *q1 = theta - acos(z / (2 * l1));
     if (*q1 < 0)
@@ -508,8 +519,6 @@ double MoveSara::arcLength(double deltaZ, double deltaTheta, double zInit)
  */
 void MoveSara::calculate_line_equations()
 {
-    double radius_1 = 400;
-    double radius_2 = 500;
     double z = radius_2;
     double theta;
     for (int i = 0; i < 2 * no_picos; i++)
