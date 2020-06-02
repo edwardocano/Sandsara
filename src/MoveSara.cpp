@@ -152,13 +152,20 @@ void MoveSara::moveTo(double x, double y, bool littleMovement)
 {
     double q1, q2, distance;
     long steps_of_q1, steps_of_q2;
+    
     ik(x, y, &q1, &q2);
+    if (x == 0 && y == 0){
+        Serial.print("q1: ");
+        Serial.print(q1);
+        Serial.print("\tq2: ");
+        Serial.println(q2);
+    }
     x = dkX(q1, q2);
     y = dkY(q1, q2);
     distance = module(x, y, x_current, y_current);
     if (distance > 1.1)
     {
-        moveInterpolateTo(x, y, distance);
+        moveInterpolateTo(x, y, distance, littleMovement);
     }
     else if (distance > 0.5 || littleMovement)
     {
@@ -178,7 +185,7 @@ void MoveSara::moveTo(double x, double y, bool littleMovement)
  * @param y coordenada en el eje y, medida en milimetros, a la que se desea avanzar.
  * @param distance es la distancia, medida en milimetros, entre el punto actual y el punto al que se desea avanzar.
  */
-void MoveSara::moveInterpolateTo(double x, double y, double distance)
+void MoveSara::moveInterpolateTo(double x, double y, double distance, bool littlemovement)
 {
     double alpha = atan2(y - y_current, x - x_current);
     double delta_x, delta_y;
@@ -190,9 +197,9 @@ void MoveSara::moveInterpolateTo(double x, double y, double distance)
     {
         x_aux += delta_x;
         y_aux += delta_y;
-        moveTo(x_aux, y_aux);
+        moveTo(x_aux, y_aux, littlemovement);
     }
-    moveTo(x, y);
+    moveTo(x, y, littlemovement);
 }
 //properties----------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------
@@ -228,7 +235,7 @@ int MoveSara::position(){
     if (robotModule >= l1 + l2 - 2){
         pos = 2;
     }
-    else if (robotModule <= 0.2)
+    else if (robotModule <= 2)
     {
         pos = 0;
     }

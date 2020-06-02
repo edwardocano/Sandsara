@@ -65,7 +65,7 @@ class MoveSara {
         double module(double , double , double , double );
         int position();
     private:
-        void moveInterpolateTo(double , double , double );
+        void moveInterpolateTo(double ,double ,double ,bool );
         void moveSteps(long, long, double);
         //mathematics methods
         long calculate_steps(double , double );
