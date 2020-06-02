@@ -97,7 +97,7 @@ void setup()
     Serial.println("init func");
     haloCalib.init();
     Serial.println("start func");
-    haloCalib.start();
+    //haloCalib.start();
     Serial.println("Salio de start");
     pinMode(EN_PIN, OUTPUT);
     pinMode(EN_PIN2, OUTPUT);
@@ -425,7 +425,7 @@ int run_sandsara(String playList, int ordenMode)
             else if (posisionCase == 0){
                 Serial.println("Se mandara a cero");
                 movePolarTo(0, 0, 0, true);
-                haloCalib.verificacion_cal();
+                //haloCalib.verificacion_cal();
             }
 #ifdef PROCESSING_SIMULATOR
             Serial.println("finished");
