@@ -64,6 +64,7 @@ class MoveSara {
         static double arcLength(double ,double , double);
         double module(double , double , double , double );
         int position();
+        
     private:
         void moveInterpolateTo(double ,double ,double ,bool );
         void moveSteps(long, long, double);
@@ -71,6 +72,7 @@ class MoveSara {
         long calculate_steps(double , double );
         void calculate_line_equations();
         double polarModule(double , double , double , double );
+
         void ik(double , double , double* , double* );
 };
 

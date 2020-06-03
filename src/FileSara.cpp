@@ -854,3 +854,31 @@ int FileSara::numberOfLines(String dir){
     }
     return count;
 }
+
+/**
+ * @brief comprueba si un archivo es valido.
+ * @return si es valido regresa true si no false.
+ */
+bool FileSara::isValid(){
+    int resp;
+    int stackMode = directionMode;
+    int stackPFileBin = pFileBin;
+    long stackPFile = pFile;
+    double component1, component2;
+    resp = getNextComponents(&component1, &component2);
+    while (resp == 3)
+    {
+        resp = getNextComponents(&component1, &component2);
+    }
+    pFile = stackPFile;
+    pFileBin = stackPFileBin;
+    dataBuffer = "";
+    directionMode = stackMode;
+
+    if (resp == 0){
+        return true;
+    }
+    else{
+        return false;
+    }
+}

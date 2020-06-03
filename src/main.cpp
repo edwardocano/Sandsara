@@ -226,10 +226,6 @@ int run_sandsara(String playList, int ordenMode)
     int numberOfFiles;
     String fileName;
 
-    numberOfFiles = FileSara::numberOfLines(playList);
-    Serial.print("Numero de archivos: ");
-    Serial.println(numberOfFiles);
-    
     if (ordenMode == 2)
     {
         numberOfFiles = FileSara::creatListOfFiles("/RANDOM.txt");
@@ -241,6 +237,11 @@ int run_sandsara(String playList, int ordenMode)
     {
         numberOfFiles = FileSara::creatListOfFiles("/DEFAULT.txt");
         playList = "/DEFAULT.txt";
+        Serial.print("Numero de archivos: ");
+        Serial.println(numberOfFiles);
+    }
+    else{
+        numberOfFiles = FileSara::numberOfLines(playList);
         Serial.print("Numero de archivos: ");
         Serial.println(numberOfFiles);
     }
@@ -287,16 +288,26 @@ int run_sandsara(String playList, int ordenMode)
             int working_status = 0;
             fileName = current_file.name();
             current_file.close();
+
+            double couplingAngle, startFileAngle, endFileAngle;
+            int posisionCase;
+            FileSara file(fileName);
+            if (file.fileType < 0){
+                pListFile += 1;
+                continue;
+            }
+
+            double zInit = halo.getCurrentModule();
+            //se selecciona modo de lectura
+            file.autoSetMode(zInit);
+            if (!file.isValid()){
+                pListFile += 1;
+                continue;
+            }
 #ifdef PROCESSING_SIMULATOR
             Serial.print("fileName: ");
             Serial.println(fileName);
 #endif
-            double couplingAngle, startFileAngle, endFileAngle;
-            int posisionCase;
-            FileSara file(fileName);
-            double zInit = halo.getCurrentModule();
-            //se selecciona modo de lectura
-            file.autoSetMode(zInit);
             startFileAngle = file.getStartAngle();
             startFileAngle = MoveSara::normalizeAngle(startFileAngle);
             endFileAngle = file.getFinalAngle();
