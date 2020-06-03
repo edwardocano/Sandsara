@@ -36,16 +36,13 @@ CalibMotor::CalibMotor(){
 
 void IRAM_ATTR onTimer() {
   
-  //STEP_PORT ^= 1 << STEP_BIT_POS;
   if(flag == 0){
     digitalWrite(STEP_PIN, !digitalRead(STEP_PIN));
   }
-
   if (flag == 2){
     digitalWrite(STEP_PIN, !digitalRead(STEP_PIN));
     digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2));
   }
-
   if(flag == 3){
     digitalWrite(STEP_PIN2,!digitalRead(STEP_PIN2));
   }
@@ -53,7 +50,6 @@ void IRAM_ATTR onTimer() {
 } 
 
 int CalibMotor::init(){
-    Serial.println("\nStart...");
 
     SERIAL_PORT.begin(115200);
     SERIAL_PORT2.begin(115200);
@@ -79,7 +75,7 @@ int CalibMotor::init(){
     driver.pdn_disable(true);  
     driver.toff(4);
     driver.blank_time(24);
-    driver.rms_current(500); 
+    driver.rms_current(600); 
     driver.microsteps(MICROSTEPPING);
     driver.TCOOLTHRS(0xFFFFF); // 20bit max
     driver.semin(0);
@@ -92,7 +88,7 @@ int CalibMotor::init(){
     driver2.pdn_disable(true);  
     driver2.toff(4);
     driver2.blank_time(24);
-    driver2.rms_current(500); 
+    driver2.rms_current(600); 
     driver2.microsteps(MICROSTEPPING);
     driver2.TCOOLTHRS(0xFFFFF); // 20bit max
     driver2.semin(0);
@@ -103,13 +99,12 @@ int CalibMotor::init(){
 }
 
 int CalibMotor::start(){
-    //////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
 ////////////////////////////WITH STALLGUARD///////////////////////////
     giro_normal();
     delay(100);
     while(true){
     if (digitalRead(DIAG_PIN) == 1){
-        Serial.println("conflicto");
         flag = 1; 
     //Back a little  first arm
         digitalWrite(DIR_PIN,HIGH);
@@ -131,43 +126,36 @@ int CalibMotor::start(){
 
     //move second arm until hall detects
         int mean = meanFilter.AddValue(analogRead(hall));
-        while (mean < 2400){                                    //Revisar valor de umbral.
+        while (mean < 2400){                      
             mean = meanFilter.AddValue(analogRead(hall));
-            Serial.println(mean);
             flag = 3;
         }
-
         flag=1;
-        delay(200);
         s_dir = 0;
         slow_Calibration_encoder(s_dir);
         slow_Calibration_hall(s_dir);
         digitalWrite(EN_PIN,LOW);
         digitalWrite(EN_PIN2,LOW); 
         avoid = 1;
-        Serial.println("Done with stallGuard");
     }
 
     //////////////////////////////////////////////////////////////////////////
     ////////////////////////////WITHOUT STALLGUARD////////////////////////////
 
     if(analogRead(encoder)>600 && avoid == 0){
-        
         flag = 1;
         digitalWrite(DIR_PIN , LOW);
-        digitalWrite(DIR_PIN2 , HIGH);
-        
+        digitalWrite(DIR_PIN2 ,HIGH);
         int mean = meanFilter.AddValue(analogRead(hall));
         digitalWrite(EN_PIN2,LOW);
-        driver.rms_current(1500);                     //incrementar corriente a motor 1 para evitar interferencia con m2 
-        delay(100);
-
+        driver.rms_current(1500);     
+        delay(500);                      
+        
         while (mean < 2400){
             mean = meanFilter.AddValue(analogRead(hall));
             flag = 3;
-            //Serial.println(driver2.SG_RESULT(), DEC);
-            /////////////////Secuencia donde se encuentra entre ambos picos
-            delay(50);                            
+            delay(10);
+                                      
             if(digitalRead(DIAG_PIN2) == 1 and avoid2 == 1){
                 flag = 1;
                 //secuencia donde el brazo se encuentra entre ambos picos//regresa main 30 grados, el otro gira 90, y ambos se mueven juntos.
@@ -180,7 +168,6 @@ int CalibMotor::start(){
                 digitalWrite(DIR_PIN2 , LOW); 
                 mover(1600,2);
                 
-                    
                 //move both arms at same time.
                 digitalWrite(DIR_PIN , LOW);
                 digitalWrite(DIR_PIN2 , LOW);
@@ -200,10 +187,7 @@ int CalibMotor::start(){
                 flag=1;
                 break;
             }
-            
-
-            
-            
+              
             if(digitalRead(DIAG_PIN2) == 1 and avoid2 == 0){
             digitalWrite(DIR_PIN2 , LOW);
             avoid2 = 1; 
@@ -221,16 +205,12 @@ int CalibMotor::start(){
         }
         slow_Calibration_encoder(s_dir);
         slow_Calibration_hall(s_dir);
-
-        Serial.println("Done without stallGuard");
-        avoid = 1;
         driver.rms_current(600); 
-        driver2.rms_current(600); 
-        return 0;
-        digitalWrite(EN_PIN,HIGH);
-        digitalWrite(EN_PIN2,HIGH);         
+        driver2.rms_current(600);
+        avoid = 1;
+        return 0;        
     }
-    }
+  }
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////END_LOOP////////////////////////////////
 }
@@ -238,12 +218,12 @@ int CalibMotor::start(){
 void giro_normal(){
   {
     cli();//stop interrupts
-  timer1 = timerBegin(3, 8,true); // Se configura el timer, en este caso uso el timer 4 de los 4 disponibles en el ESP(0,1,2,3)
+    timer1 = timerBegin(3, 8,true); // Se configura el timer, en este caso uso el timer 4 de los 4 disponibles en el ESP(0,1,2,3)
                                  // el prescaler es 8, y true es una bandera que indica si la interrupcion se realiza en borde o en nivel
-  timerAttachInterrupt(timer1, &onTimer, true); //Se vincula el timer con la funcion AttachInterrup 
+    timerAttachInterrupt(timer1, &onTimer, true); //Se vincula el timer con la funcion AttachInterrup 
                                                //la cual se ejecuta cuando se genera la interrupcion
-  timerAlarmWrite(timer1, 10000, true); //En esta funcion se define el valor del contador en el cual se genera la interrupción del timer
-  timerAlarmEnable(timer1); //Función para habilitar el temporizador.           
+    timerAlarmWrite(timer1, 10000, true); //En esta funcion se define el valor del contador en el cual se genera la interrupción del timer
+    timerAlarmEnable(timer1); //Función para habilitar el temporizador.           
     sei();//allow interrupts
   }
 }
@@ -251,7 +231,6 @@ void giro_normal(){
 
 void slow_Calibration_encoder(int s_dir){
   
-  //int dato[100];
   for(int i = 0 ; i < 100 ; i++){
     dato[i] = -1 ;
   } 
@@ -270,8 +249,6 @@ void slow_Calibration_encoder(int s_dir){
   int foo = 0;
   int foo1 = 0;
   int back = 0;
-
-  Serial.println("Before");
   delay(500);
 
   //sweep for encoder
@@ -301,7 +278,7 @@ void slow_Calibration_encoder(int s_dir){
   accum++;
   
   }
-  //Serial.println(accum);
+
   int maxValue = 0;
   int indexValue = 0;
   int indexValue2 = 0;
@@ -330,16 +307,13 @@ void slow_Calibration_encoder(int s_dir){
   digitalWrite(EN_PIN,HIGH);
   digitalWrite(EN_PIN2,HIGH);
  
- 
 }
 ///////////////////////////////Second arm////////////////////////////////////////
-void slow_Calibration_hall(int s_dir2){  
-
+void slow_Calibration_hall(int s_dir2){
   digitalWrite(EN_PIN2,LOW);
   for(int i = 0 ; i < 300 ; i++){
     dato2[i] = -1 ;
   } 
-  //go out from encoder
   int k=0;
   int val_sens;
   int val_sens_filt;
@@ -364,25 +338,18 @@ void slow_Calibration_hall(int s_dir2){
     {
       val_sens = meanFilter3.AddValue(analogRead(hall));
     }
-    Serial.print(val_sens);
-    Serial.print("\t");
+    delay(1);
     val_sens_filt = meanFilter4.AddValue(val_sens);
     if(val_sens_filt > maximo)
     {
       maximo = val_sens_filt;
     }
     dato2[k] = val_sens_filt;
-    //Serial.print(k);
-    //Serial.print("\t");
-    Serial.println(dato2[k]);
+    delay(1);
     k++;
 
   }
-  Serial.println("Maximo");
-  Serial.println(maximo);
   limit = maximo * 0.9;
-  Serial.println("limit");
-  Serial.println(limit);
   k = 300;
   while(k > 0)
   {
@@ -406,22 +373,16 @@ void slow_Calibration_hall(int s_dir2){
     }
     k--;
   }
-  Serial.println("pasos_ini");
-  Serial.println(pasos_ini);
-  Serial.println("pasos_fin");
-  Serial.println(pasos_fin);
+  
   digitalWrite(DIR_PIN2, LOW);
   int pas;
   int media;
   media = (pasos_ini - pasos_fin)/2;
   pas = (300 - pasos_ini)+media;
-  mover(pas,2);
- 
+  mover(pas,2); 
 }
 
 void mover(int pasos, int motor_d){
-  //Serial.println(pasos);
-
   if(motor_d == 1)
   {
       for (int i = 0; i < pasos; i++)
@@ -444,7 +405,6 @@ void mover(int pasos, int motor_d){
       }
   }
 
-  //delay(2000);
  }
 
  void CalibMotor::verificacion_cal(void){
@@ -587,25 +547,19 @@ void mover(int pasos, int motor_d){
     {
       val_sens = meanFilter3.AddValue(analogRead(hall));
     }
-    Serial.print(val_sens);
-    Serial.print("\t");
+    delay(25);
     val_sens_filt = meanFilter4.AddValue(val_sens);
     if(val_sens_filt > maximo)
     {
       maximo = val_sens_filt;
     }
     dato3[k] = val_sens_filt;
-    //Serial.print(k);
-    //Serial.print("\t");
-    Serial.println(dato3[k]);
+    delay(25);
     k++;
 
   }
-  Serial.println("Maximo");
-  Serial.println(maximo);
   limit = maximo * 0.98;
-  Serial.println("limit");
-  Serial.println(limit);
+  delay(50);
   k = 200;
   while(k > 0)
   {
@@ -629,17 +583,20 @@ void mover(int pasos, int motor_d){
     }
     k--;
   }
-  Serial.println("pasos_ini");
-  Serial.println(pasos_ini);
-  Serial.println("pasos_fin");
-  Serial.println(pasos_fin);
+  delay(50);
   digitalWrite(DIR_PIN2, LOW);
   int pas;
   int media;
   media = (pasos_ini - pasos_fin)/2;
   pas = (200 - pasos_ini)+media;
-  mover(pas,2);
-
-
+  for(int t =0; t < pas;t++)
+  {
+    mover(1,2);
+    delay(50);
+  }
+  
+  digitalWrite(EN_PIN2,LOW);
+  digitalWrite(EN_PIN,LOW); 
+  driver.rms_current(600); 
+  driver2.rms_current(600);
  }
-

@@ -4,7 +4,7 @@
 #define R_SENSE             0.11f
 
 //STALL_VALUE y STALL_VALUE2 es la sensibilidad para la deteccion de colision la cual tambien depende de la corriente.
-#define STALL_VALUE         5 // [0..255]
+#define STALL_VALUE         2 // [0..255]
 #define STALL_VALUE2        2
 
 //MICROSTEPPING es para configurar las distintas configuraciones de de microstepping que tiene el motor

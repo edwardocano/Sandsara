@@ -131,12 +131,12 @@ void setup()
     //==============================================
 
     //=====Inicializar SD===========================================
-    if (!SD.begin())
+    while(!SD.begin(13))
     {
         Serial.println("Card failed, or not present");
-        while (1)
-            ;
+        delay(200); 
     }
+    Serial.println("Card present");
     myFile = SD.open("/");
     if (!myFile)
     {
