@@ -1,4 +1,5 @@
 #include "CalibMotor.h"
+#include <HardwareSerial.h>
 
 hw_timer_t * timer1 = NULL; 
 
@@ -22,8 +23,10 @@ int dato2[300];
 int dato3[200];
 int maximo;
 
-TMC2209Stepper driver(&SERIAL_PORT, R_SENSE, DRIVER_ADDRESS);
-TMC2209Stepper driver2(&SERIAL_PORT2, R_SENSE, DRIVER_ADDRESS2);
+//TMC2208Stepper driver = TMC2208Stepper(&Serial1);
+//TMC2208Stepper driver2 = TMC2208Stepper(&Serial2);  
+TMC2208Stepper driver(&SERIAL_PORT, R_SENSE);
+TMC2208Stepper driver2(&SERIAL_PORT2, R_SENSE);
 
 void giro_normal();
 void mover(int , int );
@@ -51,8 +54,8 @@ void IRAM_ATTR onTimer() {
 
 int CalibMotor::init(){
 
-    SERIAL_PORT.begin(115200);
-    SERIAL_PORT2.begin(115200);
+    //SERIAL_PORT.begin(115200);
+    //SERIAL_PORT2.begin(115200);
 
     
     pinMode(DIAG_PIN, INPUT);
@@ -71,31 +74,30 @@ int CalibMotor::init(){
     digitalWrite(EN_PIN2,HIGH);
     digitalWrite(DIR_PIN2,LOW);
     
+    Serial1.begin(115200);
+    Serial2.begin(115200);
+
+
     driver.begin();
-    driver.pdn_disable(true);  
-    driver.toff(4);
-    driver.blank_time(24);
-    driver.rms_current(600); 
-    driver.microsteps(MICROSTEPPING);
-    driver.TCOOLTHRS(0xFFFFF); // 20bit max
-    driver.semin(0);
-    //driver.semax(2);
+    driver.pdn_disable(1);							// Use PDN/UART pin for communication
+	  driver.I_scale_analog(0);						// Adjust current from the registers
+	  driver.rms_current(600);
+    driver.mstep_reg_select(1);
+    driver.microsteps(MICROSTEPPING);						// Set driver current 500mA
+	  driver.toff(5); 
+    driver.pwm_autoscale(1);
     driver.shaft(false);
-    driver.sedn(0b01);
-    driver.SGTHRS(STALL_VALUE);
 
     driver2.begin();
-    driver2.pdn_disable(true);  
-    driver2.toff(4);
-    driver2.blank_time(24);
-    driver2.rms_current(600); 
-    driver2.microsteps(MICROSTEPPING);
-    driver2.TCOOLTHRS(0xFFFFF); // 20bit max
-    driver2.semin(0);
-    //driver.semax(2);
+    driver2.pdn_disable(1);							// Use PDN/UART pin for communication
+	  driver2.I_scale_analog(0);						// Adjust current from the registers
+	  driver2.rms_current(600);	
+    driver2.mstep_reg_select(1);
+  	driver2.microsteps(MICROSTEPPING);			// Set driver current 500mA
+	  driver2.toff(5); 
+    driver2.pwm_autoscale(1);
+    
     driver2.shaft(false);
-    driver2.sedn(0b01);
-    driver2.SGTHRS(STALL_VALUE2);
 }
 
 int CalibMotor::start(){
@@ -104,41 +106,7 @@ int CalibMotor::start(){
     giro_normal();
     delay(100);
     while(true){
-    if (digitalRead(DIAG_PIN) == 1){
-        flag = 1; 
-    //Back a little  first arm
-        digitalWrite(DIR_PIN,HIGH);
-        mover(300,1);
-
-    //Move second arm 90 degrees.    
-        digitalWrite(EN_PIN,LOW);
-        digitalWrite(EN_PIN2,LOW);
-        digitalWrite(DIR_PIN2 , LOW);
-        mover(1600,2);
-
-    //move both arms until encoder detects
-        digitalWrite(DIR_PIN , LOW);
-        digitalWrite(DIR_PIN2 , LOW);
-        while(analogRead(encoder)<600){
-        flag=2;
-        }
-        flag=1;
-
-    //move second arm until hall detects
-        int mean = meanFilter.AddValue(analogRead(hall));
-        while (mean < 2400){                      
-            mean = meanFilter.AddValue(analogRead(hall));
-            flag = 3;
-        }
-        flag=1;
-        s_dir = 0;
-        slow_Calibration_encoder(s_dir);
-        slow_Calibration_hall(s_dir);
-        digitalWrite(EN_PIN,LOW);
-        digitalWrite(EN_PIN2,LOW); 
-        avoid = 1;
-    }
-
+      Serial.println("aqui");
     //////////////////////////////////////////////////////////////////////////
     ////////////////////////////WITHOUT STALLGUARD////////////////////////////
 
@@ -148,7 +116,7 @@ int CalibMotor::start(){
         digitalWrite(DIR_PIN2 ,HIGH);
         int mean = meanFilter.AddValue(analogRead(hall));
         digitalWrite(EN_PIN2,LOW);
-        driver.rms_current(1500);     
+        driver.rms_current(1300);     
         delay(500);                      
         
         while (mean < 2400){
@@ -304,8 +272,6 @@ void slow_Calibration_encoder(int s_dir){
   mover(back,2);
 
   delay(1000);
-  digitalWrite(EN_PIN,HIGH);
-  digitalWrite(EN_PIN2,HIGH);
  
 }
 ///////////////////////////////Second arm////////////////////////////////////////
@@ -380,6 +346,10 @@ void slow_Calibration_hall(int s_dir2){
   media = (pasos_ini - pasos_fin)/2;
   pas = (300 - pasos_ini)+media;
   mover(pas,2); 
+
+  Serial.println(driver.microsteps());
+  Serial.println(driver2.microsteps());
+  delay(5000);
 }
 
 void mover(int pasos, int motor_d){
@@ -404,7 +374,8 @@ void mover(int pasos, int motor_d){
           delayMicroseconds(Velocidad);
       }
   }
-
+  Serial.println(driver.microsteps());
+  Serial.println(driver2.microsteps());
  }
 
  void CalibMotor::verificacion_cal(void){
@@ -599,4 +570,5 @@ void mover(int pasos, int motor_d){
   digitalWrite(EN_PIN,LOW); 
   driver.rms_current(600); 
   driver2.rms_current(600);
+
  }

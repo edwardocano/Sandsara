@@ -16,8 +16,8 @@
 
 #define EEPROM_SIZE 512
 
-extern TMC2209Stepper driver;
-extern TMC2209Stepper driver2;
+//extern TMC2208Stepper driver;
+//extern TMC2208Stepper driver2;
 
 File myFile;
 File root;
@@ -83,6 +83,7 @@ bool productType;
 
 //==========Thred=========
 TaskHandle_t Task1;
+bool runninCalibration = true;
 //========================
 
 //========Calibracion=====
@@ -94,23 +95,6 @@ void setup()
     //=====Configurar Serial========================
     Serial.begin(115200);
     //==============================================
-    
-    //====Seleccionar tipo de producto====
-    pinMode(PIN_ProducType, INPUT);
-    delay(1000);
-    productType = digitalRead(PIN_ProducType);
-    //==========Calibrar=========
-    Serial.println("init func");
-    haloCalib.init();
-    Serial.println("start func");
-    //haloCalib.start();
-    Serial.println("Salio de start");
-    pinMode(EN_PIN, OUTPUT);
-    pinMode(EN_PIN2, OUTPUT);
-    digitalWrite(EN_PIN, LOW);
-    digitalWrite(EN_PIN2, LOW);
-    //================
-
     //=====Configurar fastled=======================
      delay( 3000 ); // power-up safety delay
     FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
@@ -119,6 +103,34 @@ void setup()
     currentPalette = RainbowColors_p;
     currentBlending = LINEARBLEND;
     //==============================================
+    //======new task==========
+    xTaskCreatePinnedToCore(
+                    ledsFunc,   /* Task function. */
+                    "Task1",     /* name of task. */
+                    10000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    1,           /* priority of the task */
+                    &Task1,      /* Task handle to keep track of created task */
+                    0);          /* pin task to core 0 */                  
+    delay(500); 
+    //===============================================
+    //====Seleccionar tipo de producto====
+    pinMode(PIN_ProducType, INPUT);
+    delay(1000);
+    productType = digitalRead(PIN_ProducType);
+    //==========Calibrar=========
+    Serial.println("init func");
+    haloCalib.init();
+    Serial.println("start func");
+    haloCalib.start();
+    Serial.println("Salio de start");
+    runninCalibration = false;
+    pinMode(EN_PIN, OUTPUT);
+    pinMode(EN_PIN2, OUTPUT);
+    digitalWrite(EN_PIN, LOW);
+    digitalWrite(EN_PIN2, LOW);
+    //================
+
 
     //======Neopixel=============================================
     //pixels.begin(); // Inicializa NeoPixel
@@ -156,8 +168,21 @@ void setup()
     playListGlobal = romGetPlaylist();
     ordenModeGlobal = romGetOrdenMode();
     changePalette(romGetPallete());
-    Serial.print("lista guardada: ");
-    Serial.println(playListGlobal);
+    if (playListGlobal.equals("/")){
+        Serial.print("No hay una playlist guardada, se reproduciran todos los archivos en la sd");
+        ordenModeGlobal = 3;
+    }
+    else
+    {
+        if (SD.exists(playListGlobal)){
+            Serial.print("lista guardada: ");
+            Serial.println(playListGlobal);
+        }
+        else{
+            Serial.println("La playlist no existe, se reproduciran todos los archivos en la sd");
+            ordenModeGlobal = 3;
+        }
+    }
     Serial.print("ordenMode guardado: ");
     Serial.println(ordenModeGlobal);
     //============================================================
@@ -170,17 +195,7 @@ void setup()
     //=====================================================================================
     Serial.print("Task1 running on core ");
     Serial.println(xPortGetCoreID());
-    //======new task==========
-    xTaskCreatePinnedToCore(
-                    ledsFunc,   /* Task function. */
-                    "Task1",     /* name of task. */
-                    10000,       /* Stack size of task */
-                    NULL,        /* parameter of the task */
-                    1,           /* priority of the task */
-                    &Task1,      /* Task handle to keep track of created task */
-                    0);          /* pin task to core 0 */                  
-    delay(500); 
-    //===============================================
+    
 }
 
 void loop()
@@ -442,7 +457,8 @@ int run_sandsara(String playList, int ordenMode)
             else if (posisionCase == 0){
                 Serial.println("Se mandara a cero");
                 movePolarTo(0, 0, 0, true);
-                //haloCalib.verificacion_cal();
+                
+                haloCalib.verificacion_cal();
             }
 #ifdef PROCESSING_SIMULATOR
             Serial.println("finished");
@@ -852,11 +868,24 @@ const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
  */
 void ledsFunc( void * pvParameters ){
     for(;;){
-        if (millis() - timeLeds> periodLeds){
-            FillLEDsFromPaletteColors(startIndex);
+        //if (!runninCalibration){
+            if (millis() - timeLeds> periodLeds){
+                FillLEDsFromPaletteColors(startIndex);
+                FastLED.show();
+                startIndex += 3;
+                timeLeds = millis();
+            }
+        //}
+        /*else
+        {
+            for (int i = 0; i < NUM_LEDS; i++)
+            {
+                leds[i].setRGB( 255, 255, 255);
+            }
             FastLED.show();
-            startIndex += 3;
-            timeLeds = millis();
-        }
+            delay(1000);
+        }*/
+        
+        
     } 
 }
