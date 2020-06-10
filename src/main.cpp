@@ -94,6 +94,17 @@ void setup()
     //=====Configurar Serial========================
     Serial.begin(115200);
     //==============================================
+    //======new task==========
+    xTaskCreatePinnedToCore(
+                    ledsFunc,   /* Task function. */
+                    "Task1",     /* name of task. */
+                    10000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    1,           /* priority of the task */
+                    &Task1,      /* Task handle to keep track of created task */
+                    0);          /* pin task to core 0 */                  
+    delay(500); 
+    //===============================================
     
     //====Seleccionar tipo de producto====
     pinMode(PIN_ProducType, INPUT);
@@ -156,8 +167,21 @@ void setup()
     playListGlobal = romGetPlaylist();
     ordenModeGlobal = romGetOrdenMode();
     changePalette(romGetPallete());
-    Serial.print("lista guardada: ");
-    Serial.println(playListGlobal);
+    if (playListGlobal.equals("/")){
+        Serial.print("No hay una playlist guardada, se reproduciran todos los archivos en la sd");
+        ordenModeGlobal = 3;
+    }
+    else
+    {
+        if (SD.exists(playListGlobal)){
+            Serial.print("lista guardada: ");
+            Serial.println(playListGlobal);
+        }
+        else{
+            Serial.println("La playlist no existe, se reproduciran todos los archivos en la sd");
+            ordenModeGlobal = 3;
+        }
+    }
     Serial.print("ordenMode guardado: ");
     Serial.println(ordenModeGlobal);
     //============================================================
@@ -170,17 +194,7 @@ void setup()
     //=====================================================================================
     Serial.print("Task1 running on core ");
     Serial.println(xPortGetCoreID());
-    //======new task==========
-    xTaskCreatePinnedToCore(
-                    ledsFunc,   /* Task function. */
-                    "Task1",     /* name of task. */
-                    10000,       /* Stack size of task */
-                    NULL,        /* parameter of the task */
-                    1,           /* priority of the task */
-                    &Task1,      /* Task handle to keep track of created task */
-                    0);          /* pin task to core 0 */                  
-    delay(500); 
-    //===============================================
+    
 }
 
 void loop()
