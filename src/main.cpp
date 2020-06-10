@@ -143,7 +143,9 @@ void setup()
     //==============================================
 
     //=====Inicializar SD===========================================
-    while(!SD.begin(13))
+    while(!SD.begin(
+        
+    ))
     {
         Serial.println("Card failed, or not present");
         delay(200); 
