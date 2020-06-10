@@ -20,6 +20,10 @@ int Velocidad = 5000;
 int dato[100];
 int dato2[300];
 int dato3[200];
+int vect_prom[5];
+int vect_simi[5];
+int vect_max[5];
+int vect_min[5];
 int maximo;
 
 TMC2209Stepper driver(&SERIAL_PORT, R_SENSE, DRIVER_ADDRESS);
@@ -29,6 +33,7 @@ void giro_normal();
 void mover(int , int );
 void slow_Calibration_hall(int );
 void slow_Calibration_encoder(int s_dir);
+void Cero_Hall(void);
 
 CalibMotor::CalibMotor(){
 
@@ -101,6 +106,8 @@ int CalibMotor::init(){
 int CalibMotor::start(){
 //////////////////////////////////////////////////////////////////////
 ////////////////////////////WITH STALLGUARD///////////////////////////
+    Cero_Hall();
+    delay(5000);
     giro_normal();
     delay(100);
     while(true){
@@ -600,3 +607,252 @@ void mover(int pasos, int motor_d){
   driver.rms_current(600); 
   driver2.rms_current(600);
  }
+
+
+ void Cero_Hall(void){
+   flag = 1;
+   digitalWrite(EN_PIN,LOW);
+   int dato_hall;
+   int dato_filt;
+   int min = 5000;
+   int max = 0;
+   int suma = 0;
+   int promedio;
+   for(int x = 0; x < 5; x++)
+   {
+      for(int i = 0; i < 40; i++)
+      {
+        dato_filt = meanFilter2.AddValue(analogRead(hall));
+      }
+      dato_hall = dato_filt/4;
+      if(dato_hall > max)
+      {
+        max = dato_hall;
+      }
+      if(dato_hall < min)
+      {
+        min = dato_hall;
+      }
+      suma = suma + dato_hall;
+      vect_max[0] = max;
+      vect_min[0] = min;
+      delay(500);
+   }
+   promedio = suma / 5;
+   vect_prom[0] = promedio;
+   suma = 0;
+
+   digitalWrite(DIR_PIN,HIGH);
+   mover(178,1);
+
+   min = 5000;
+   max = 0;
+   for(int x = 0; x < 5; x++)
+   {
+      for(int i = 0; i < 40; i++)
+      {
+        dato_filt = meanFilter2.AddValue(analogRead(hall));
+      }
+      dato_hall = dato_filt/4;
+      if(dato_hall > max)
+      {
+        max = dato_hall;
+      }
+      if(dato_hall < min)
+      {
+        min = dato_hall;
+      }
+      suma = suma + dato_hall;
+      vect_max[1] = max;
+      vect_min[1] = min;
+      delay(500);
+   }
+   promedio = suma / 5;
+   vect_prom[1] = promedio;
+   suma = 0;
+
+   digitalWrite(DIR_PIN,HIGH);
+   mover(178,1);
+
+   min = 5000;
+   max = 0;
+   for(int x = 0; x < 5; x++)
+   {
+      for(int i = 0; i < 40; i++)
+      {
+        dato_filt = meanFilter2.AddValue(analogRead(hall));
+      }
+      dato_hall = dato_filt/4;
+      if(dato_hall > max)
+      {
+        max = dato_hall;
+      }
+      if(dato_hall < min)
+      {
+        min = dato_hall;
+      }
+      suma = suma + dato_hall;
+      vect_max[2] = max;
+      vect_min[2] = min;
+      delay(500);
+   }
+   promedio = suma / 5;
+   vect_prom[2] = promedio;
+   suma = 0;
+
+   digitalWrite(DIR_PIN,LOW);
+   mover(533,1);
+
+   min = 5000;
+   max = 0;
+   for(int x = 0; x < 5; x++)
+   {
+      for(int i = 0; i < 40; i++)
+      {
+        dato_filt = meanFilter2.AddValue(analogRead(hall));
+      }
+      dato_hall = dato_filt/4;
+      if(dato_hall > max)
+      {
+        max = dato_hall;
+      }
+      if(dato_hall < min)
+      {
+        min = dato_hall;
+      }
+      suma = suma + dato_hall;
+      vect_max[3] = max;
+      vect_min[3] = min;
+      delay(500);
+   }
+   promedio = suma / 5;
+   vect_prom[3] = promedio;
+   suma = 0;
+
+   digitalWrite(DIR_PIN,LOW);
+   mover(178,1);
+
+
+   min = 5000;
+   max = 0;
+   for(int x = 0; x < 5; x++)
+   {
+      for(int i = 0; i < 40; i++)
+      {
+        dato_filt = meanFilter2.AddValue(analogRead(hall));
+      }
+      dato_hall = dato_filt/4;
+      if(dato_hall > max)
+      {
+        max = dato_hall;
+      }
+      if(dato_hall < min)
+      {
+        min = dato_hall;
+      }
+      suma = suma + dato_hall;
+      vect_max[4] = max;
+      vect_min[4] = min;
+      delay(500);
+   }
+   promedio = suma / 5;
+   vect_prom[4] = promedio;
+   suma = 0;
+
+  
+   int  similitud;
+   int cont_simi = 0;
+   for(int i = 0; i < 5; i++)
+   {
+     for(int j = 0; j < 5; j++)
+     {
+       similitud = vect_prom[i] - vect_prom[j];
+       if(similitud < 0)
+       {
+         similitud = similitud * (-1);
+       }
+       if(similitud <= 10)
+       {
+         cont_simi++;
+       }
+     }
+     vect_simi[i] = cont_simi;
+     cont_simi = 0;
+   }
+   int accum5 = 0;
+   int accum4 = 0;
+   int accum3 = 0;
+   for(int i = 0; i < 5; i++)
+   {
+     if(vect_simi[i] == 5)
+     {
+       accum5++;
+     }
+     if(vect_simi[i] == 4)
+     {
+       accum4++;
+     }
+     if(vect_simi[i] == 3)
+     {
+       accum3++;
+     }
+
+   }
+   Serial.println("Acumm5:  ");
+   Serial.println(accum5);
+   Serial.println("Acumm4:  ");
+   Serial.println(accum4);
+   Serial.println("Acumm3:  ");
+   Serial.println(accum3);
+  
+   min = 5000;
+   max = 0;
+   for(int i = 0; i < 5; i++)
+   {
+     if(vect_simi[i] >= 3)
+     {
+       if(vect_max[i] > max)
+       {
+         max = vect_max[i];
+       }
+       if(vect_min[i] < min)
+       {
+         min = vect_min[i];
+       }
+     }
+
+   }
+   Serial.println("max:  ");
+   Serial.println(max);
+   Serial.println("min:  ");
+   Serial.println(min);
+  
+   Serial.println("vector promedio");
+   for(int i = 0; i < 5; i++)
+   {
+     Serial.println(vect_prom[i]);
+
+   }
+
+   Serial.println("vector similitud");
+   for(int i = 0; i < 5; i++)
+   {
+     Serial.println(vect_simi[i]);
+
+   }
+
+
+ }
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -94,7 +94,17 @@ void setup()
     //=====Configurar Serial========================
     Serial.begin(115200);
     //==============================================
-    
+    //======new task==========
+    xTaskCreatePinnedToCore(
+                    ledsFunc,   /* Task function. */
+                    "Task1",     /* name of task. */
+                    10000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    1,           /* priority of the task */
+                    &Task1,      /* Task handle to keep track of created task */
+                    0);          /* pin task to core 0 */                  
+    delay(500); 
+    //===============================================
     //====Seleccionar tipo de producto====
     pinMode(PIN_ProducType, INPUT);
     delay(1000);
@@ -103,7 +113,7 @@ void setup()
     Serial.println("init func");
     haloCalib.init();
     Serial.println("start func");
-    //haloCalib.start();
+    haloCalib.start();
     Serial.println("Salio de start");
     pinMode(EN_PIN, OUTPUT);
     pinMode(EN_PIN2, OUTPUT);
@@ -131,7 +141,7 @@ void setup()
     //==============================================
 
     //=====Inicializar SD===========================================
-    while(!SD.begin(13))
+    while(!SD.begin())
     {
         Serial.println("Card failed, or not present");
         delay(200); 
@@ -156,8 +166,21 @@ void setup()
     playListGlobal = romGetPlaylist();
     ordenModeGlobal = romGetOrdenMode();
     changePalette(romGetPallete());
-    Serial.print("lista guardada: ");
-    Serial.println(playListGlobal);
+    if (playListGlobal.equals("/")){
+        Serial.print("No hay una playlist guardada, se reproduciran todos los archivos en la sd");
+        ordenModeGlobal = 3;
+    }
+    else
+    {
+        if (SD.exists(playListGlobal)){
+            Serial.print("lista guardada: ");
+            Serial.println(playListGlobal);
+        }
+        else{
+            Serial.println("La playlist no existe, se reproduciran todos los archivos en la sd");
+            ordenModeGlobal = 3;
+        }
+    }
     Serial.print("ordenMode guardado: ");
     Serial.println(ordenModeGlobal);
     //============================================================
@@ -170,17 +193,7 @@ void setup()
     //=====================================================================================
     Serial.print("Task1 running on core ");
     Serial.println(xPortGetCoreID());
-    //======new task==========
-    xTaskCreatePinnedToCore(
-                    ledsFunc,   /* Task function. */
-                    "Task1",     /* name of task. */
-                    10000,       /* Stack size of task */
-                    NULL,        /* parameter of the task */
-                    1,           /* priority of the task */
-                    &Task1,      /* Task handle to keep track of created task */
-                    0);          /* pin task to core 0 */                  
-    delay(500); 
-    //===============================================
+    
 }
 
 void loop()
@@ -857,6 +870,7 @@ void ledsFunc( void * pvParameters ){
             FastLED.show();
             startIndex += 3;
             timeLeds = millis();
+            delay(1);
         }
     } 
 }

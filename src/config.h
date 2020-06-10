@@ -58,7 +58,7 @@
 #define PROCESSING_SIMULATOR
 //#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
-#define DISABLE_MOTORS
+//#define DISABLE_MOTORS
 
 /**
  * DISTANCIA_MAX es el radio maximo, desde el centro, que va a dibujar el robot
