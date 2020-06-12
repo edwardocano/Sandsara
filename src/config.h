@@ -4,8 +4,8 @@
 #define R_SENSE             0.11f
 
 //STALL_VALUE y STALL_VALUE2 es la sensibilidad para la deteccion de colision la cual tambien depende de la corriente.
-#define STALL_VALUE         2 // [0..255]
-#define STALL_VALUE2        2
+#define STALL_VALUE         5 // [0..255]
+#define STALL_VALUE2        5
 
 //MICROSTEPPING es para configurar las distintas configuraciones de de microstepping que tiene el motor
 // entre las opciones estan 1,2,4,8,16,32,64.
@@ -71,8 +71,8 @@
  * encoder es el pin para la senal del encoder
  * hall es el pin para la senal del sensor de efecto hall
  */
-#define encoder           39
-#define hall              36
+#define hall1           39
+#define hall2           36
 
 /**
  * DIAG_PIN es el pin diag para detectar colisiones del motor 1
