@@ -1,6 +1,15 @@
 
 #include "BlueSara.h"
+#include <Update.h>
+#include <FS.h>
+#include <SD.h>
 
+// perform the actual update from a given stream
+int performUpdate(Stream &, size_t );
+// check given FS for valid update.bin and perform update if available
+int updateFromFS(fs::FS &, String );
+int programming(String );
+void rebootEspWithReason(String );
 
 //--------------Bluetooth--------------------------------------------------------
 //-------------------------------------------------------------------------------
@@ -58,12 +67,19 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * -5, se intento enviar un archivo con un nombre ya existente.
  * -7, no coincide checksum.
  * -8, no se pudo crear el archivo.
- * -9, se han leido mas de X numero de caracteres sin encontrar un '\n' en la funcion readLine()
+ * -9, se han leido mas de X numero de caracteres sin encontrar un '\n' en la funcion readLine().
+ * -51, es un directorio
+ * -52, el archivo esta vacio
+ * -53, el archivo no se pudo abrir.02
+ * -54, no se pudo finalizar la actualizacion
+ * -55, no hay suficiente espacio para el OTA.
+ * -56, Ocurrio un error al actualizar el firmware
  * @note interpreta los siguientes mensajes
  * code01, significa que va a transferer un archivo.
  * code02, significa que se esta solicitando el cambio de playlist.
  * code03, significa que se esta solicitando el cambio de orden de reproduccion.
  * code04, significa que se esta solicitando el cambio de paleta de leds.
+ * code66, actualizar firmware
  */
 int BlueSara::checkBlueTooth()
 {
@@ -248,6 +264,31 @@ int BlueSara::checkBlueTooth()
             ledMode = line.toInt();
             writeBtln("ok");
             return 30; //Se solicita el cambio de leds
+        }
+        else if (line.indexOf("code66") >= 0)
+        {
+            writeBtln("request-nameUpdate");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            line = "/" + line;
+            codeError = programming(line);
+            if (codeError == 1)
+            {
+                writeBtln("ok");
+                rebootEspWithReason("Reiniciando");
+                return codeError; //ya no llega a este puntp
+            }
+            else{
+                writeBt("error=");
+                writeBtln(String(codeError - 50));
+                return codeError - 50; //No se pudo actualizar el firmware
+            }
+            
         }
         else
         {
@@ -561,4 +602,116 @@ String BlueSara::GetMD5String(uint8_t *msg, int mlen)
     }
     //free(d);
     return str;
+}
+
+/**
+ * @brief realiza la actualizacion
+ * @return un codigo de error que puede significar lo siguiente
+ * -4, no se pudo finalizar la actualizacion
+ * -5, no hay suficiente espacio para el OTA.
+ * -6, Ocurrio un error al actualizar el firmware
+ */
+int performUpdate(Stream &updateSource, size_t updateSize)
+{
+    if (Update.begin(updateSize))
+    {
+        size_t written = Update.writeStream(updateSource);
+        if (written == updateSize)
+        {
+            Serial.println("Written : " + String(written) + " successfully");
+        }
+        else
+        {
+            Serial.println("Written only : " + String(written) + "/" + String(updateSize) + ". Retry?");
+        }
+        if (Update.end())
+        {
+            Serial.println("OTA done!");
+            if (Update.isFinished())
+            {
+                Serial.println("Update successfully completed. Rebooting.");
+                return 1;
+            }
+            else
+            {
+                Serial.println("Update not finished? Something went wrong!");
+                return -4;
+            }
+        }
+        else
+        {
+            Serial.println("Error Occurred. Error #: " + String(Update.getError()));
+            return -6;
+        }
+    }
+    else
+    {
+        Serial.println("Not enough space to begin OTA");
+        return -5;
+    }
+}
+
+/**
+ * @brief revisa si el archivo es valido y si lo es actualiza el firmware
+ * @return un codigos de error:
+ *  1, se actualizo el firmware
+ * -1, es un directorio
+ * -2, el archivo esta vacio
+ * -3, el archivo no se pudo abrir.
+ * -4, no se pudo finalizar la actualizacion
+ * -5, no hay suficiente espacio para el OTA.
+ * -6, Ocurrio un error al actualizar el firmware
+ */
+int updateFromFS(fs::FS &fs, String name)
+{
+    int errorCode;
+    File updateBin = fs.open(name);
+    if (updateBin)
+    {
+        if (updateBin.isDirectory())
+        {
+            Serial.println("Error, update.bin is not a file");
+            updateBin.close();
+            return -1;
+        }
+
+        size_t updateSize = updateBin.size();
+
+        if (updateSize > 0)
+        {
+            Serial.println("Try to start update");
+            errorCode = performUpdate(updateBin, updateSize);
+            updateBin.close();
+            fs.remove(name);
+            return errorCode; // se actualizo el firmware
+        }
+        else
+        {
+            Serial.println("Error, file is empty");
+            updateBin.close();
+            return -2;
+        }
+
+        updateBin.close();
+
+        // whe finished remove the binary from sd card to indicate end of the process
+        fs.remove(name);
+    }
+    else
+    {
+        Serial.println("Could not load update.bin from sd root");
+        return -3;
+    }
+}
+
+int programming(String name) {
+    int errorCode;
+    errorCode = updateFromFS(SD, name);
+    return errorCode;
+}
+
+void rebootEspWithReason(String reason){
+    Serial.println(reason);
+    delay(1000);
+    ESP.restart();
 }

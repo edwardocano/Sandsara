@@ -74,7 +74,7 @@ extern CRGBPalette16 myRedWhiteBluePalette;
 extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
 
 unsigned long timeLeds;
-int periodLeds = 20;
+int periodLeds = 10;
 uint8_t startIndex = 0;
 //====Product Type====
 bool productType;
@@ -231,6 +231,7 @@ void loop()
  * 2, se ejecutan todos los archivos contenidos en el directorio principal de la SD en orden aleatorio.
  * 3, se ejecutan todos los archivos contenidos en el directorio principal de la SD en el orden que la sd los acomoda.
  * 4, se ejecutan los archivos de la playlist en orden aleatorio (no implementado).
+ * @return codigo de error.
  */
 int run_sandsara(String playList, int ordenMode)
 {
@@ -864,6 +865,8 @@ const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
  * 
  */
 void ledsFunc( void * pvParameters ){
+    //pinMode(2,OUTPUT);
+    //bool estado = true;
     for(;;){
         if (millis() - timeLeds> periodLeds){
             FillLEDsFromPaletteColors(startIndex);
@@ -871,6 +874,8 @@ void ledsFunc( void * pvParameters ){
             startIndex += 3;
             timeLeds = millis();
             delay(1);
+            //estado = !estado;
+            //digitalWrite(2,estado);
         }
     } 
 }
