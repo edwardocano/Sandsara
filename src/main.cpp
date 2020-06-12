@@ -232,6 +232,11 @@ void loop()
  * 3, se ejecutan todos los archivos contenidos en el directorio principal de la SD en el orden que la sd los acomoda.
  * 4, se ejecutan los archivos de la playlist en orden aleatorio (no implementado).
  * @return codigo de error.
+ *  0, termino el la funcion sin problemas.
+ * -1, No se pudo abrir el archivo con la direccion dirFile.
+ * -2, El archivo abierto es un directorio.
+ * -3, La linea que se desea leer no es valida.
+ * 
  */
 int run_sandsara(String playList, int ordenMode)
 {
@@ -474,6 +479,9 @@ int run_sandsara(String playList, int ordenMode)
  * @param y coordenada en el eje y, medida en milimetros, a la que se desea avanzar.
  * @param distance es la distancia, medida en milimetros, entre el punto actual y el punto al que se desea avanzar.
  * @return un codigo de error referente al bluetooth.
+ * 1, se requiere cambio de playlist
+ * 2, se requiere cambio de ordenMode
+ * 0, termino 
  */
 int moveInterpolateTo(double x, double y, double distance)
 {
@@ -510,6 +518,8 @@ int moveInterpolateTo(double x, double y, double distance)
  * @param couplingAngle es el angulo que se va a rotar el punto con coordenadas polares component_1, component_2 (modulo y angulo, respectivamente).
  * @note es muy importante que se hayan definido las variables zCurrent y thetaCurrent antes.
  * de llamar a esta funcion porque es apartir de estas variables que se calcula cuanto se debe mover.
+ * @return un codigo de error:
+ * 
  */
 int movePolarTo(double component_1, double component_2, double couplingAngle, bool littleMovement){
     double zNext = component_1;
