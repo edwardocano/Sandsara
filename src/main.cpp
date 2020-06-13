@@ -232,6 +232,8 @@ void loop()
  * 3, se ejecutan todos los archivos contenidos en el directorio principal de la SD en el orden que la sd los acomoda.
  * 4, se ejecutan los archivos de la playlist en orden aleatorio (no implementado).
  * @return codigo de error.
+ *  1, se cambio la playlist
+ *  2, se cambio el ordenMode
  *  0, termino el la funcion sin problemas.
  * -1, No se pudo abrir el archivo con la direccion dirFile.
  * -2, El archivo abierto es un directorio.
@@ -519,7 +521,9 @@ int moveInterpolateTo(double x, double y, double distance)
  * @note es muy importante que se hayan definido las variables zCurrent y thetaCurrent antes.
  * de llamar a esta funcion porque es apartir de estas variables que se calcula cuanto se debe mover.
  * @return un codigo de error:
- * 
+ * 0, no se recibio nada por bluetooth
+ * 1, se cambio la playlist
+ * 2, se cambio el ordenMode
  */
 int movePolarTo(double component_1, double component_2, double couplingAngle, bool littleMovement){
     double zNext = component_1;
@@ -575,6 +579,7 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     halo.setZCurrent(zNext);
     return 0;
 }
+
 //===========================
 void executeCode(int errorCode){
     if (errorCode == 10){
