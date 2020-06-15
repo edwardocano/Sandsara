@@ -244,7 +244,7 @@ int MoveSara::position(){
     }
     return pos;
 }
-//==================funciones Get======================
+//==================funciones Get y Set======================
 
 /**
  * @brief regresa el miembro privado zCurrent
@@ -260,6 +260,41 @@ double MoveSara::getZCurrent(){
  */
 double MoveSara::getThetaCurrent(){
     return thetaCurrent;
+}
+
+/**
+ * @brief obtiene el valor de la velocidad actual del robor en milimetros por segundo
+ * @return la variable millimeterSpeed.
+ */
+int MoveSara::getSpeed(){
+    return millimeterSpeed;
+}
+
+/**
+ * @brief cambia la velocidad del robot
+ * @param speed es la nueva valocidad, en milimetros por segundo, que va a tener el robot
+ */
+void MoveSara::setSpeed(int speed){
+    millimeterSpeed = speed;
+}
+/**
+ * @brief moficica el miembro z_current a uno nuevo.
+ * @param z es el valor que se le va a asignar a la variable miembro zCurrent.
+ * @note  Esto es importante para que los archivos .thr tengan una referencia de donde empezar a moverse.
+ */
+void MoveSara::setZCurrent(double z)
+{
+    zCurrent = z;
+}
+
+/**
+ * @brief moficica el miembro theta_current a uno nuevo.
+ * @param theta es el valor que se le va a asignar a la variable miembro thetaCurrent.
+ * @note  Esto es importante para que los archivos .thr tengan una referencia de donde empezar a moverse.
+ */
+void MoveSara::setThetaCurrent(double theta)
+{
+    thetaCurrent = theta;
 }
 
 //Configuration Methods-----------------------------------------------------------------------
@@ -297,25 +332,7 @@ void MoveSara::setCouplingAngle(double angle)
     couplingAngle = normalizeAngle(angle);
 }
 
-/**
- * @brief moficica el miembro z_current a uno nuevo.
- * @param z es el valor que se le va a asignar a la variable miembro zCurrent.
- * @note  Esto es importante para que los archivos .thr tengan una referencia de donde empezar a moverse.
- */
-void MoveSara::setZCurrent(double z)
-{
-    zCurrent = z;
-}
 
-/**
- * @brief moficica el miembro theta_current a uno nuevo.
- * @param theta es el valor que se le va a asignar a la variable miembro thetaCurrent.
- * @note  Esto es importante para que los archivos .thr tengan una referencia de donde empezar a moverse.
- */
-void MoveSara::setThetaCurrent(double theta)
-{
-    thetaCurrent = theta;
-}
 //----------------------------mathematics---------------------------------------------------
 
 //Kinematics--------------------------------------------------------------------------------

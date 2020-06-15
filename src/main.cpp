@@ -14,16 +14,18 @@
 
 #include <EEPROM.h>
 
-#define EEPROM_SIZE 512
+
 
 extern TMC2209Stepper driver;
 extern TMC2209Stepper driver2;
 
 File myFile;
 File root;
-//variables para ordenar secuencia de archivos
+//variables globales en rom
 String playListGlobal;
 int ordenModeGlobal;
+int speedMotorGlobal;
+int palleteGlobal;
 //
 MoveSara halo;
 BlueSara haloBt;
@@ -51,9 +53,11 @@ int run_sandsara(String ,int );
 int movePolarTo(double ,double ,double, bool = false);
 int romSetPallete(int );
 int romGetPallete();
-//=====================================
-//=============Variable leds========================
-//Neopixel==========================================
+int romSetSpeedMotor(int speed);
+int romGetSpeedMotor();
+//====
+//====Variable leds====
+//====Neopixel====
 #define PIN 15
 #define NUMPIXELS 30 // numero de pixels en la tira
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
@@ -79,88 +83,23 @@ uint8_t startIndex = 0;
 //====Product Type====
 bool productType;
 
-//==================================================
+//====
 
-//==========Thred=========
+//====Thred====
 TaskHandle_t Task1;
-//========================
+//====
 
-//========Calibracion=====
+//====Calibracion====
 CalibMotor haloCalib;
-//========================
+//====
 
 void setup()
 {
-    //=====Configurar Serial========================
+    delay(3000); // power-up safety delay
+    //====Configurar Serial====
     Serial.begin(115200);
-    //==============================================
-    //======new task==========
-    xTaskCreatePinnedToCore(
-                    ledsFunc,   /* Task function. */
-                    "Task1",     /* name of task. */
-                    10000,       /* Stack size of task */
-                    NULL,        /* parameter of the task */
-                    1,           /* priority of the task */
-                    &Task1,      /* Task handle to keep track of created task */
-                    0);          /* pin task to core 0 */                  
-    delay(500); 
-    //===============================================
-    //====Seleccionar tipo de producto====
-    pinMode(PIN_ProducType, INPUT);
-    delay(1000);
-    productType = digitalRead(PIN_ProducType);
-    //==========Calibrar=========
-    Serial.println("init func");
-    haloCalib.init();
-    Serial.println("start func");
-    haloCalib.start();
-    Serial.println("Salio de start");
-    pinMode(EN_PIN, OUTPUT);
-    pinMode(EN_PIN2, OUTPUT);
-    digitalWrite(EN_PIN, LOW);
-    digitalWrite(EN_PIN2, LOW);
-    //================
-
-    //=====Configurar fastled=======================
-     delay( 3000 ); // power-up safety delay
-    FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
-    FastLED.setBrightness( BRIGHTNESS );
-    
-    currentPalette = RainbowColors_p;
-    currentBlending = LINEARBLEND;
-    //==============================================
-
-    //======Neopixel=============================================
-    //pixels.begin(); // Inicializa NeoPixel
-    //===========================================================
-    
-    
-    //====Configure the halo========================
-    halo.init();
-    haloBt.init("Halo");
-    //==============================================
-
-    //=====Inicializar SD===========================================
-    while(!SD.begin())
-    {
-        Serial.println("Card failed, or not present");
-        delay(200); 
-    }
-    Serial.println("Card present");
-    myFile = SD.open("/");
-    if (!myFile)
-    {
-        Serial.println("No se pudo abrir archivo");
-        return;
-    }
-    root = SD.open("/");
-    delay(1000);
-    //============================================================
-    
-#ifdef PROCESSING_SIMULATOR
-    Serial.println("inicia");
-#endif
-    //====recuperar valores de playlist y ordenMode===============
+    //====
+    //====recuperar valores de playlist y ordenMode====
     EEPROM.begin(EEPROM_SIZE);
     delay(500);
     playListGlobal = romGetPlaylist();
@@ -183,14 +122,89 @@ void setup()
     }
     Serial.print("ordenMode guardado: ");
     Serial.println(ordenModeGlobal);
-    //============================================================
+    //====
+    //====Recuperar speedMotor====
+    speedMotorGlobal = romGetSpeedMotor();
+    if (speedMotorGlobal > MAX_SPEED_MOTOR || speedMotorGlobal < MIN_SPEED_MOTOR){
+        speedMotorGlobal = 25;
+    }
+    halo.setSpeed(speedMotorGlobal);
+    //====
+    //====Recuperar Paleta de color para leds====
+    palleteGlobal = romGetPallete();
+    if (palleteGlobal > MAX_SPEED_MOTOR || palleteGlobal < MIN_SPEED_MOTOR){
+        palleteGlobal = 1;
+    }
+    changePalette(palleteGlobal);
+    //====
+    //====Configure the halo y bluetooth====
+    halo.init();
+    haloBt.init("Halo");
+    //====
+    Serial.println("configuro bluetooth");
+    //====new task====
+    xTaskCreatePinnedToCore(
+                    ledsFunc,   /* Task function. */
+                    "Task1",     /* name of task. */
+                    10000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    1,           /* priority of the task */
+                    &Task1,      /* Task handle to keep track of created task */
+                    0);          /* pin task to core 0 */                  
+    delay(500); 
+    //====
+    //====Seleccionar tipo de producto====
+    pinMode(PIN_ProducType, INPUT);
+    delay(1000);
+    productType = digitalRead(PIN_ProducType);
+    //====Calibrar====
+    Serial.println("init func");
+    haloCalib.init();
+    Serial.println("start func");
+    haloCalib.start();
+    Serial.println("Salio de start");
+    pinMode(EN_PIN, OUTPUT);
+    pinMode(EN_PIN2, OUTPUT);
+    digitalWrite(EN_PIN, LOW);
+    digitalWrite(EN_PIN2, LOW);
+    //====
 
-    //=====si existe el archivos llamado playlist.playlist se ejecutara esa playlist=======
+    
+
+    //====Neopixel====
+    //pixels.begin(); // Inicializa NeoPixel
+    //====
+    
+    
+    
+    //====Inicializar SD====
+    while(!SD.begin())
+    {
+        Serial.println("Card failed, or not present");
+        delay(200); 
+    }
+    Serial.println("Card present");
+    myFile = SD.open("/");
+    if (!myFile)
+    {
+        Serial.println("No se pudo abrir archivo");
+        return;
+    }
+    root = SD.open("/");
+    delay(1000);
+    //====
+    
+#ifdef PROCESSING_SIMULATOR
+    Serial.println("inicia");
+#endif
+    
+    
+    //=====si existe el archivos llamado playlist.playlist se ejecutara esa playlist====
     if (SD.exists("/playlist.playlist")){
         playListGlobal = "/playlist.playlist";
         ordenModeGlobal = 1;
     }
-    //=====================================================================================
+    //=====
     Serial.print("Task1 running on core ");
     Serial.println(xPortGetCoreID());
     
@@ -602,15 +616,14 @@ void executeCode(int errorCode){
         romSetPallete(ledModeGlobal);
         //Neo_Pixel(ledModeGlobal);
     }
+    else if (errorCode == 50){
+        int speed = haloBt.getSpeed();
+        halo.setSpeed(speed);
+        romSetSpeedMotor(speed);
+    }
 }
 
 //------------Guardar variables importantes en FLASH----------------
-#define ADDRESSPLAYLIST 0
-#define ADDRESSPOSITION 41
-#define ADDRESSORDENMODE 50
-#define ADDRESSPALLETE 60
-
-#define MAX_CHARS_PLAYLIST 40
 
 /**
  * @brief actualiza el valor, en la ROM/FLASH, el nombre de la lista de reproduccion.
@@ -734,6 +747,34 @@ int romGetPallete(){
     }
     return pallete;
 }
+
+/**
+ * @brief guarda la velocidad de los moteres en rom
+ * @param speed es la velocidad en milimetros por segundo del robot.
+ * @return 0
+ */
+int romSetSpeedMotor(int speed){
+    uint8_t* p = (uint8_t* ) &speed;
+    for (int i = 0; i < sizeof(speed); i++){
+        EEPROM.write(ADDRESSSPEEDMOTOR + i, *(p + i));
+    }
+    EEPROM.commit();
+    return 0;
+}
+
+/**
+ * @brief recupera, de la ROM/FLASH, la ultima palleta de colores guardada.
+ * @return un numero entero que indaca una paleta de colores. 
+ */
+int romGetSpeedMotor(){
+    int speed;
+    uint8_t* p = (uint8_t* ) &speed;
+    for (int i = 0; i < sizeof(speed); i++){
+        *(p + i) = EEPROM.read(ADDRESSSPEEDMOTOR + i);
+    }
+    return speed;
+}
+
 //=======================================Leds========================================
 //===================================================================================
 void Neo_Pixel(int color)
@@ -882,15 +923,19 @@ const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
 void ledsFunc( void * pvParameters ){
     //pinMode(2,OUTPUT);
     //bool estado = true;
+    //====Configurar fastled====
+    FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+    FastLED.setBrightness( BRIGHTNESS );
+    //====
     for(;;){
         if (millis() - timeLeds> periodLeds){
             FillLEDsFromPaletteColors(startIndex);
             FastLED.show();
             startIndex += 3;
             timeLeds = millis();
-            delay(1);
             //estado = !estado;
             //digitalWrite(2,estado);
         }
+        delay(1);
     } 
 }

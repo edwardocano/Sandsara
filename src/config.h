@@ -92,3 +92,23 @@
 #define radius_2 100.0
 
 #define PIN_ProducType 35
+
+/**
+ * Direcciones de la ROM
+ */
+#define EEPROM_SIZE 512
+
+#define ADDRESSPLAYLIST 0
+#define ADDRESSPOSITION 41
+#define ADDRESSORDENMODE 50
+#define ADDRESSPALLETE 60
+#define ADDRESSSPEEDMOTOR 70
+
+/**
+ * Restricciones
+ */
+#define MAX_CHARS_PLAYLIST 40
+#define MAX_SPEED_MOTOR 200
+#define MIN_SPEED_MOTOR 1
+#define MAX_PALLETE 10
+#define MIN_PALLETE 0

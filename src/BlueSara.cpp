@@ -1,4 +1,3 @@
-
 #include "BlueSara.h"
 #include <Update.h>
 #include <FS.h>
@@ -60,6 +59,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * 10, se solicito un cambio de playlist, para recuperar el nombre llamar a la funcion getPlaylist().
  * 20, se solicito un cambio en ordenMode, para recuperar el numero llamar a la funcion getOrdenMode().
  * 30, se solicito un cambio en ledMode, para recueperar el numero llamar a la funcion getLedMode().
+ * 50, se solicita el cambio de velocidad de motores, la velocidad se almacena en la variable miembro speed. speed se obtiene con getSpeed().
  * -1, no se reconoce el comando enviado.
  * -2, se quiso enviar un numero de bytes incorrecto.
  * -3, se excedio el tiempo de respuesta del transmisor en la funcion readLine (depende de la variable timeOutBt, medida en milisegundos)
@@ -74,12 +74,15 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * -54, no se pudo finalizar la actualizacion
  * -55, no hay suficiente espacio para el OTA.
  * -56, Ocurrio un error al actualizar el firmware
+ * -60
  * @note interpreta los siguientes mensajes
  * code01, significa que va a transferer un archivo.
  * code02, significa que se esta solicitando el cambio de playlist.
  * code03, significa que se esta solicitando el cambio de orden de reproduccion.
  * code04, significa que se esta solicitando el cambio de paleta de leds.
+ * code05, significa que se solicita el cambio de velocidad de motores.
  * code66, actualizar firmware
+ * 
  */
 int BlueSara::checkBlueTooth()
 {
@@ -265,6 +268,24 @@ int BlueSara::checkBlueTooth()
             writeBtln("ok");
             return 30; //Se solicita el cambio de leds
         }
+        else if (line.indexOf("code05") >= 0)
+        {
+            writeBtln("request-speedMotor");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            speed = line.toInt();
+            if (speed > MAX_SPEED_MOTOR || speed <= MIN_SPEED_MOTOR){
+                writeBtln("error= -60"); //velocidad no permitida
+                return -60;
+            }
+            writeBtln("ok");
+            return 50; //Se solicita el cambio de leds
+        }
         else if (line.indexOf("code66") >= 0)
         {
             writeBtln("request-nameUpdate");
@@ -314,6 +335,13 @@ int BlueSara::getLedMode(){
  */
 String BlueSara::getPlaylist(){
     return playList;
+}
+
+/**
+ * 
+ */
+int BlueSara::getSpeed(){
+    return speed;
 }
 
 /**
