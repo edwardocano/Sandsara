@@ -34,6 +34,7 @@ class BlueSara {
         int ordenMode;
         int ledMode;
         int speed;
+        int periodLed;
     public:
         BlueSara(); 
         int init(String );
@@ -47,6 +48,7 @@ class BlueSara {
         int getOrdenMode();
         int getLedMode();
         int getSpeed();
+        int getPeriodLed();
 };
 
 #endif

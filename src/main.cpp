@@ -25,7 +25,8 @@ File root;
 String playListGlobal;
 int ordenModeGlobal;
 int speedMotorGlobal;
-int palleteGlobal;
+int ledModeGlobal;
+int periodLedsGlobal;
 //
 MoveSara halo;
 BlueSara haloBt;
@@ -53,8 +54,10 @@ int run_sandsara(String ,int );
 int movePolarTo(double ,double ,double, bool = false);
 int romSetPallete(int );
 int romGetPallete();
-int romSetSpeedMotor(int speed);
+int romSetSpeedMotor(int );
 int romGetSpeedMotor();
+int romSetPeriodLed(int );
+int romGetPeriodLed();
 //====
 //====Variable leds====
 //====Neopixel====
@@ -62,7 +65,6 @@ int romGetSpeedMotor();
 #define NUMPIXELS 30 // numero de pixels en la tira
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 #define DELAYVAL 50
-int ledModeGlobal;
 
 #define LED_PIN     32
 #define NUM_LEDS    30
@@ -78,7 +80,6 @@ extern CRGBPalette16 myRedWhiteBluePalette;
 extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
 
 unsigned long timeLeds;
-int periodLeds = 10;
 uint8_t startIndex = 0;
 //====Product Type====
 bool productType;
@@ -131,11 +132,17 @@ void setup()
     halo.setSpeed(speedMotorGlobal);
     //====
     //====Recuperar Paleta de color para leds====
-    palleteGlobal = romGetPallete();
-    if (palleteGlobal > MAX_SPEED_MOTOR || palleteGlobal < MIN_SPEED_MOTOR){
-        palleteGlobal = 1;
+    ledModeGlobal = romGetPallete();
+    if (ledModeGlobal > MAX_SPEED_MOTOR || ledModeGlobal < MIN_SPEED_MOTOR){
+        ledModeGlobal = 1;
     }
-    changePalette(palleteGlobal);
+    changePalette(ledModeGlobal);
+    //====
+    //====Recuperar Periodo de refresco de los leds====
+    periodLedsGlobal = romGetPeriodLed();
+    if (periodLedsGlobal > MAX_PERIOD_LED || periodLedsGlobal < MIN_PERIOD_LED){
+        periodLedsGlobal = 50;
+    }
     //====
     //====Configure the halo y bluetooth====
     halo.init();
@@ -219,21 +226,7 @@ void loop()
     Serial.print("errorCode de run: ");
     Serial.println(errorCode);
     errorCode = haloBt.checkBlueTooth();
-    if (errorCode == 10){
-        playListGlobal = "/" + haloBt.getPlaylist();
-        romSetPlaylist(playListGlobal);
-    }
-    else if (errorCode == 20){
-        ordenModeGlobal = haloBt.getOrdenMode();
-        romSetOrdenMode(ordenModeGlobal);
-    }
-    else if (errorCode == 30){
-        ledModeGlobal = haloBt.getLedMode();
-        changePalette(ledModeGlobal);
-        romSetPallete(ledModeGlobal);
-        //Neo_Pixel(ledModeGlobal);
-    }
-    //root.rewindDirectory();
+    executeCode(errorCode);
     delay(3000);
 }
 
@@ -621,6 +614,11 @@ void executeCode(int errorCode){
         halo.setSpeed(speed);
         romSetSpeedMotor(speed);
     }
+    else if (errorCode == 60){
+        int periodLed = haloBt.getPeriodLed();
+        periodLedsGlobal = periodLed;
+        romSetPeriodLed(periodLedsGlobal);
+    }
 }
 
 //------------Guardar variables importantes en FLASH----------------
@@ -749,7 +747,7 @@ int romGetPallete(){
 }
 
 /**
- * @brief guarda la velocidad de los moteres en rom
+ * @brief guarda la velocidad del robot en rom
  * @param speed es la velocidad en milimetros por segundo del robot.
  * @return 0
  */
@@ -763,8 +761,8 @@ int romSetSpeedMotor(int speed){
 }
 
 /**
- * @brief recupera, de la ROM/FLASH, la ultima palleta de colores guardada.
- * @return un numero entero que indaca una paleta de colores. 
+ * @brief recupera, de la ROM/FLASH, la velocidad del robot.
+ * @return un numero entero que indaca la velocidad del robot, en milimetros por segundo. 
  */
 int romGetSpeedMotor(){
     int speed;
@@ -773,6 +771,32 @@ int romGetSpeedMotor(){
         *(p + i) = EEPROM.read(ADDRESSSPEEDMOTOR + i);
     }
     return speed;
+}
+
+/**
+ * @brief guarda el periodo de refresco de los leds en ROM.
+ * @param periodLed es el periodo de refresco de los leds.
+ * @return 0
+ */
+int romSetPeriodLed(int periodLed){
+    uint8_t* p = (uint8_t* ) &periodLed;
+    for (int i = 0; i < sizeof(periodLed); i++){
+        EEPROM.write(ADDRESSPERIODLED + i, *(p + i));
+    }
+    EEPROM.commit();
+    return 0;
+}
+/**
+ * @brief recupera, de la ROM/FLASH, el periodo de refresco de los leds.
+ * @return el periodo de refresco de los leds. 
+ */
+int romGetPeriodLed(){
+    int periodLed;
+    uint8_t* p = (uint8_t* ) &periodLed;
+    for (int i = 0; i < sizeof(periodLed); i++){
+        *(p + i) = EEPROM.read(ADDRESSPERIODLED + i);
+    }
+    return periodLed;
 }
 
 //=======================================Leds========================================
@@ -928,10 +952,10 @@ void ledsFunc( void * pvParameters ){
     FastLED.setBrightness( BRIGHTNESS );
     //====
     for(;;){
-        if (millis() - timeLeds> periodLeds){
+        if (millis() - timeLeds> periodLedsGlobal){
             FillLEDsFromPaletteColors(startIndex);
             FastLED.show();
-            startIndex += 3;
+            startIndex += 1;
             timeLeds = millis();
             //estado = !estado;
             //digitalWrite(2,estado);
