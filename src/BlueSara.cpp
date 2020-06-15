@@ -85,6 +85,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * code05, significa que se solicita el cambio de velocidad de motores.
  * code06, significa que se solicita el cambio de velocidad de los leds.
  * code66, actualizar firmware
+ * code80, Reiniciar Sandsara
  * 
  */
 int BlueSara::checkBlueTooth()
@@ -323,14 +324,19 @@ int BlueSara::checkBlueTooth()
             {
                 writeBtln("ok");
                 rebootEspWithReason("Reiniciando");
-                return codeError; //ya no llega a este puntp
+                return codeError; //ya no llega a este punto
             }
             else{
                 writeBt("error=");
                 writeBtln(String(codeError - 50));
                 return codeError - 50; //No se pudo actualizar el firmware
             }
-            
+        }
+        else if (line.indexOf("code80") >= 0)
+        {
+            writeBtln("ok");
+            rebootEspWithReason("Reiniciando");
+            return -666; //Ya no llega a este punto
         }
         else
         {
