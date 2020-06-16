@@ -19,7 +19,12 @@ BlueSara::BlueSara(){
 }
 
 int BlueSara::init(String name){
-    SerialBT.begin(name); //Bluetooth device name
+    if (!SerialBT.begin(name)){ //Bluetooth device name
+        SerialBT.begin("Sandsara");
+#ifdef BLUECOMMENTS
+        Serial.println("No se inicializo con nombre por defecto");
+#endif
+    }
     SerialBT.register_callback(callback);
 #ifdef BLUECOMMENTS
     Serial.println("The device started, now you can pair it with bluetooth!");
@@ -77,6 +82,8 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * -56, Ocurrio un error al actualizar el firmware
  * -60, Velocidad no permitida para los motores
  * -70, periodo no permitido para los leds
+ * -80, nombre muy largo para bluetooth
+ * -81, No se pudo cambiar el nombre del bluetooth, pero se vera el cambio cuando se reinicie.
  * @note interpreta los siguientes mensajes
  * code01, significa que va a transferer un archivo.
  * code02, significa que se esta solicitando el cambio de playlist.
@@ -84,6 +91,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * code04, significa que se esta solicitando el cambio de paleta de leds.
  * code05, significa que se solicita el cambio de velocidad de motores.
  * code06, significa que se solicita el cambio de velocidad de los leds.
+ * code07, significa que se desea cambiar el nombre del bluetooth.
  * code66, actualizar firmware
  * code80, Reiniciar Sandsara
  * 
@@ -308,6 +316,30 @@ int BlueSara::checkBlueTooth()
             writeBtln("ok");
             return 60; //Se solicita el cambio de leds
         }
+        else if (line.indexOf("code07") >= 0)
+        {
+            writeBtln("request-bluetoothName");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            if (line.length() >= MAX_CHARACTERS_BTNAME){
+                writeBtln("error= -80");
+                return -80; //nombre muy largo para bluetooth
+            }
+            bluetoothName = line;
+            char deviceName[MAX_CHARACTERS_BTNAME];
+            line.toCharArray(deviceName, MAX_CHARACTERS_BTNAME);
+            if (esp_bt_dev_set_device_name(deviceName) != ESP_OK) {
+                writeBtln("error = -81");
+                return -81;
+            }
+            writeBtln("ok");
+            return 70; //Se cambio nombre de bluetooth
+        }
         else if (line.indexOf("code66") >= 0)
         {
             writeBtln("request-nameUpdate");
@@ -386,6 +418,14 @@ int BlueSara::getPeriodLed(){
  */
 int BlueSara::getOrdenMode(){
     return ordenMode;
+}
+
+/**
+ * @brief recupera el orden de la ultima solicitud de cambio de orden de reproduccion que se realizo.
+ * @return el ultimo numero referente al oreden de reproduccion que se solicito por bluetooth.
+ */
+String BlueSara::getBluetoothName(){
+    return bluetoothName;
 }
 
 /**

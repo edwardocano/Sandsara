@@ -8,6 +8,7 @@
 #include "SPI.h"
 #include "BluetoothSerial.h"
 #include "config.h"
+#include "esp_bt_device.h"
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
@@ -35,6 +36,7 @@ class BlueSara {
         int ledMode;
         int speed;
         int periodLed;
+        String bluetoothName;
     public:
         BlueSara(); 
         int init(String );
@@ -49,6 +51,7 @@ class BlueSara {
         int getLedMode();
         int getSpeed();
         int getPeriodLed();
+        String getBluetoothName();
 };
 
 #endif

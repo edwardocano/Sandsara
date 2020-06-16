@@ -23,6 +23,7 @@ File myFile;
 File root;
 //variables globales en rom
 String playListGlobal;
+String bluetoothNameGlobal;
 int ordenModeGlobal;
 int speedMotorGlobal;
 int ledModeGlobal;
@@ -58,6 +59,8 @@ int romSetSpeedMotor(int );
 int romGetSpeedMotor();
 int romSetPeriodLed(int );
 int romGetPeriodLed();
+int romSetBluetoothName(String );
+String romGetBluetoothName();
 //====
 //====Variable leds====
 //====Neopixel====
@@ -144,11 +147,13 @@ void setup()
         periodLedsGlobal = 50;
     }
     //====
+    //====Recuperar nombre del bluetooth====
+    bluetoothNameGlobal = romGetBluetoothName();
+    //====
     //====Configure the halo y bluetooth====
     halo.init();
-    haloBt.init("Halo");
+    haloBt.init(bluetoothNameGlobal);
     //====
-    Serial.println("configuro bluetooth");
     //====new task====
     xTaskCreatePinnedToCore(
                     ledsFunc,   /* Task function. */
@@ -619,6 +624,11 @@ void executeCode(int errorCode){
         periodLedsGlobal = periodLed;
         romSetPeriodLed(periodLedsGlobal);
     }
+    else if (errorCode == 70){
+        String blueName = haloBt.getBluetoothName();
+        bluetoothNameGlobal = blueName;
+        romSetBluetoothName(bluetoothNameGlobal);
+    }
 }
 
 //------------Guardar variables importantes en FLASH----------------
@@ -797,6 +807,45 @@ int romGetPeriodLed(){
         *(p + i) = EEPROM.read(ADDRESSPERIODLED + i);
     }
     return periodLed;
+}
+
+/**
+ * @brief guarda el nombre del dispositivo bluetooth.
+ * @param str corresponde al nombre del bluetooth
+ */
+int romSetBluetoothName(String str){
+    if (str.length() > MAX_CHARACTERS_BTNAME){
+        return -1;
+    }
+    int i = 0;
+    for ( ; i < str.length(); i++){
+        EEPROM.write(ADDRESSBTNAME + i, str.charAt(i));
+    }
+    EEPROM.write(ADDRESSBTNAME + i, '\0');
+    EEPROM.commit();
+    return 0;
+}
+
+/**
+ * @brief recupera el nombre del bluetooth guardado en ROM
+ * @return el nombre del bluetooth guardado en ROM.
+ * @note si no encuentra un nombre guardado, devuelve el nombre "Sandsara".
+ */
+String romGetBluetoothName(){
+    String str = "";
+    char chr;
+    for (int i = 0; i < MAX_CHARACTERS_BTNAME; i++){
+        chr = EEPROM.read(ADDRESSBTNAME + i);
+        if (chr == '\0')
+        {
+            if (str.equals("")){
+                return "Sandsara";
+            }
+            return str;
+        }
+        str.concat( chr );
+    }
+    return "Sandsara";
 }
 
 //=======================================Leds========================================

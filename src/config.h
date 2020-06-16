@@ -104,6 +104,7 @@
 #define ADDRESSPALLETE 60
 #define ADDRESSSPEEDMOTOR 70
 #define ADDRESSPERIODLED 80
+#define ADDRESSBTNAME 90
 
 /**
  * Restricciones
@@ -115,3 +116,4 @@
 #define MIN_PERIOD_LED 1
 #define MAX_PALLETE 10
 #define MIN_PALLETE 0
+#define MAX_CHARACTERS_BTNAME 30
