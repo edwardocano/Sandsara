@@ -21,13 +21,18 @@ extern TMC2209Stepper driver2;
 
 File myFile;
 File root;
-//variables globales en rom
+//====variables globales en rom
 String playListGlobal;
 String bluetoothNameGlobal;
 int ordenModeGlobal;
 int speedMotorGlobal;
 int ledModeGlobal;
 int periodLedsGlobal;
+//====variables gloabales
+bool ledsOffGlobal = false;
+//====variables de estado====
+bool pauseModeGlobal = false;
+bool suspensionModeGlobal = false;
 //
 MoveSara halo;
 BlueSara haloBt;
@@ -480,6 +485,17 @@ int run_sandsara(String playList, int ordenMode)
 #ifdef PROCESSING_SIMULATOR
             Serial.println("finished");
 #endif
+            //====Revisar si se desea suspender====
+            if (suspensionModeGlobal){
+                ledsOffGlobal = true;
+            }
+            while(suspensionModeGlobal){
+                int errorCode = haloBt.checkBlueTooth();
+                executeCode(errorCode);
+                delay(1);
+            }
+            ledsOffGlobal = false;
+            //====
         }
         pListFile += 1;
     }
@@ -628,6 +644,24 @@ void executeCode(int errorCode){
         String blueName = haloBt.getBluetoothName();
         bluetoothNameGlobal = blueName;
         romSetBluetoothName(bluetoothNameGlobal);
+    }
+    else if (errorCode == 80){
+        suspensionModeGlobal = true;
+        pauseModeGlobal = false;
+    }
+    else if (errorCode == 90){
+        if (!pauseModeGlobal && !suspensionModeGlobal){
+            pauseModeGlobal = true;
+            while(pauseModeGlobal){
+                int errorCode = haloBt.checkBlueTooth();
+                executeCode(errorCode);
+                delay(1);
+            }
+        }
+    }
+    else if (errorCode == 100){
+        pauseModeGlobal = false;
+        suspensionModeGlobal = false;
     }
 }
 
@@ -1001,6 +1035,13 @@ void ledsFunc( void * pvParameters ){
     FastLED.setBrightness( BRIGHTNESS );
     //====
     for(;;){
+        if (ledsOffGlobal){
+            FastLED.clear();
+            FastLED.show();
+            while(ledsOffGlobal){
+                delay(100);
+            }
+        }
         if (millis() - timeLeds> periodLedsGlobal){
             FillLEDsFromPaletteColors(startIndex);
             FastLED.show();

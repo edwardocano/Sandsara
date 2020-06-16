@@ -66,6 +66,10 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * 30, se solicito un cambio en ledMode, para recueperar el numero llamar a la funcion getLedMode().
  * 50, se solicita el cambio de velocidad de motores, la velocidad se almacena en la variable miembro speed. speed se obtiene con getSpeed().
  * 60, se solicita el cambio de velocidad de los leds, la velocidad se almacena en la variable miembro periodLed. periodLed se obtiene con getPeriodLed().
+ * 70, se solicita cambio de nombre de bluetooth.
+ * 80, se solicita entrar en modo de suspencion.
+ * 90, se solicita entrar en modo de pausa.
+ * 100, se solicita salir del modo suspencion o pausa.
  * -1, no se reconoce el comando enviado.
  * -2, se quiso enviar un numero de bytes incorrecto.
  * -3, se excedio el tiempo de respuesta del transmisor en la funcion readLine (depende de la variable timeOutBt, medida en milisegundos)
@@ -92,9 +96,11 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * code05, significa que se solicita el cambio de velocidad de motores.
  * code06, significa que se solicita el cambio de velocidad de los leds.
  * code07, significa que se desea cambiar el nombre del bluetooth.
+ * code08, significa que se desea entrar en modo de suspencion.
+ * code09, significa que se desea pausar el programa.
+ * code10, significa que se desea salir del modo suspencion o pausa.
  * code66, actualizar firmware
  * code80, Reiniciar Sandsara
- * 
  */
 int BlueSara::checkBlueTooth()
 {
@@ -339,6 +345,21 @@ int BlueSara::checkBlueTooth()
             }
             writeBtln("ok");
             return 70; //Se cambio nombre de bluetooth
+        }
+        else if (line.indexOf("code08") >= 0)
+        {
+            writeBtln("ok");
+            return 80; //Se cambio nombre de bluetooth
+        }
+        else if (line.indexOf("code09") >= 0)
+        {
+            writeBtln("ok");
+            return 90; //Se cambio nombre de bluetooth
+        }
+        else if (line.indexOf("code10") >= 0)
+        {
+            writeBtln("ok");
+            return 100; //Se cambio nombre de bluetooth
         }
         else if (line.indexOf("code66") >= 0)
         {
