@@ -66,6 +66,9 @@ int romSetPeriodLed(int );
 int romGetPeriodLed();
 int romSetBluetoothName(String );
 String romGetBluetoothName();
+void findUpdate();
+extern int programming(String );
+extern void rebootEspWithReason(String );
 //====
 //====Variable leds====
 //====Neopixel====
@@ -91,13 +94,10 @@ unsigned long timeLeds;
 uint8_t startIndex = 0;
 //====Product Type====
 bool productType;
-
 //====
-
 //====Thred====
 TaskHandle_t Task1;
 //====
-
 //====Calibracion====
 CalibMotor haloCalib;
 //====
@@ -210,7 +210,9 @@ void setup()
     root = SD.open("/");
     delay(1000);
     //====
-    
+    //====Buscar por nueva actualizacion====
+    findUpdate();
+    //====
 #ifdef PROCESSING_SIMULATOR
     Serial.println("inicia");
 #endif
@@ -1028,8 +1030,10 @@ const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
  * 
  */
 void ledsFunc( void * pvParameters ){
-    //pinMode(2,OUTPUT);
-    //bool estado = true;
+#ifdef DEBUGGIN_LED2
+    pinMode(2,OUTPUT);
+    bool estado = true;
+#endif
     //====Configurar fastled====
     FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness( BRIGHTNESS );
@@ -1047,9 +1051,82 @@ void ledsFunc( void * pvParameters ){
             FastLED.show();
             startIndex += 1;
             timeLeds = millis();
-            //estado = !estado;
-            //digitalWrite(2,estado);
+#ifdef DEBUGGIN_LED2
+            estado = !estado;
+            digitalWrite(2,estado);
+#endif
         }
         delay(1);
     } 
+}
+
+void findUpdate(){
+    File file;
+    File root = SD.open("/");
+    String fileName;
+    while(true){
+        file = root.openNextFile();
+        if (!file){
+            root.close();
+            return;
+        }
+        fileName = file.name();
+        if (fileName.indexOf("/firmware-") == 0){
+            int indexDash1 = fileName.indexOf("-");
+            int indexDash2 = fileName.indexOf("-", indexDash1 + 1);
+            int indexDot1 = fileName.indexOf(".");
+            int indexDot2 = fileName.indexOf(".", indexDot1 + 1);
+            int indexDot3 = fileName.indexOf(".", indexDot2 + 1);
+            if (indexDash1 == -1 || indexDash2 == -1 || indexDot1 == -1 || indexDot2 == -1 || indexDot3 == -1){
+                Serial.println("No se encontraron 3 puntos y 2 dash");
+                continue;
+            }
+            if (!fileName.substring(indexDot3).equals(".bin")){
+                Serial.println("no es un .bin");
+                continue;
+            }
+            int v1 = fileName.substring(indexDash1 + 1, indexDot1).toInt();
+            int v2 = fileName.substring(indexDot1 + 1, indexDot2).toInt();
+            int v3 = fileName.substring(indexDot2 + 1, indexDash2).toInt();
+            int hash = fileName.substring(indexDash2 + 1, indexDot3).toInt();
+            if (hash != v1 + v2 + v3 + 1){
+                Serial.println("El hash no coincide");
+                continue;
+            }
+            if (v1 > v1Current){
+                int errorCode = programming(fileName);
+                if (errorCode == 1){
+                    rebootEspWithReason("Reiniciando");
+                }
+                continue;
+            }
+            else if(v1 == v1Current){
+                if (v2 > v2Current){
+                    int errorCode = programming(fileName);
+                    if (errorCode == 1){
+                        rebootEspWithReason("Reiniciando");
+                    }
+                    continue;
+                }
+                else if(v2 == v2Current){
+                    if(v3 > v3Current){
+                        int errorCode = programming(fileName);
+                        if (errorCode == 1){
+                            rebootEspWithReason("Reiniciando");
+                        }
+                        continue;
+                    }
+                    else{
+                        continue;
+                    }
+                }
+                else{
+                    continue;
+                }
+            }
+            else{
+                continue;
+            }
+        }
+    }
 }

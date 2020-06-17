@@ -1,5 +1,12 @@
 #pragma once
 
+/**
+ * VERSION v1Current.v2Current.v3Current
+ */
+#define v1Current 1
+#define v2Current 0
+#define v3Current 0
+
 //Es el valor de la resistencia colocada en los drivers, por ejemplo 0.11f representa 0.11 ohms.
 #define R_SENSE             0.11f
 
@@ -59,6 +66,7 @@
 //#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
 //#define DISABLE_MOTORS
+//#define DEBUGGIN_LED2
 
 /**
  * DISTANCIA_MAX es el radio maximo, desde el centro, que va a dibujar el robot
