@@ -125,3 +125,6 @@
 #define MAX_PALLETE 10
 #define MIN_PALLETE 0
 #define MAX_CHARACTERS_BTNAME 30
+
+//Disable interrupts during updating leds
+//#define FASTLED_ALLOW_INTERRUPTS 0
