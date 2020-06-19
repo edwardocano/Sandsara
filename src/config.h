@@ -113,6 +113,7 @@
 #define ADDRESSSPEEDMOTOR 70
 #define ADDRESSPERIODLED 80
 #define ADDRESSBTNAME 90
+#define ADDRESSCEROZONE 140
 
 /**
  * Restricciones
@@ -128,3 +129,19 @@
 
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0
+
+/**
+ * Valores por defecto de Sandsara
+ */
+#define SPEED_MOTOR_DEFAULT 25
+#define PLAYLIST_DEFAULT "/"
+#define PALLETE_DEFAULT 1
+#define PERIOD_LED_DEFAULT 10
+#define ORDENMODE_DEFAULT 3
+#define BLUETOOTHNAME "Sandsara"
+
+/**
+ * Valores para saber si ya se realizo la busqueda de la zona cero
+ */
+#define CEROZONE_PERFORMED 233
+#define CEROZONE_NO_PERFORMED 177

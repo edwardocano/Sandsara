@@ -71,6 +71,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * 90, se solicita entrar en modo de pausa.
  * 100, se solicita salir del modo suspencion o pausa.
  * 110, se envio la version del firmware por bluetooth.
+ * 970, se solicita un reset de fabrica.
  * -1, no se reconoce el comando enviado.
  * -2, se quiso enviar un numero de bytes incorrecto.
  * -3, se excedio el tiempo de respuesta del transmisor en la funcion readLine (depende de la variable timeOutBt, medida en milisegundos)
@@ -89,6 +90,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * -70, periodo no permitido para los leds
  * -80, nombre muy largo para bluetooth
  * -81, No se pudo cambiar el nombre del bluetooth, pero se vera el cambio cuando se reinicie.
+ * -97, se intento un reset de fabrica pero no se confirmo.
  * @note interpreta los siguientes mensajes
  * code01, significa que va a transferer un archivo.
  * code02, significa que se esta solicitando el cambio de playlist.
@@ -402,6 +404,23 @@ int BlueSara::checkBlueTooth()
             writeBtln("ok");
             rebootEspWithReason("Reiniciando");
             return -666; //Ya no llega a este punto
+        }
+        else if (line.indexOf("code97") >= 0)
+        {
+            writeBtln("request-Y/N");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            if (line.equals("Y")){
+                writeBtln("ok");
+                return 970;
+            }
+            writeBtln("reset Canceled");
+            return -97;
         }
         else
         {

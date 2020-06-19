@@ -28,6 +28,7 @@ int ordenModeGlobal;
 int speedMotorGlobal;
 int ledModeGlobal;
 int periodLedsGlobal;
+bool ceroZoneGlobal;
 //====variables gloabales
 bool ledsOffGlobal = false;
 //====variables de estado====
@@ -69,6 +70,8 @@ String romGetBluetoothName();
 void findUpdate();
 extern int programming(String );
 extern void rebootEspWithReason(String );
+bool romGetCeroZone();
+int romSetCeroZone(bool );
 //====
 //====Variable leds====
 //====Neopixel====
@@ -108,29 +111,9 @@ void setup()
     //====Configurar Serial====
     Serial.begin(115200);
     //====
-    //====recuperar valores de playlist y ordenMode====
+    //====Inicializacion de SD====
     EEPROM.begin(EEPROM_SIZE);
     delay(500);
-    playListGlobal = romGetPlaylist();
-    ordenModeGlobal = romGetOrdenMode();
-    changePalette(romGetPallete());
-    if (playListGlobal.equals("/")){
-        Serial.print("No hay una playlist guardada, se reproduciran todos los archivos en la sd");
-        ordenModeGlobal = 3;
-    }
-    else
-    {
-        if (SD.exists(playListGlobal)){
-            Serial.print("lista guardada: ");
-            Serial.println(playListGlobal);
-        }
-        else{
-            Serial.println("La playlist no existe, se reproduciran todos los archivos en la sd");
-            ordenModeGlobal = 3;
-        }
-    }
-    Serial.print("ordenMode guardado: ");
-    Serial.println(ordenModeGlobal);
     //====
     //====Recuperar speedMotor====
     speedMotorGlobal = romGetSpeedMotor();
@@ -141,7 +124,7 @@ void setup()
     //====
     //====Recuperar Paleta de color para leds====
     ledModeGlobal = romGetPallete();
-    if (ledModeGlobal > MAX_SPEED_MOTOR || ledModeGlobal < MIN_SPEED_MOTOR){
+    if (ledModeGlobal > MAX_PALLETE || ledModeGlobal < MIN_PALLETE){
         ledModeGlobal = 1;
     }
     changePalette(ledModeGlobal);
@@ -158,6 +141,9 @@ void setup()
     //====Configure the halo y bluetooth====
     halo.init();
     haloBt.init(bluetoothNameGlobal);
+    //====
+    //====Recuperar ceroZone variable====
+    ceroZoneGlobal = romGetCeroZone();
     //====
     //====new task====
     xTaskCreatePinnedToCore(
@@ -209,6 +195,28 @@ void setup()
     }
     root = SD.open("/");
     delay(1000);
+    //====
+    //====recuperar valores de playlist y ordenMode====    
+    playListGlobal = romGetPlaylist();
+    ordenModeGlobal = romGetOrdenMode();
+    changePalette(romGetPallete());
+    if (playListGlobal.equals("/")){
+        Serial.print("No hay una playlist guardada, se reproduciran todos los archivos en la sd");
+        ordenModeGlobal = 3;
+    }
+    else
+    {
+        if (SD.exists(playListGlobal)){
+            Serial.print("lista guardada: ");
+            Serial.println(playListGlobal);
+        }
+        else{
+            Serial.println("La playlist no existe, se reproduciran todos los archivos en la sd");
+            ordenModeGlobal = 3;
+        }
+    }
+    Serial.print("ordenMode guardado: ");
+    Serial.println(ordenModeGlobal);
     //====
     //====Buscar por nueva actualizacion====
     findUpdate();
@@ -610,7 +618,10 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     return 0;
 }
 
-//===========================
+/**
+ * @brief Ejecuta los codigos que regresa la funcion checkBluetooth();
+ * 
+ */
 void executeCode(int errorCode){
     if (errorCode == 10){
         playListGlobal = "/" + haloBt.getPlaylist();
@@ -664,6 +675,17 @@ void executeCode(int errorCode){
     else if (errorCode == 100){
         pauseModeGlobal = false;
         suspensionModeGlobal = false;
+    }
+    else if (errorCode == 970){
+        romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
+        romSetPlaylist(PLAYLIST_DEFAULT);
+        romSetPallete(PALLETE_DEFAULT);
+        romSetPeriodLed(PERIOD_LED_DEFAULT);
+        romSetOrdenMode(ORDENMODE_DEFAULT);
+        romSetBluetoothName(BLUETOOTHNAME);
+        romSetCeroZone(false);
+        delay(1000);
+        rebootEspWithReason("Se hiso reset de fabrica, Reiniciando...");
     }
 }
 
@@ -882,6 +904,35 @@ String romGetBluetoothName(){
         str.concat( chr );
     }
     return "Sandsara";
+}
+
+/**
+ * @brief guarda la velocidad del robot en rom
+ * @param speed es la velocidad en milimetros por segundo del robot.
+ * @return 0
+ */
+int romSetCeroZone(bool ceroZone){
+    if (ceroZone){
+        EEPROM.write(ADDRESSCEROZONE, CEROZONE_PERFORMED);
+    }
+    else{
+        EEPROM.write(ADDRESSCEROZONE, CEROZONE_NO_PERFORMED);
+    }
+    EEPROM.commit();
+    return 0;
+}
+
+/**
+ * @brief recupera, de la ROM/FLASH, la velocidad del robot.
+ * @return un numero entero que indaca la velocidad del robot, en milimetros por segundo. 
+ */
+bool romGetCeroZone(){
+    int ceroZone;
+    ceroZone = EEPROM.read(ADDRESSCEROZONE);
+    if (ceroZone == CEROZONE_PERFORMED){
+        return true;
+    }
+    return false;
 }
 
 //=======================================Leds========================================
