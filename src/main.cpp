@@ -21,7 +21,7 @@ extern TMC2209Stepper driver2;
 
 File myFile;
 File root;
-//====variables globales en rom
+//====variables globales en rom====
 String playListGlobal;
 String bluetoothNameGlobal;
 int ordenModeGlobal;
@@ -29,8 +29,10 @@ int speedMotorGlobal;
 int ledModeGlobal;
 int periodLedsGlobal;
 bool ceroZoneGlobal;
-//====variables gloabales
+//====variables gloabales====
 bool ledsOffGlobal = false;
+bool playlistChanged = false;
+bool ordenModeChanged = false;
 //====variables de estado====
 bool pauseModeGlobal = false;
 bool suspensionModeGlobal = false;
@@ -40,7 +42,7 @@ BlueSara haloBt;
 
 int errorCode;
 
-//=================prototipos de funciones=========
+//====prototipos de funciones====
 int moveInterpolateTo(double x, double y, double distance);
 void executeCode(int );
 int romSetPlaylist(String );
@@ -259,8 +261,7 @@ void loop()
  * 3, se ejecutan todos los archivos contenidos en el directorio principal de la SD en el orden que la sd los acomoda.
  * 4, se ejecutan los archivos de la playlist en orden aleatorio (no implementado).
  * @return codigo de error.
- *  1, se cambio la playlist
- *  2, se cambio el ordenMode
+ *  1, se cambio la playlist o se cambio el ordenMode
  *  0, termino el la funcion sin problemas.
  * -1, No se pudo abrir el archivo con la direccion dirFile.
  * -2, El archivo abierto es un directorio.
@@ -273,7 +274,9 @@ int run_sandsara(String playList, int ordenMode)
     int pListFile = 1;
     int numberOfFiles;
     String fileName;
-
+    ordenModeChanged = false;
+    playlistChanged = false;
+    
     if (ordenMode == 2)
     {
         numberOfFiles = FileSara::creatListOfFiles("/RANDOM.txt");
@@ -289,9 +292,23 @@ int run_sandsara(String playList, int ordenMode)
         Serial.println(numberOfFiles);
     }
     else{
-        numberOfFiles = FileSara::numberOfLines(playList);
-        Serial.print("Numero de archivos: ");
-        Serial.println(numberOfFiles);
+        File file;
+        file = SD.open(playList);
+        if (file){
+            file.close();
+            numberOfFiles = FileSara::numberOfLines(playList);
+            Serial.print("Numero de archivos: ");
+            Serial.println(numberOfFiles);
+        }
+        else
+        {
+            file.close();
+            ordenMode = 3;
+            numberOfFiles = FileSara::creatListOfFiles("/DEFAULT.txt");
+            playList = "/DEFAULT.txt";
+            Serial.print("Numero de archivos: ");
+            Serial.println(numberOfFiles);
+        }
     }
     if (numberOfFiles == 0){
         return -4;
@@ -434,13 +451,6 @@ int run_sandsara(String playList, int ordenMode)
                 //revisar bluetooth
                 errorCode = haloBt.checkBlueTooth();
                 executeCode(errorCode);
-                if (errorCode == 10){
-                    return 1; //cambio de playlist
-                }
-                else if (errorCode == 20){
-                    return 2; //cambio de ordenMode
-                }
-                //ledsFunc();
                 //dependiendo del tipo de archivo se ejecuta la funcion correspondiente de movimiento.
                 if (file.fileType == 1 || file.fileType == 3)
                 {
@@ -508,6 +518,13 @@ int run_sandsara(String playList, int ordenMode)
             }
             ledsOffGlobal = false;
             //====
+            //====Revisar si se desea cambiar de lista de reproduccion u ordenMode====
+            if(playlistChanged || ordenModeChanged){
+                playlistChanged = false;
+                ordenModeChanged = false;
+                return 1;
+            }
+            //====
         }
         pListFile += 1;
     }
@@ -541,12 +558,6 @@ int moveInterpolateTo(double x, double y, double distance)
         halo.moveTo(x_aux, y_aux);
         errorCode = haloBt.checkBlueTooth();
         executeCode(errorCode);
-        if (errorCode == 10){
-            return 1; //cambio de playlist
-        }
-        else if (errorCode == 20){
-            return 2; //cambio de ordenMode
-        }
     }
     halo.moveTo(x, y);
     return 0;
@@ -604,12 +615,6 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
             halo.moveTo(xAux, yAux, littleMovement);
             errorCode = haloBt.checkBlueTooth();
             executeCode(errorCode);
-            if (errorCode == 10){
-                return 1; //cambio de playlist
-            }
-            else if (errorCode == 20){
-                return 2; //cambio de ordenMode
-            }
         }
     }
     xAux = zNext * cos(thetaNext);
@@ -628,16 +633,18 @@ void executeCode(int errorCode){
     if (errorCode == 10){
         playListGlobal = "/" + haloBt.getPlaylist();
         romSetPlaylist(playListGlobal);
-#ifdef PROCESSING_SIMULATOR
+        playlistChanged = true;
+/*#ifdef PROCESSING_SIMULATOR
         Serial.println("finished");
-#endif
+#endif*/
     }
     else if (errorCode == 20){
         ordenModeGlobal = haloBt.getOrdenMode();
         romSetOrdenMode(ordenModeGlobal);
-#ifdef PROCESSING_SIMULATOR
+        ordenModeChanged = true;
+/*#ifdef PROCESSING_SIMULATOR
         Serial.println("finished");
-#endif
+#endif*/
     }
     else if (errorCode == 30){
         ledModeGlobal = haloBt.getLedMode();
