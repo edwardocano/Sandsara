@@ -842,6 +842,9 @@ int FileSara::numberOfLines(String dir){
     if (!f){
         return 0;
     }
+    if (f.isDirectory()){
+        return 0;
+    }
     while(true)
     {
         character = f.read();

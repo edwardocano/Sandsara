@@ -9,7 +9,16 @@ int performUpdate(Stream &, size_t );
 int updateFromFS(fs::FS &, String );
 int programming(String );
 void rebootEspWithReason(String );
-
+//====
+extern String romGetPlaylist();
+extern int romGetOrdenMode();
+extern int romGetPosition();
+extern int romGetPallete();
+extern int romGetSpeedMotor();
+extern int romGetPeriodLed();
+extern String romGetBluetoothName();
+extern bool romGetCeroZone();
+//====
 //--------------Bluetooth--------------------------------------------------------
 //-------------------------------------------------------------------------------
 void callback(esp_spp_cb_event_t , esp_spp_cb_param_t* );
@@ -71,6 +80,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * 90, se solicita entrar en modo de pausa.
  * 100, se solicita salir del modo suspencion o pausa.
  * 110, se envio la version del firmware por bluetooth.
+ * 120, se enviaron datos de sandsara
  * 970, se solicita un reset de fabrica.
  * -1, no se reconoce el comando enviado.
  * -2, se quiso enviar un numero de bytes incorrecto.
@@ -103,6 +113,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * code09, significa que se desea pausar el programa.
  * code10, significa que se desea salir del modo suspencion o pausa.
  * code11, significa que se desea conocer la version del firmware
+ * code12, significa que se desea conocer los parametros guardados en ROM.
  * code66, actualizar firmware
  * code80, Reiniciar Sandsara
  */
@@ -258,7 +269,7 @@ int BlueSara::checkBlueTooth()
                 writeBtln(String(codeError));
                 return codeError;
             }
-            playList = line;
+            playList = line + ".playlist";
             writeBtln("ok");
             return 10; //Se solicita el cambio de playlista
         }
@@ -374,6 +385,30 @@ int BlueSara::checkBlueTooth()
             writeBt(".");
             writeBtln(String(v3Current));
             return 110; //Se cambio nombre de bluetooth
+        }
+        else if (line.indexOf("code12") >= 0)
+        {
+            writeBt("version= ");
+            writeBt(String(v1Current));
+            writeBt(".");
+            writeBt(String(v2Current));
+            writeBt(".");
+            writeBtln(String(v3Current));
+            writeBt("Nombre del bluetooth= ");
+            writeBtln(romGetBluetoothName());
+            writeBt("Velocidad de motores= ");
+            writeBtln(String(romGetSpeedMotor()));
+            writeBt("Paleta de colores= ");
+            writeBtln(String(romGetPallete()));
+            writeBt("Periodo de los leds= ");
+            writeBtln(String(romGetPeriodLed()));
+            writeBt("Lista de reproduccion= ");
+            writeBtln(romGetPlaylist());
+            writeBt("Orden de reproduccion= ");
+            writeBtln(String(romGetOrdenMode()));
+            writeBt("Zona cero= ");
+            writeBtln(String(romGetCeroZone()));
+            return 120; //Se cambio nombre de bluetooth
         }
         else if (line.indexOf("code66") >= 0)
         {

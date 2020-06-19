@@ -265,7 +265,7 @@ void loop()
  * -1, No se pudo abrir el archivo con la direccion dirFile.
  * -2, El archivo abierto es un directorio.
  * -3, La linea que se desea leer no es valida.
- * 
+ * -4, el numero de archivos es cero.
  */
 int run_sandsara(String playList, int ordenMode)
 {
@@ -293,7 +293,9 @@ int run_sandsara(String playList, int ordenMode)
         Serial.print("Numero de archivos: ");
         Serial.println(numberOfFiles);
     }
-
+    if (numberOfFiles == 0){
+        return -4;
+    }
     while (true)
     {
 #ifdef DEBUGGING_DATA
