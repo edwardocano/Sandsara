@@ -90,6 +90,8 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * -7, no coincide checksum.
  * -8, no se pudo crear el archivo.
  * -9, se han leido mas de X numero de caracteres sin encontrar un '\n' en la funcion readLine().
+ * -21, ordenMode no valido.
+ * -31, ledMode no valido.
  * -51, es un directorio
  * -52, el archivo esta vacio
  * -53, el archivo no se pudo abrir.02
@@ -284,6 +286,10 @@ int BlueSara::checkBlueTooth()
                 return codeError;
             }
             ordenMode = line.toInt();
+            if(ordenMode < 1 || ordenMode > 4){
+                writeBtln("error= -21");
+                return -21;
+            }
             writeBtln("ok");
             return 20; //Se solicita el cambio de playlista
         }
@@ -298,6 +304,10 @@ int BlueSara::checkBlueTooth()
                 return codeError;
             }
             ledMode = line.toInt();
+            if (ledMode < 0 || ledMode >10){
+                writeBtln("error= -31");
+                return -31;
+            }
             writeBtln("ok");
             return 30; //Se solicita el cambio de leds
         }
