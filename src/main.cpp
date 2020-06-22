@@ -3,6 +3,7 @@
 #include "MoveSara.h"
 #include "BlueSara.h"
 #include <Adafruit_NeoPixel.h>
+#define FASTLED_ESP32_I2S true
 #include <FastLED.h>
 #include "CalibMotor.h"
 
@@ -164,7 +165,7 @@ void setup()
                     "Task1",     /* name of task. */
                     10000,       /* Stack size of task */
                     NULL,        /* parameter of the task */
-                    1,           /* priority of the task */
+                    5,           /* priority of the task */
                     &Task1,      /* Task handle to keep track of created task */
                     1);          /* pin task to core 0 */                  
     delay(500); 
@@ -1122,20 +1123,17 @@ void ledsFunc( void * pvParameters ){
             FastLED.clear();
             FastLED.show();
             while(ledsOffGlobal){
-                delay(100);
+                vTaskDelay(100);
             }
         }
-        if (millis() - timeLeds> periodLedsGlobal){
-            FillLEDsFromPaletteColors(startIndex);
-            FastLED.show();
-            startIndex += 1;
-            timeLeds = millis();
+        FillLEDsFromPaletteColors(startIndex);
+        FastLED.show();
+        startIndex += 1;
 #ifdef DEBUGGIN_LED2
-            estado = !estado;
-            digitalWrite(2,estado);
+        estado = !estado;
+        digitalWrite(2,estado);
 #endif
-        }
-        delay(1);
+        vTaskDelay(periodLedsGlobal);
     } 
 }
 
