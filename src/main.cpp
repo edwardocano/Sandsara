@@ -33,10 +33,16 @@ bool ceroZoneGlobal;
 bool ledsOffGlobal = false;
 bool playlistChanged = false;
 bool ordenModeChanged = false;
+bool incrementIndexGlobal = true;
 //====variables de estado====
 bool pauseModeGlobal = false;
 bool suspensionModeGlobal = false;
-//
+//====
+//====Variables de paletas de colores====
+CRGBPalette16 NO_SD_PALLETE;
+CRGBPalette16 UPTADATING_PALLETE;
+CRGBPalette16 CALIBRATING_PALLETE;
+//====
 MoveSara halo;
 BlueSara haloBt;
 
@@ -53,7 +59,7 @@ int romSetPosition(int );
 int romGetPosition();
 void Neo_Pixel(int );
 uint32_t rainbow();
-void FillLEDsFromPaletteColors( uint8_t );
+void FillLEDsFromPaletteColors(uint8_t );
 void changePalette(int );
 void SetupTotallyRandomPalette();
 void SetupBlackAndWhiteStripedPalette();
@@ -112,6 +118,11 @@ void setup()
     delay(3000); // power-up safety delay
     //====Configurar Serial====
     Serial.begin(115200);
+    //====
+    //====Inicializar Paletas====
+    NO_SD_PALLETE= CRGBPalette16( CRGB::Black, CRGB::Red, CRGB::Red, CRGB::Black);
+    UPTADATING_PALLETE = CRGBPalette16( CRGB::Black, CRGB::Yellow, CRGB::Yellow, CRGB::Black);
+    CALIBRATING_PALLETE = CRGBPalette16( CRGB::Black, CRGB::Blue, CRGB::Blue    , CRGB::Black);
     //====
     //====Inicializacion de SD====
     EEPROM.begin(EEPROM_SIZE);
@@ -185,10 +196,16 @@ void setup()
     //====Inicializar SD====
     while(!SD.begin())
     {
+        currentPalette = NO_SD_PALLETE;
+        currentBlending = LINEARBLEND;
+        incrementIndexGlobal = false;
         Serial.println("Card failed, or not present");
         delay(200); 
     }
+    changePalette(ledModeGlobal);
+    incrementIndexGlobal = true;
     Serial.println("Card present");
+    //====
     myFile = SD.open("/");
     if (!myFile)
     {
@@ -991,7 +1008,9 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
     
     for( int i = 0; i < NUM_LEDS; i++) {
         leds[i] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
-        colorIndex += 3;
+        if (incrementIndexGlobal){
+            colorIndex += 3;
+        }
     }
 }
 
@@ -1154,6 +1173,9 @@ void findUpdate(){
                 continue;
             }
             if (v1 > v1Current){
+                currentPalette = UPTADATING_PALLETE;
+                currentBlending = LINEARBLEND;
+                incrementIndexGlobal = false;
                 int errorCode = programming(fileName);
                 if (errorCode == 1){
                     rebootEspWithReason("Reiniciando");
@@ -1162,6 +1184,9 @@ void findUpdate(){
             }
             else if(v1 == v1Current){
                 if (v2 > v2Current){
+                    currentPalette = UPTADATING_PALLETE;
+                    currentBlending = LINEARBLEND;
+                    incrementIndexGlobal = false;
                     int errorCode = programming(fileName);
                     if (errorCode == 1){
                         rebootEspWithReason("Reiniciando");
@@ -1170,6 +1195,9 @@ void findUpdate(){
                 }
                 else if(v2 == v2Current){
                     if(v3 > v3Current){
+                        currentPalette = UPTADATING_PALLETE;
+                        currentBlending = LINEARBLEND;
+                        incrementIndexGlobal = false;
                         int errorCode = programming(fileName);
                         if (errorCode == 1){
                             rebootEspWithReason("Reiniciando");

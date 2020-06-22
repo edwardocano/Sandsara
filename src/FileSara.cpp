@@ -81,6 +81,7 @@ FileSara::~FileSara()
  * -1 no se encontro el separador de los componentes (',' o ' ')
  * -4 no se encontro un segundo componente
  * -6 no es un tipo de archivo valido
+ * -10 ya no hay mas archivos por leer por posible problema con memoria sd.
  */
 int FileSara::getNextComponents(double *component1, double *component2)
 {
