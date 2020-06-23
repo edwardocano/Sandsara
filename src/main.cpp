@@ -35,6 +35,10 @@ bool ledsOffGlobal = false;
 bool playlistChanged = false;
 bool ordenModeChanged = false;
 bool incrementIndexGlobal = true;
+String currentProgramGlobal;
+String nextProgramGlobal;
+String currentPlaylistGlobal;
+int currentPositionListGlobal;
 //====variables de estado====
 bool pauseModeGlobal = false;
 bool suspensionModeGlobal = false;
@@ -81,6 +85,9 @@ extern int programming(String );
 extern void rebootEspWithReason(String );
 bool romGetCeroZone();
 int romSetCeroZone(bool );
+int orderRandom(String ,int);
+void setFrom1(int [], int);
+void removeIndex(int [], int , int );
 //====
 //====Variable leds====
 //====Neopixel====
@@ -178,7 +185,7 @@ void setup()
     Serial.println("init func");
     haloCalib.init();
     Serial.println("start func");
-    //haloCalib.start();
+    haloCalib.start();
     Serial.println("Salio de start");
     pinMode(EN_PIN, OUTPUT);
     pinMode(EN_PIN2, OUTPUT);
@@ -222,7 +229,7 @@ void setup()
     changePalette(romGetPallete());
     if (playListGlobal.equals("/")){
         Serial.print("No hay una playlist guardada, se reproduciran todos los archivos en la sd");
-        ordenModeGlobal = 3;
+        //ordenModeGlobal = 3;
     }
     else
     {
@@ -232,7 +239,7 @@ void setup()
         }
         else{
             Serial.println("La playlist no existe, se reproduciran todos los archivos en la sd");
-            ordenModeGlobal = 3;
+            //ordenModeGlobal = 3;
         }
     }
     Serial.print("ordenMode guardado: ");
@@ -297,15 +304,17 @@ int run_sandsara(String playList, int ordenMode)
     
     if (ordenMode == 2)
     {
-        numberOfFiles = FileSara::creatListOfFiles("/RANDOM.txt");
-        playList = "/RANDOM.txt";
+        numberOfFiles = FileSara::creatListOfFiles("/auxList32132123.playlist");
+        playList = "/auxList32132123.playlist";
+        orderRandom(playList,numberOfFiles);
+        playList = "/RANDOM.playlist";
         Serial.print("Numero de archivos: ");
         Serial.println(numberOfFiles);
     }
     else if (ordenMode == 3)
     {
-        numberOfFiles = FileSara::creatListOfFiles("/DEFAULT.txt");
-        playList = "/DEFAULT.txt";
+        numberOfFiles = FileSara::creatListOfFiles("/DEFAULT.playlist");
+        playList = "/DEFAULT.playlist";
         Serial.print("Numero de archivos: ");
         Serial.println(numberOfFiles);
     }
@@ -322,8 +331,8 @@ int run_sandsara(String playList, int ordenMode)
         {
             file.close();
             ordenMode = 3;
-            numberOfFiles = FileSara::creatListOfFiles("/DEFAULT.txt");
-            playList = "/DEFAULT.txt";
+            numberOfFiles = FileSara::creatListOfFiles("/DEFAULT.playlist");
+            playList = "/DEFAULT.playlist";
             Serial.print("Numero de archivos: ");
             Serial.println(numberOfFiles);
         }
@@ -331,23 +340,27 @@ int run_sandsara(String playList, int ordenMode)
     if (numberOfFiles == 0){
         return -4;
     }
+    //====recuperar playlist====
+    currentPlaylistGlobal = playList;
+    //====
     while (true)
     {
-#ifdef DEBUGGING_DATA
-        Serial.println("Abrira el siguiente archivo disponible");
-#endif
-        if (ordenMode == 2 || ordenMode == 4)
-        {
-            pListFile = random(1, numberOfFiles + 1);
-        }
+        #ifdef DEBUGGING_DATA
+            Serial.println("Abrira el siguiente archivo disponible");
+        #endif
         errorCode = FileSara::getLineNumber(pListFile, playList, fileName);
         if (errorCode < 0)
         {
-            //playList no valida asi que regresa
+            //====playList no valida asi que regresa
             delay(1000);
             return errorCode;
         }
-        if (!(ordenMode == 2 || ordenMode == 4) && (errorCode == 2 || errorCode == 3))
+        errorCode = FileSara::getLineNumber(pListFile + 1, playList, nextProgramGlobal);
+        if (errorCode < 0)
+        {
+            nextProgramGlobal = "none";
+        }
+        if (errorCode == 2 || errorCode == 3)
         {
             delay(1000);
             break;
@@ -355,9 +368,9 @@ int run_sandsara(String playList, int ordenMode)
         File current_file = SD.open("/" + fileName);
         if (!current_file)
         {
-#ifdef DEBUGGING_DATA
-            Serial.println("No hay archivo disponible");
-#endif
+            #ifdef DEBUGGING_DATA
+                Serial.println("No hay archivo disponible");
+            #endif
             delay(1000);
             pListFile += 1;
             continue;
@@ -370,10 +383,14 @@ int run_sandsara(String playList, int ordenMode)
         }
         else
         {
+            
             int working_status = 0;
             fileName = current_file.name();
             current_file.close();
-
+            //====recuperar el nombre del programa y su posicion en la lista
+            currentProgramGlobal = fileName;
+            currentPositionListGlobal = pListFile;
+            //====
             double couplingAngle, startFileAngle, endFileAngle;
             int posisionCase;
             FileSara file(fileName);
@@ -389,10 +406,10 @@ int run_sandsara(String playList, int ordenMode)
                 pListFile += 1;
                 continue;
             }
-#ifdef PROCESSING_SIMULATOR
-            Serial.print("fileName: ");
-            Serial.println(fileName);
-#endif
+            #ifdef PROCESSING_SIMULATOR
+                Serial.print("fileName: ");
+                Serial.println(fileName);
+            #endif
             startFileAngle = file.getStartAngle();
             startFileAngle = MoveSara::normalizeAngle(startFileAngle);
             endFileAngle = file.getFinalAngle();
@@ -522,9 +539,9 @@ int run_sandsara(String playList, int ordenMode)
                 movePolarTo(0, 0, 0, true);
                 //haloCalib.verificacion_cal();
             }
-#ifdef PROCESSING_SIMULATOR
-            Serial.println("finished");
-#endif
+            #ifdef PROCESSING_SIMULATOR
+                Serial.println("finished");
+            #endif
             //====Revisar si se desea suspender====
             if (suspensionModeGlobal){
                 ledsOffGlobal = true;
@@ -652,17 +669,11 @@ void executeCode(int errorCode){
         playListGlobal = "/" + haloBt.getPlaylist();
         romSetPlaylist(playListGlobal);
         playlistChanged = true;
-/*#ifdef PROCESSING_SIMULATOR
-        Serial.println("finished");
-#endif*/
     }
     else if (errorCode == 20){
         ordenModeGlobal = haloBt.getOrdenMode();
         romSetOrdenMode(ordenModeGlobal);
         ordenModeChanged = true;
-/*#ifdef PROCESSING_SIMULATOR
-        Serial.println("finished");
-#endif*/
     }
     else if (errorCode == 30){
         ledModeGlobal = haloBt.getLedMode();
@@ -702,6 +713,37 @@ void executeCode(int errorCode){
     else if (errorCode == 100){
         pauseModeGlobal = false;
         suspensionModeGlobal = false;
+    }
+    else if (errorCode == 130){
+        haloBt.writeBt("currentProgram= ");
+        haloBt.writeBtln(currentProgramGlobal);
+    }
+    else if (errorCode == 140){
+        haloBt.writeBt("nextProgram= ");
+        haloBt.writeBtln(nextProgramGlobal);
+    }
+    else if (errorCode == 150){
+        String fileName;
+        int i = 1, errorCode;
+        haloBt.writeBt("playlist: ");
+        haloBt.writeBtln(currentPlaylistGlobal);
+        for (;;){
+            errorCode = FileSara::getLineNumber(i,currentPlaylistGlobal, fileName);
+            if (errorCode < 0){
+                haloBt.writeBtln("error");
+                break;
+            }
+            if (errorCode > 0){
+                if (!fileName.equals("")){
+                    haloBt.writeBt(String(i) + ": ");
+                    haloBt.writeBtln(fileName);
+                }
+                break;
+            }
+            haloBt.writeBt(String(i) + ": ");
+            haloBt.writeBtln(fileName);
+            i++;
+        }
     }
     else if (errorCode == 970){
         romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
@@ -1214,5 +1256,63 @@ void findUpdate(){
                 continue;
             }
         }
+    }
+}
+
+/**
+ * @brief reordena las lineas del archivo dirFile de forma random en un archivo llamado RANDOM.playlist y borrar el archivo dirFile
+ * @param dirFile es la direccion del archivo a ordenar ej. "/lista.txt"
+ * @param numberLines es el numero de lineas que contiene el archivo
+ * @return 1 si se ordeno de forma correcta
+ * -1, no se pudo crear el archivo auxiliar.
+ * -2, hubo problemas al leer el archivo dirFile.
+ */
+int orderRandom(String dirFile, int numberLines){
+    File file;
+    String fileName;
+    int randomNumber, errorCode, limit = numberLines;
+    file = SD.open("/RANDOM.playlist", FILE_WRITE);
+    if (!file){
+        return -1;
+    }
+    int availableNumber[numberLines];
+    setFrom1(availableNumber, numberLines);
+    for(int i = 0; i < limit; i++){
+        randomNumber = random(0, numberLines);
+        errorCode = FileSara::getLineNumber(availableNumber[randomNumber], dirFile, fileName);
+        if (errorCode < 0){
+            file.close();
+            SD.remove(dirFile);
+            return -2;
+        }
+        file.print(fileName + "\r\n");
+        removeIndex(availableNumber, randomNumber, numberLines);
+        numberLines -= 1;
+    }
+    file.close();
+    SD.remove(dirFile);
+    return 1;
+}
+
+/**
+ * @brief inicializa los valores del vector en orden ascendente empezando en 1.
+ * @param list es el array que se desea inicializar.
+ * @note ejemplo el array terminara con elemento  list[0] = 1, list[1] = 2, list[2] = 3...
+ */
+void setFrom1(int list[], int elements){
+    for (int i = 1; i <= elements; i++){
+        list[i-1] = i;
+    }
+}
+
+/**
+ * @brief elimina el elemento en la posicion index del array list
+ * @param list es el array que se va a modificar.
+ * @param index la posicion del elemento que se desea quitar.
+ * @note ejemplo un array con los elementos 1,2,3,4,5,6,7,8,9 se le quita su elemento en la posicion 5 quedaria 1,2,3,4,5,7,8,9
+ */
+void removeIndex(int list[], int index, int elements){
+    for(int i=index; i < elements; i++){
+        list[i] = list[i+1];
     }
 }

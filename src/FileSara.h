@@ -67,7 +67,7 @@ class FileSara {
         static int numberOfLines(String );
         bool isValid();
     private:
-        int getType(String);
+        static int getType(String);
         int getComponents(String , double* , double*);
         int getComponentsBin(uint8_t* , double* , double* );
         String nextRow();

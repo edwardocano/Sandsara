@@ -140,11 +140,12 @@ int FileSara::getStatus()
 }
 
 /**
- * Encuentra el tipo de archivo que se va a leer
- * @return un numero que representa uno de los siguientes tipos de archivo
- * 1 para un .txt
- * 2 para un .thr
- * 3 para un .bin
+ * @brief Encuentra el tipo de archivo que se va a leer.
+ * @return un numero que representa uno de los siguientes tipos de archivo.
+ * 1 para un .txt.
+ * 2 para un .thr.
+ * 3 para un .bin.
+ * -1 ninguno de los anteriores.
  */
 int FileSara::getType(String name_file)
 {
@@ -800,7 +801,7 @@ int FileSara::creatListOfFiles(String fileName)
     File file, root, fileObj;
     int numberOfFiles = 0;
     root = SD.open("/");
-    file = SD.open("/" + fileName, FILE_WRITE);
+    file = SD.open(fileName, FILE_WRITE);
     if (!file)
     {
         return -1; //no se pudo crear el archivo
@@ -821,7 +822,7 @@ int FileSara::creatListOfFiles(String fileName)
             String varName = fileObj.name();
             String varNameLower = varName;
             varNameLower.toLowerCase();
-            if (varNameLower.equals(fileName))
+            if (varNameLower.equals(fileName) || getType(varNameLower) == -1)
             {
                 continue;
             }

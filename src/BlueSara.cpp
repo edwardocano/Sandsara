@@ -81,6 +81,9 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * 100, se solicita salir del modo suspencion o pausa.
  * 110, se envio la version del firmware por bluetooth.
  * 120, se enviaron datos de sandsara
+ * 130, se solicita el nombre del programa actual.
+ * 140, se solicita el nombre del programa siguiente.
+ * 150, se solicita la lista de reproduccion completa.
  * 970, se solicita un reset de fabrica.
  * -1, no se reconoce el comando enviado.
  * -2, se quiso enviar un numero de bytes incorrecto.
@@ -116,6 +119,9 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * code10, significa que se desea salir del modo suspencion o pausa.
  * code11, significa que se desea conocer la version del firmware
  * code12, significa que se desea conocer los parametros guardados en ROM.
+ * code13, significa que se desea conocer el nombre del programa actual.
+ * code14, significa que se desea conocer el nombre del siguiente programa.
+ * code15, significa que se desea conocer la lista de reproduccion actual.
  * code66, actualizar firmware
  * code80, Reiniciar Sandsara
  */
@@ -419,6 +425,19 @@ int BlueSara::checkBlueTooth()
             writeBt("Zona cero= ");
             writeBtln(String(romGetCeroZone()));
             return 120; //Se cambio nombre de bluetooth
+        }
+        else if (line.indexOf("code13") >= 0)
+        {
+            return 130;
+        }
+        else if (line.indexOf("code14") >= 0)
+        {
+            return 140;
+        }
+        else if (line.indexOf("code15") >= 0)
+        {
+            
+            return 150;
         }
         else if (line.indexOf("code66") >= 0)
         {
