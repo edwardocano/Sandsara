@@ -145,3 +145,17 @@
  */
 #define CEROZONE_PERFORMED 233
 #define CEROZONE_NO_PERFORMED 177
+
+/**
+ * delay de leds y codigos de palletas
+ */
+#define DELAYCOLORCODE 10
+#define CODE_NOSD_PALLETE 71
+#define CODE_UPDATING_PALLETE 72
+#define CODE_CALIBRATING_PALLETE 73
+#define CODE_SDEMPTY_PALLETE 74
+
+/**
+ * El numero que avanzan los leds en la paleta de colores
+ */
+#define INCREMENTINDEXPALLETE 3

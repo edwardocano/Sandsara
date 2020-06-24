@@ -39,6 +39,7 @@ String currentProgramGlobal;
 String nextProgramGlobal;
 String currentPlaylistGlobal;
 int currentPositionListGlobal;
+int delayLeds;
 //====variables de estado====
 bool pauseModeGlobal = false;
 bool suspensionModeGlobal = false;
@@ -185,33 +186,21 @@ void setup()
     Serial.println("init func");
     haloCalib.init();
     Serial.println("start func");
-    haloCalib.start();
+    //haloCalib.start();
     Serial.println("Salio de start");
     pinMode(EN_PIN, OUTPUT);
     pinMode(EN_PIN2, OUTPUT);
     digitalWrite(EN_PIN, LOW);
     digitalWrite(EN_PIN2, LOW);
     //====
-
-    
-
-    //====Neopixel====
-    //pixels.begin(); // Inicializa NeoPixel
-    //====
-    
-    
-    
     //====Inicializar SD====
     while(!SD.begin())
     {
-        currentPalette = NO_SD_PALLETE;
-        currentBlending = LINEARBLEND;
-        incrementIndexGlobal = false;
+        changePalette(CODE_NOSD_PALLETE);
         Serial.println("Card failed, or not present");
         delay(200); 
     }
     changePalette(ledModeGlobal);
-    incrementIndexGlobal = true;
     Serial.println("Card present");
     //====
     myFile = SD.open("/");
@@ -689,6 +678,7 @@ void executeCode(int errorCode){
     else if (errorCode == 60){
         int periodLed = haloBt.getPeriodLed();
         periodLedsGlobal = periodLed;
+        delayLeds = periodLed;
         romSetPeriodLed(periodLedsGlobal);
     }
     else if (errorCode == 70){
@@ -1052,7 +1042,7 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
     for( int i = 0; i < NUM_LEDS; i++) {
         leds[i] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
         if (incrementIndexGlobal){
-            colorIndex += 3;
+            colorIndex += INCREMENTINDEXPALLETE;
         }
     }
 }
@@ -1068,18 +1058,21 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
 
 void changePalette(int pallet)
 {
-    if( pallet ==  0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND; }
-    else if( pallet == 1)  { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;  }
-    else if( pallet == 2)  { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND; }
-    else if( pallet == 3)  { SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND; }
-    else if( pallet == 4)  { SetupTotallyRandomPalette();              currentBlending = LINEARBLEND; }
-    else if( pallet == 5)  { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND; }
-    else if( pallet == 6)  { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND; }
-    else if( pallet == 7)  { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND; }
-    else if( pallet == 8)  { currentPalette = PartyColors_p;           currentBlending = LINEARBLEND; }
-    else if( pallet == 9)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = NOBLEND;  }
-    else if( pallet == 10)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND; }
-    else {currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;}
+    if     ( pallet ==  0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
+    else if( pallet == 1)   { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;           incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
+    else if( pallet == 2)   { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
+    else if( pallet == 3)   { SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
+    else if( pallet == 4)   { SetupTotallyRandomPalette();              currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
+    else if( pallet == 5)   { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND;           incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
+    else if( pallet == 6)   { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
+    else if( pallet == 7)   { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
+    else if( pallet == 8)   { currentPalette = PartyColors_p;           currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
+    else if( pallet == 9)   { currentPalette = myRedWhiteBluePalette_p; currentBlending = NOBLEND;           incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
+    else if( pallet == 10)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
+    else if( pallet == CODE_NOSD_PALLETE    )     { currentPalette = NO_SD_PALLETE;           currentBlending = LINEARBLEND;       incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;    }
+    else if( pallet == CODE_UPDATING_PALLETE)     { currentPalette = UPTADATING_PALLETE;      currentBlending = LINEARBLEND;       incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;    }
+    else if( pallet == CODE_CALIBRATING_PALLETE)  { currentPalette = CALIBRATING_PALLETE;     currentBlending = LINEARBLEND;       incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;    }
+    else                    { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
 }
 
 // This function fills the palette with totally random colors.
@@ -1171,11 +1164,11 @@ void ledsFunc( void * pvParameters ){
         FillLEDsFromPaletteColors(startIndex);
         FastLED.show();
         startIndex += 1;
-#ifdef DEBUGGIN_LED2
-        estado = !estado;
-        digitalWrite(2,estado);
-#endif
-        vTaskDelay(periodLedsGlobal);
+        #ifdef DEBUGGIN_LED2
+                estado = !estado;
+                digitalWrite(2,estado);
+        #endif
+        vTaskDelay(delayLeds);
     } 
 }
 
@@ -1213,9 +1206,7 @@ void findUpdate(){
                 continue;
             }
             if (v1 > v1Current){
-                currentPalette = UPTADATING_PALLETE;
-                currentBlending = LINEARBLEND;
-                incrementIndexGlobal = false;
+                changePalette(CODE_UPDATING_PALLETE);
                 int errorCode = programming(fileName);
                 if (errorCode == 1){
                     rebootEspWithReason("Reiniciando");
@@ -1224,9 +1215,7 @@ void findUpdate(){
             }
             else if(v1 == v1Current){
                 if (v2 > v2Current){
-                    currentPalette = UPTADATING_PALLETE;
-                    currentBlending = LINEARBLEND;
-                    incrementIndexGlobal = false;
+                    changePalette(CODE_UPDATING_PALLETE);
                     int errorCode = programming(fileName);
                     if (errorCode == 1){
                         rebootEspWithReason("Reiniciando");
@@ -1235,9 +1224,7 @@ void findUpdate(){
                 }
                 else if(v2 == v2Current){
                     if(v3 > v3Current){
-                        currentPalette = UPTADATING_PALLETE;
-                        currentBlending = LINEARBLEND;
-                        incrementIndexGlobal = false;
+                        changePalette(CODE_UPDATING_PALLETE);
                         int errorCode = programming(fileName);
                         if (errorCode == 1){
                             rebootEspWithReason("Reiniciando");
