@@ -7,18 +7,23 @@
 #include <FastLED.h>
 #include "CalibMotor.h"
 
-#include "FS.h"
-#include "SD.h"
+//#define FS_NO_GLOBALS
+//#include <FS.h>
 #include "SPI.h"
+#include "SdFat.h"
+SdFat SD;
 
 #include <math.h>
 
 #include <EEPROM.h>
 
 
-
+//====Variables externas====
 extern TMC2209Stepper driver;
 extern TMC2209Stepper driver2;
+extern bool sdExists(String );
+extern bool sdRemove(String );
+//====
 
 File myFile;
 File root;
@@ -194,7 +199,7 @@ void setup()
     digitalWrite(EN_PIN2, LOW);
     //====
     //====Inicializar SD====
-    while(!SD.begin())
+    while(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
     {
         changePalette(CODE_NOSD_PALLETE);
         Serial.println("Card failed, or not present");
@@ -222,7 +227,7 @@ void setup()
     }
     else
     {
-        if (SD.exists(playListGlobal)){
+        if (sdExists(playListGlobal)){
             Serial.print("lista guardada: ");
             Serial.println(playListGlobal);
         }
@@ -243,7 +248,7 @@ void setup()
     
     
     //=====si existe el archivos llamado playlist.playlist se ejecutara esa playlist====
-    if (SD.exists("/playlist.playlist")){
+    if (sdExists("/playlist.playlist")){
         playListGlobal = "/playlist.playlist";
         ordenModeGlobal = 1;
     }
@@ -261,6 +266,16 @@ void loop()
     errorCode = run_sandsara(playListGlobal, ordenModeGlobal);
     Serial.print("errorCode de run: ");
     Serial.println(errorCode);
+    if (errorCode == -10){
+        while(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
+        {
+            changePalette(CODE_NOSD_PALLETE);
+            Serial.println("Card failed, or not present");
+            delay(200); 
+        }
+        changePalette(ledModeGlobal);
+        Serial.println("Card present");
+    }
     errorCode = haloBt.checkBlueTooth();
     executeCode(errorCode);
     delay(3000);
@@ -281,6 +296,7 @@ void loop()
  * -2, El archivo abierto es un directorio.
  * -3, La linea que se desea leer no es valida.
  * -4, el numero de archivos es cero.
+ * -10, no se detecta SD.
  */
 int run_sandsara(String playList, int ordenMode)
 {
@@ -372,9 +388,10 @@ int run_sandsara(String playList, int ordenMode)
         }
         else
         {
-            
             int working_status = 0;
-            fileName = current_file.name();
+            char nameF[NAME_LENGTH];
+            current_file.getName(nameF,NAME_LENGTH);
+            fileName = nameF;
             current_file.close();
             //====recuperar el nombre del programa y su posicion en la lista
             currentProgramGlobal = fileName;
@@ -463,16 +480,18 @@ int run_sandsara(String playList, int ordenMode)
             while (true)
             {
                 //se obtienen los siguientes componentes
-                working_status = file.getNextComponents(&component_1, &component_2);
+                working_status = file.getNextComponents(&component_1, &component_2);                
                 if (working_status == 3)
                 {
                     continue;
                 }
                 if (working_status != 0)
                 {
+                    Serial.print("workingStatus= ");
+                    Serial.println(working_status);
                     break;
                 }
-                //revisar bluetooth
+                //====revisar bluetooth====
                 errorCode = haloBt.checkBlueTooth();
                 executeCode(errorCode);
                 //dependiendo del tipo de archivo se ejecuta la funcion correspondiente de movimiento.
@@ -507,6 +526,12 @@ int run_sandsara(String playList, int ordenMode)
             if (working_status == -10)
             {
                 Serial.println("There were problems for reading SD");
+                Serial.println("Se mandara a cero");
+                movePolarTo(0, 0, 0, true);
+                #ifdef PROCESSING_SIMULATOR
+                    Serial.println("finished");
+                #endif
+                return -10;
             }
 
             halo.setZCurrent(halo.getCurrentModule());
@@ -1182,7 +1207,9 @@ void findUpdate(){
             root.close();
             return;
         }
-        fileName = file.name();
+        char nameF[NAME_LENGTH];
+        file.getName(nameF,NAME_LENGTH);
+        fileName = nameF;
         if (fileName.indexOf("/firmware-") == 0){
             int indexDash1 = fileName.indexOf("-");
             int indexDash2 = fileName.indexOf("-", indexDash1 + 1);
@@ -1258,6 +1285,7 @@ int orderRandom(String dirFile, int numberLines){
     File file;
     String fileName;
     int randomNumber, errorCode, limit = numberLines;
+    sdRemove("/RANDOM.playlist");
     file = SD.open("/RANDOM.playlist", FILE_WRITE);
     if (!file){
         return -1;
@@ -1269,7 +1297,7 @@ int orderRandom(String dirFile, int numberLines){
         errorCode = FileSara::getLineNumber(availableNumber[randomNumber], dirFile, fileName);
         if (errorCode < 0){
             file.close();
-            SD.remove(dirFile);
+            sdRemove(dirFile);
             return -2;
         }
         file.print(fileName + "\r\n");
@@ -1277,7 +1305,7 @@ int orderRandom(String dirFile, int numberLines){
         numberLines -= 1;
     }
     file.close();
-    SD.remove(dirFile);
+    sdRemove(dirFile);
     return 1;
 }
 

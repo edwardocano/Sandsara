@@ -1,5 +1,11 @@
 #include "FileSara.h"
 #include "MoveSara.h"
+extern SdFat SD;
+
+//====prototipos de funcion====
+bool sdExists(String );
+bool sdRemove(String );
+//====
 
 /**
  * @brief es el contructor de la clase FileSara
@@ -801,6 +807,7 @@ int FileSara::creatListOfFiles(String fileName)
     File file, root, fileObj;
     int numberOfFiles = 0;
     root = SD.open("/");
+    sdRemove(fileName);
     file = SD.open(fileName, FILE_WRITE);
     if (!file)
     {
@@ -819,14 +826,16 @@ int FileSara::creatListOfFiles(String fileName)
         }
         if (!fileObj.isDirectory())
         {
-            String varName = fileObj.name();
+            char nameF[NAME_LENGTH];
+            fileObj.getName(nameF,NAME_LENGTH);
+            String varName = nameF;
             String varNameLower = varName;
             varNameLower.toLowerCase();
             if (varNameLower.equals(fileName) || getType(varNameLower) == -1)
             {
                 continue;
             }
-            file.print(varName.substring(1) + "\r\n");
+            file.print(varName + "\r\n");
             numberOfFiles += 1;
         }
     }
@@ -886,4 +895,12 @@ bool FileSara::isValid(){
     else{
         return false;
     }
+}
+
+bool sdExists(String dirName){
+    return SD.exists(dirName.c_str());
+}
+
+bool sdRemove(String dirName){
+    return SD.remove(dirName.c_str());
 }

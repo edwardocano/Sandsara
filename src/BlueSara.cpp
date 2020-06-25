@@ -1,12 +1,15 @@
 #include "BlueSara.h"
 #include <Update.h>
-#include <FS.h>
-#include <SD.h>
 
+//====Variables externas====
+extern SdFat SD;
+extern bool sdExists(String );
+extern bool sdRemove(String );
+//====
 // perform the actual update from a given stream
 int performUpdate(Stream &, size_t );
 // check given FS for valid update.bin and perform update if available
-int updateFromFS(fs::FS &, String );
+int updateFromFS(SdFat &, String );
 int programming(String );
 void rebootEspWithReason(String );
 //====
@@ -158,7 +161,7 @@ int BlueSara::checkBlueTooth()
             Serial.print("Nombre del archivo: ");
             Serial.println(fileNameBt);
 #endif
-            if (SD.exists("/" + fileNameBt))
+            if (sdExists("/" + fileNameBt))
             {
                 codeError = -5;
                 writeBtln("error= -5"); //Ya existe el archivo
@@ -259,7 +262,7 @@ int BlueSara::checkBlueTooth()
                     if (codeError != 0)
                     {
                         file.close();
-                        SD.remove("/" + fileNameBt);
+                        sdRemove("/" + fileNameBt);
 #ifdef BLUECOMMENTS
                         Serial.println("transferencia cancelada");
 #endif
@@ -882,7 +885,7 @@ int performUpdate(Stream &updateSource, size_t updateSize)
  * -5, no hay suficiente espacio para el OTA.
  * -6, Ocurrio un error al actualizar el firmware
  */
-int updateFromFS(fs::FS &fs, String name)
+int updateFromFS(SdFat &fs, String name)
 {
     int errorCode;
     File updateBin = fs.open(name);
@@ -902,7 +905,7 @@ int updateFromFS(fs::FS &fs, String name)
             Serial.println("Try to start update");
             errorCode = performUpdate(updateBin, updateSize);
             updateBin.close();
-            fs.remove(name);
+            sdRemove(name);
             return errorCode; // se actualizo el firmware
         }
         else
@@ -915,7 +918,7 @@ int updateFromFS(fs::FS &fs, String name)
         updateBin.close();
 
         // whe finished remove the binary from sd card to indicate end of the process
-        fs.remove(name);
+        sdRemove(name);
     }
     else
     {

@@ -3,11 +3,10 @@
 
 //#define BLUECOMMENTS
 
-#include "FS.h"
-#include "SD.h"
-#include "SPI.h"
-#include "BluetoothSerial.h"
 #include "config.h"
+#include <SPI.h>
+#include "SdFat.h"
+#include "BluetoothSerial.h"
 #include "esp_bt_device.h"
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)

@@ -159,3 +159,14 @@
  * El numero que avanzan los leds en la paleta de colores
  */
 #define INCREMENTINDEXPALLETE 3
+
+/**
+ * Configuracion de la SD
+ */
+#define SPI_SPEED_TO_SD SD_SCK_MHZ(16)
+#define SD_CS_PIN 5
+
+/**
+ * Buffer de tamano de nombre de un archivo en sd
+ */
+#define NAME_LENGTH 60
