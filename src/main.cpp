@@ -1210,7 +1210,7 @@ void findUpdate(){
         char nameF[NAME_LENGTH];
         file.getName(nameF,NAME_LENGTH);
         fileName = nameF;
-        if (fileName.indexOf("/firmware-") == 0){
+        if (fileName.indexOf("firmware-") == 0){
             int indexDash1 = fileName.indexOf("-");
             int indexDash2 = fileName.indexOf("-", indexDash1 + 1);
             int indexDot1 = fileName.indexOf(".");
