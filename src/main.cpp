@@ -292,9 +292,9 @@ void loop()
  * @param playlist el nombre de la playlist a ejecutar, ejemplo "/animales.playlist"
  * @param ordenMode el tipo de reproduccion pudiendo ser
  * 1, se ejecuta en orden desendente segun la playlist.
- * 2, se ejecutan todos los archivos contenidos en el directorio principal de la SD en orden aleatorio.
+ * 2, se ejecutan los archivos de la playlist en orden aleatorio.
  * 3, se ejecutan todos los archivos contenidos en el directorio principal de la SD en el orden que la sd los acomoda.
- * 4, se ejecutan los archivos de la playlist en orden aleatorio (no implementado).
+ * 4, se ejecutan todos los archivos contenidos en el directorio principal de la SD en orden aleatorio.
  * @return codigo de error.
  *  1, se cambio la playlist o se cambio el ordenMode
  *  0, termino el la funcion sin problemas.
@@ -313,29 +313,7 @@ int run_sandsara(String playList, int ordenMode)
     ordenModeChanged = false;
     playlistChanged = false;
     
-    if (ordenMode == 2)
-    {
-        numberOfFiles = FileSara::creatListOfFiles("/auxList32132123.playlist");
-        if (numberOfFiles < 0){
-            return -4;
-        }
-        playList = "/auxList32132123.playlist";
-        orderRandom(playList,numberOfFiles);
-        playList = "/RANDOM.playlist";
-        Serial.print("Numero de archivos: ");
-        Serial.println(numberOfFiles);
-    }
-    else if (ordenMode == 3)
-    {
-        numberOfFiles = FileSara::creatListOfFiles("/DEFAULT.playlist");
-        if (numberOfFiles < 0){
-            return -4;
-        }
-        playList = "/DEFAULT.playlist";
-        Serial.print("Numero de archivos: ");
-        Serial.println(numberOfFiles);
-    }
-    else{
+    if (ordenMode == 1 || ordenMode == 2){
         File file;
         file = SD.open(playList);
         if (file){
@@ -343,6 +321,10 @@ int run_sandsara(String playList, int ordenMode)
             numberOfFiles = FileSara::numberOfLines(playList);
             if (numberOfFiles < 0){
                 return -4;
+            }
+            if (ordenMode == 2){
+                orderRandom(playList,numberOfFiles);
+                playList = "/RANDOM.playlist";
             }
             Serial.print("Numero de archivos: ");
             Serial.println(numberOfFiles);
@@ -360,6 +342,29 @@ int run_sandsara(String playList, int ordenMode)
             Serial.println(numberOfFiles);
         }
     }
+    else if (ordenMode == 4)
+    {
+        numberOfFiles = FileSara::creatListOfFiles("/auxList32132123.playlist");
+        if (numberOfFiles < 0){
+            return -4;
+        }
+        playList = "/auxList32132123.playlist";
+        orderRandom(playList,numberOfFiles);
+        playList = "/RANDOM.playlist";
+        Serial.print("Numero de archivos: ");
+        Serial.println(numberOfFiles);
+    }
+    else
+    {
+        numberOfFiles = FileSara::creatListOfFiles("/DEFAULT.playlist");
+        if (numberOfFiles < 0){
+            return -4;
+        }
+        playList = "/DEFAULT.playlist";
+        Serial.print("Numero de archivos: ");
+        Serial.println(numberOfFiles);
+    }
+    
     if (numberOfFiles == 0){
         return -4;
     }
