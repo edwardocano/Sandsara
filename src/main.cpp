@@ -53,6 +53,7 @@ bool suspensionModeGlobal = false;
 CRGBPalette16 NO_SD_PALLETE;
 CRGBPalette16 UPTADATING_PALLETE;
 CRGBPalette16 CALIBRATING_PALLETE;
+CRGBPalette16 SDEMPTY_PALLETE;
 //====
 MoveSara halo;
 BlueSara haloBt;
@@ -137,6 +138,7 @@ void setup()
     NO_SD_PALLETE= CRGBPalette16( CRGB::Black, CRGB::Red, CRGB::Red, CRGB::Black);
     UPTADATING_PALLETE = CRGBPalette16( CRGB::Black, CRGB::Yellow, CRGB::Yellow, CRGB::Black);
     CALIBRATING_PALLETE = CRGBPalette16( CRGB::Black, CRGB::Blue, CRGB::Blue    , CRGB::Black);
+    SDEMPTY_PALLETE = CRGBPalette16( CRGB::Black, CRGB::OrangeRed, CRGB::OrangeRed    , CRGB::Black);
     //====
     //====Inicializacion de SD====
     EEPROM.begin(EEPROM_SIZE);
@@ -276,6 +278,10 @@ void loop()
         changePalette(ledModeGlobal);
         Serial.println("Card present");
     }
+    else if (errorCode == -4){
+        changePalette(CODE_SDEMPTY_PALLETE);
+        SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD);
+    }
     errorCode = haloBt.checkBlueTooth();
     executeCode(errorCode);
     delay(3000);
@@ -292,9 +298,9 @@ void loop()
  * @return codigo de error.
  *  1, se cambio la playlist o se cambio el ordenMode
  *  0, termino el la funcion sin problemas.
- * -1, No se pudo abrir el archivo con la direccion dirFile.
- * -2, El archivo abierto es un directorio.
- * -3, La linea que se desea leer no es valida.
+ * -1, No se pudo abrir el archivo con la direccion dirFile de getLineNumber.
+ * -2, El archivo abierto es un directorio de getLineNumber.
+ * -3, La linea que se desea leer no es valida de getLineNumber.
  * -4, el numero de archivos es cero.
  * -10, no se detecta SD.
  */
@@ -310,6 +316,9 @@ int run_sandsara(String playList, int ordenMode)
     if (ordenMode == 2)
     {
         numberOfFiles = FileSara::creatListOfFiles("/auxList32132123.playlist");
+        if (numberOfFiles < 0){
+            return -4;
+        }
         playList = "/auxList32132123.playlist";
         orderRandom(playList,numberOfFiles);
         playList = "/RANDOM.playlist";
@@ -319,6 +328,9 @@ int run_sandsara(String playList, int ordenMode)
     else if (ordenMode == 3)
     {
         numberOfFiles = FileSara::creatListOfFiles("/DEFAULT.playlist");
+        if (numberOfFiles < 0){
+            return -4;
+        }
         playList = "/DEFAULT.playlist";
         Serial.print("Numero de archivos: ");
         Serial.println(numberOfFiles);
@@ -329,6 +341,9 @@ int run_sandsara(String playList, int ordenMode)
         if (file){
             file.close();
             numberOfFiles = FileSara::numberOfLines(playList);
+            if (numberOfFiles < 0){
+                return -4;
+            }
             Serial.print("Numero de archivos: ");
             Serial.println(numberOfFiles);
         }
@@ -337,6 +352,9 @@ int run_sandsara(String playList, int ordenMode)
             file.close();
             ordenMode = 3;
             numberOfFiles = FileSara::creatListOfFiles("/DEFAULT.playlist");
+            if (numberOfFiles < 0){
+                return -4;
+            }
             playList = "/DEFAULT.playlist";
             Serial.print("Numero de archivos: ");
             Serial.println(numberOfFiles);
@@ -345,6 +363,7 @@ int run_sandsara(String playList, int ordenMode)
     if (numberOfFiles == 0){
         return -4;
     }
+    changePalette(romGetPallete());
     //====recuperar playlist====
     currentPlaylistGlobal = playList;
     //====
@@ -523,6 +542,14 @@ int run_sandsara(String playList, int ordenMode)
                     break;
                 }
             }
+            halo.setZCurrent(halo.getCurrentModule());
+            if (halo.getCurrentAngle() > PI){
+                halo.setThetaCurrent(halo.getCurrentAngle() - 2*PI);
+            }
+            else{
+                halo.setThetaCurrent(halo.getCurrentAngle());
+            }
+            //====Revisar si hubo problemas con la sd====
             if (working_status == -10)
             {
                 Serial.println("There were problems for reading SD");
@@ -533,15 +560,7 @@ int run_sandsara(String playList, int ordenMode)
                 #endif
                 return -10;
             }
-
-            halo.setZCurrent(halo.getCurrentModule());
-            if (halo.getCurrentAngle() > PI){
-                halo.setThetaCurrent(halo.getCurrentAngle() - 2*PI);
-            }
-            else{
-                halo.setThetaCurrent(halo.getCurrentAngle());
-            }
-            
+            //====
             posisionCase = halo.position(); 
             Serial.print("posisionCase: ");
             Serial.println(posisionCase);
@@ -1097,6 +1116,7 @@ void changePalette(int pallet)
     else if( pallet == CODE_NOSD_PALLETE    )     { currentPalette = NO_SD_PALLETE;           currentBlending = LINEARBLEND;       incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;    }
     else if( pallet == CODE_UPDATING_PALLETE)     { currentPalette = UPTADATING_PALLETE;      currentBlending = LINEARBLEND;       incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;    }
     else if( pallet == CODE_CALIBRATING_PALLETE)  { currentPalette = CALIBRATING_PALLETE;     currentBlending = LINEARBLEND;       incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;    }
+    else if( pallet == CODE_SDEMPTY_PALLETE)  { currentPalette = SDEMPTY_PALLETE;     currentBlending = LINEARBLEND;       incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;    }
     else                    { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
 }
 
