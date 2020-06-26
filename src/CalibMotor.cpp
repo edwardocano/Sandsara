@@ -1,4 +1,4 @@
-#include "CalibMotor.h"
+#include "CalibMotor.h"  
 
 hw_timer_t * timer1 = NULL; 
 
@@ -18,8 +18,8 @@ int motor_degrees = 0;
 int Velocidad = 5000;
 
 int dato[100];
-int dato2[100];
-int dato3[200];
+int dato2[500];
+int dato3[200];        //vector utilizado en la verificacion
 int vect_prom[5];
 int vect_simi[5];
 int vect_max[5];
@@ -28,24 +28,33 @@ int vect_prom2[5];
 int vect_simi2[5];
 int vect_max2[5];
 int vect_min2[5];
-int maximo;
-int maximo2;
+int maximo = 0;
+int maximo2 = 0;
+int minimo = 5000;
+int minimo2 = 5000;
 int max_hall1;
 int min_hall1;
+int nivel_cero1;
+int nivel_cero2;
 int max_hall2;
 int min_hall2;
 int read_hall2;
 int read_hall1;
-
+int Polo_sens1;
+int Polo_sens2;
 TMC2209Stepper driver(&SERIAL_PORT, R_SENSE, DRIVER_ADDRESS);
 TMC2209Stepper driver2(&SERIAL_PORT2, R_SENSE, DRIVER_ADDRESS2);
 
 void giro_normal();
 void mover(int,int,int);
 void slow_Calibration_hall2(int );
-void slow_Calibration_hall1(int s_dir);
+void slow_Calibration_hall1(int );
+void slow_Calibration_hall2_negativo(int);
+void slow_Calibration_hall1_negativo(int);
 int Cero_Hall1(void);
 int Cero_Hall2(void);
+int Polo1(void);
+int Polo2(void);
 
 CalibMotor::CalibMotor(){
 
@@ -117,20 +126,40 @@ int CalibMotor::init(){
 }
 
 int CalibMotor::start(){
+
+
+/*
+//===========Prueba de la verificacion de la libracion=================
+max_hall1 = 486;
+min_hall1 = 445;
+nivel_cero1 = 465;
+nivel_cero2 = 472;
+max_hall2 = 492;
+min_hall2 = 452;
+maximo = 715;
+maximo2 = 715;
+
+verif_cal_Positivob1();
+verif_cal_Negativob2();
+//=====================================================================
+*/
+ 
 //////////////////////////////////////////////////////////////////////
 ////////////////////////////WITH STALLGUARD///////////////////////////
     int ref_sensor1 = 0;
     int ref_sensor2 = 0;
     int dato_f;
     int mean;
-    while(ref_sensor1 != 1)
-    {
-      ref_sensor1 = Cero_Hall1(); 
-    }
+    int dif_ref;
 
     while(ref_sensor2 != 1)
     {
       ref_sensor2 = Cero_Hall2(); 
+    }
+
+    while(ref_sensor1 != 1)
+    {
+      ref_sensor1 = Cero_Hall1();
     }
 
     flag = 0;
@@ -140,12 +169,20 @@ int CalibMotor::start(){
     Serial.println(max_hall1);
     Serial.println("max_hall2: ");
     Serial.println(max_hall2);
+    min_hall1 = min_hall1 - 20;
+    min_hall2 = min_hall2 - 20;
+    Serial.println("min_hall1: ");
+    Serial.println(min_hall1);
+    Serial.println("min_hall2: ");
+    Serial.println(min_hall2);
     digitalWrite(EN_PIN , LOW);
     digitalWrite(DIR_PIN , LOW);
     giro_normal();
     delay(100);
     while(true){
-    digitalWrite(EN_PIN2 , HIGH); 
+    digitalWrite(EN_PIN2 , HIGH);
+    digitalWrite(DIR_PIN2,HIGH);
+    
     if(digitalRead(PIN_ProducType) == 1)
     { 
     if (digitalRead(DIAG_PIN) == 1){
@@ -159,14 +196,29 @@ int CalibMotor::start(){
         digitalWrite(EN_PIN2,LOW);
         digitalWrite(DIR_PIN2,LOW);
         mover(1600,2,5000);
-        delay(5000);
     //move both arms until encoder detects
         digitalWrite(DIR_PIN , LOW);
         digitalWrite(DIR_PIN2 , LOW);
         read_hall1 = (analogRead(hall1))/4;
-        while(read_hall1 < max_hall1)
+      
+        //for(int i = 0; i < 40; i++)
+        //{
+            //dato_f = meanFilter2.AddValue(analogRead(hall1));
+        //}
+        //read_hall1 = dato_f/4;
+        
+        
+        while(read_hall1 < max_hall1 && read_hall1 > min_hall1)
         {
           read_hall1 = (analogRead(hall1))/4;
+          
+          //for(int i = 0; i < 40; i++)
+         // {
+              //dato_f = meanFilter2.AddValue(analogRead(hall1));
+          //}
+          //read_hall1 = dato_f/4;
+          
+          
           flag=2;
         }
         flag=1;
@@ -174,10 +226,27 @@ int CalibMotor::start(){
     //move second arm until hall detects
         
         read_hall2 = (analogRead(hall2))/4;
-        mean = meanFilter.AddValue(read_hall2);
-        while (mean < max_hall2){
+        ////mean = meanFilter.AddValue(read_hall2);
+        
+        //for(int i = 0; i < 40; i++)
+        //{
+            //dato_f = meanFilter2.AddValue(analogRead(hall2));
+        //}
+        //read_hall2 = dato_f/4;
+        
+        mean = read_hall2;
+        while(mean < max_hall2 && mean > min_hall2){
             read_hall2 = (analogRead(hall2))/4;                      
-            mean = meanFilter.AddValue(read_hall2);
+            ////mean = meanFilter.AddValue(read_hall2);
+            
+            //for(int i = 0; i < 40; i++)
+            //{
+                //dato_f = meanFilter2.AddValue(analogRead(hall2));
+            //}
+            //read_hall2 = dato_f/4;
+            
+            
+            mean = read_hall2;
             flag = 3;
         }
         flag=1;
@@ -187,43 +256,59 @@ int CalibMotor::start(){
         digitalWrite(EN_PIN,LOW);
         digitalWrite(EN_PIN2,LOW); 
         avoid = 1;
+        return 0;
     }
     }
     //////////////////////////////////////////////////////////////////////////
     ////////////////////////////WITHOUT STALLGUARD////////////////////////////
 
     
-    digitalWrite(EN_PIN , LOW);
     for(int i = 0; i < 40; i++)
     {
       dato_f = meanFilter2.AddValue(analogRead(hall1));
     }
     read_hall1 = dato_f/4;
-    if(read_hall1 > max_hall1 && avoid == 0){
+    //Serial.println(read_hall1);
+    if(read_hall1 > max_hall1 || read_hall1 < min_hall1)     ///===================condicional para detener el primer brazo
+    {
+      if(avoid == 0)
+      {
+        ///if(read_hall1 > max_hall1 && avoid == 0){
         flag = 1;
-    
-        //digitalWrite(DIR_PIN , HIGH);
+
+        digitalWrite(DIR_PIN , LOW);
         digitalWrite(DIR_PIN2 ,LOW);
         for(int i = 0; i < 40; i++)
         {
           dato_f = meanFilter2.AddValue(analogRead(hall2));
         }
-        mean = dato_f /4;
+        read_hall2 = dato_f / 4;
+        mean = read_hall2;
         digitalWrite(EN_PIN2,LOW);
+        digitalWrite(EN_PIN,LOW);
         driver.rms_current(1500);     
         delay(500);                     
-        
-        while (mean < max_hall2){
+        int cont_giro = 0;
+        while (mean < max_hall2 && mean > min_hall2){                      ////condicional para detener el segundo brazo
             for(int i = 0; i < 40; i++)
             {
               dato_f = meanFilter2.AddValue(analogRead(hall2));
             }
-            mean = dato_f /4;
+            read_hall2 = dato_f / 4;
+            mean = read_hall2;
             flag = 3;
             delay(10);
+            cont_giro++;
            if(digitalRead(PIN_ProducType) == 1)
-           {                            
-            if(digitalRead(DIAG_PIN2) == 1 and avoid2 == 1){
+           { 
+              
+             //Serial.print(driver2.SG_RESULT(), DEC);
+             //Serial.print("\t");
+             //Serial.println((digitalRead(DIAG_PIN2))*80);
+             
+                                        
+            if((digitalRead(DIAG_PIN2) == 1 and avoid2 == 1) || cont_giro == 1280){
+                cont_giro = 0;
                 flag = 1;
                 //secuencia donde el brazo se encuentra entre ambos picos//regresa main 30 grados, el otro gira 90, y ambos se mueven juntos.
                 //main arm 30 degree
@@ -232,23 +317,42 @@ int CalibMotor::start(){
                 mover(540,1,5000);
                     
                 //second arm 90 degree
-                digitalWrite(DIR_PIN2 , LOW); 
-                mover(1600,2,5000);
+                digitalWrite(DIR_PIN2 , HIGH); 
+                mover(3200,2,2000);
                 
                 //move both arms at same time.
                 digitalWrite(DIR_PIN , LOW);
                 digitalWrite(DIR_PIN2 , LOW);
-                read_hall1 = (analogRead(hall1))/4;
-                while(read_hall1 < max_hall1)
+                //read_hall1 = (analogRead(hall1))/4;
+                for(int i = 0; i < 40; i++)
                 {
-                    read_hall1 = (analogRead(hall1))/4;
+                    dato_f = meanFilter2.AddValue(analogRead(hall1));
+                }
+                read_hall1 = dato_f/4;
+          
+                while(read_hall1 < max_hall1 && read_hall1 > min_hall1)
+                {
+                    //read_hall1 = (analogRead(hall1))/4;
+                    for(int i = 0; i < 40; i++)
+                    {
+                        dato_f = meanFilter2.AddValue(analogRead(hall1));
+                    }
+                    read_hall1 = dato_f/4;
+                    
                     flag=2;
                 }
                 
                 //move second arm ultil hall
-                while (mean < max_hall2)
+                while (mean < max_hall2 && mean > min_hall2)
                 {
-                    mean = (analogRead(hall2))/4;
+                    //mean = (analogRead(hall2))/4;
+                    for(int i = 0; i < 40; i++)
+                    {
+                        dato_f = meanFilter2.AddValue(analogRead(hall2));
+                    }
+                    read_hall2 = dato_f/4;
+                    
+                    mean = read_hall2;
                     flag = 3;
                 }
                 
@@ -264,6 +368,7 @@ int CalibMotor::start(){
             s_dir = 0; 
             flag3 = 1;
             }
+            
           } 
         }
         
@@ -272,14 +377,37 @@ int CalibMotor::start(){
         if (flag3 != 1){
             s_dir = 1;
         }
-        slow_Calibration_hall1(s_dir);
-        slow_Calibration_hall2(s_dir);
+        
+        Polo_sens1 = Polo1();    
+        Polo_sens2 = Polo2();
+        Serial.println("Polo iman 1:  ");
+        Serial.println(Polo_sens1);
+        Serial.println("Polo iman 2:  ");
+        Serial.println(Polo_sens2);
+
+      
+        if(Polo_sens1 == 1)
+        {
+            slow_Calibration_hall1(s_dir);
+        }
+        if(Polo_sens1 == 0)
+        {
+            slow_Calibration_hall1_negativo(s_dir);
+        }
+        if(Polo_sens2 == 1)
+        {
+            slow_Calibration_hall2(s_dir);
+        }
+        if(Polo_sens2 == 0)
+        {
+            slow_Calibration_hall2_negativo(s_dir);
+        }
         driver.rms_current(500); 
         driver2.rms_current(500);
         avoid = 1;
         return 0;        
+      }
     }
-    
   }
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////END_LOOP////////////////////////////////
@@ -302,6 +430,8 @@ void giro_normal(){
 void slow_Calibration_hall1(int s_dir){
   int dato_f;
   digitalWrite(EN_PIN,LOW);
+  digitalWrite(EN_PIN2,LOW);
+
   for(int i = 0 ; i < 100 ; i++){
     dato[i] = -1 ;
   } 
@@ -316,6 +446,7 @@ void slow_Calibration_hall1(int s_dir){
   int limit;
   int count_ini = 0;
   int count_fin = 0;
+  int dif_ref;
   digitalWrite(DIR_PIN,LOW);
   
   for(int i = 0; i < 40; i++)
@@ -323,7 +454,9 @@ void slow_Calibration_hall1(int s_dir){
     dato_f = meanFilter2.AddValue(analogRead(hall1));
   }
   read_hall1 = dato_f/4;
-  while(read_hall1 > max_hall1)
+  
+  //while(read_hall1 > max_hall1)
+  for(int t = 0; t < 80; t++)
   {
      for(int i = 0; i < 40; i++)
     {
@@ -343,25 +476,29 @@ void slow_Calibration_hall1(int s_dir){
     }
     delay(1);
     //val_sens_filt = meanFilter4.AddValue(val_sens);
+
     if(val_sens > maximo)        //if(val_sens_filt > maximo)
     {
       maximo = val_sens;     //maximo = val_sens_filt;
     }
     dato[k] = val_sens;  //dato[k] = val_sens_filt;
+    //Serial.print(k);
+    //Serial.print("\t");
+    //Serial.println(dato[k]);
     delay(1);
     k++;
 
   }
   limit = maximo * 0.9;
-  k = 100;
-  while(k > 0)
+  k = 99;
+  while(k >= 0)
   {
     if(dato[k] > limit && band_ini == 0)
     {
       count_ini++;
       if(count_ini == 9)
       {
-        pasos_ini = k+10;
+        pasos_ini = k+9;
         band_ini = 1;
       }
     }
@@ -370,7 +507,7 @@ void slow_Calibration_hall1(int s_dir){
       count_fin++;
       if(count_fin == 9)
       {
-        pasos_fin = k+10;
+        pasos_fin = k-9;
         band_fin = 1;
       }
     }
@@ -381,7 +518,7 @@ void slow_Calibration_hall1(int s_dir){
   int pas;
   int media;
   media = (pasos_ini - pasos_fin)/2;
-  pas = (100 - pasos_ini)+media;
+  pas = (99 - pasos_ini)+media;
   mover(pas,1,5000); 
  
 }
@@ -389,9 +526,9 @@ void slow_Calibration_hall1(int s_dir){
 void slow_Calibration_hall2(int s_dir2){
   int dato2_f;
   digitalWrite(EN_PIN2,LOW);
-  for(int i = 0 ; i < 100 ; i++){
+  for(int i = 0 ; i < 500 ; i++){
     dato2[i] = -1 ;
-  } 
+  }
   int k=0;
   int val_sens;
   int val_sens_filt;
@@ -403,13 +540,15 @@ void slow_Calibration_hall2(int s_dir2){
   int limit;
   int count_ini = 0;
   int count_fin = 0;
+  int dif_ref;
   digitalWrite(DIR_PIN2,LOW);
   for(int i = 0; i < 40; i++)
   {
     dato2_f = meanFilter2.AddValue(analogRead(hall2));
   }
   read_hall2 = dato2_f/4;
-  while(read_hall2 > max_hall2)
+  //while(read_hall2 > max_hall2)
+  for(int t = 0; t < 400; t++)
   {
     for(int i = 0; i < 40; i++)
     {
@@ -420,7 +559,7 @@ void slow_Calibration_hall2(int s_dir2){
   }
   
   digitalWrite(DIR_PIN2, HIGH);
-  while(k < 100) { 
+  while(k < 500) { 
     mover(1,2,5000);
     for(int y = 0; y < 40; y++)
     {
@@ -429,25 +568,29 @@ void slow_Calibration_hall2(int s_dir2){
     }
     delay(1);
     //val_sens_filt = meanFilter4.AddValue(val_sens);
+    
     if(val_sens > maximo2)
     {
       maximo2 = val_sens;
     }
     dato2[k] = val_sens;
+    //Serial.print(k);
+    //Serial.print("\t");
+    //Serial.println(dato2[k]);
     delay(1);
     k++;
 
   }
   limit = maximo2 * 0.9;
-  k = 100;
-  while(k > 0)
+  k = 499;
+  while(k >= 0)
   {
     if(dato2[k] > limit && band_ini == 0)
     {
       count_ini++;
       if(count_ini == 9)
       {
-        pasos_ini = k+10;
+        pasos_ini = k+9;
         band_ini = 1;
       }
     }
@@ -456,7 +599,7 @@ void slow_Calibration_hall2(int s_dir2){
       count_fin++;
       if(count_fin == 9)
       {
-        pasos_fin = k+10;
+        pasos_fin = k-9;
         band_fin = 1;
       }
     }
@@ -467,7 +610,7 @@ void slow_Calibration_hall2(int s_dir2){
   int pas;
   int media;
   media = (pasos_ini - pasos_fin)/2;
-  pas = (100 - pasos_ini)+media;
+  pas = (499 - pasos_ini)+media;
   mover(pas,2,5000); 
 }
 
@@ -494,29 +637,45 @@ void mover(int pasos, int motor_d, int Velocidad){
       }
   }
 
- }
+}
 
- void CalibMotor::verificacion_cal(void){
-   int encoder;
+ void CalibMotor::verif_cal_Positivob1(void){
    digitalWrite(EN_PIN2,LOW);
    digitalWrite(EN_PIN,LOW); 
+   int dato1_f;
    flag = 1; 
    int busq = 0;
    int band_b = 0;
-   //go out from encoder
+   int band_der = 0;
+   int band_izq = 0;
+   //go out from hall1
    digitalWrite(DIR_PIN , HIGH);
    digitalWrite(DIR_PIN2 , HIGH);
-  if(encoder < 600)
+   
+   for(int i = 0; i < 40; i++)
   {
-    while(busq < 100)
+    dato1_f = meanFilter2.AddValue(analogRead(hall1));
+  }
+  read_hall1 = dato1_f/4;
+  if(read_hall1 < max_hall1)
+  {
+    while(busq < 200)
     {
       mover(1,1,5000);
       mover(1,2,5000);
       busq++;
-      if(analogRead(encoder) > 600)
+      
+      for(int i = 0; i < 40; i++)
       {
-        busq = 100;
+          dato1_f = meanFilter2.AddValue(analogRead(hall1));
+      }
+      read_hall1 = dato1_f/4;
+
+      if(read_hall1 > max_hall1)
+      {
+        busq = 200;
         band_b = 1;
+        band_izq = 1;
       }
     }
     if(band_b == 0)
@@ -524,183 +683,468 @@ void mover(int pasos, int motor_d, int Velocidad){
       busq = 0;
       digitalWrite(DIR_PIN , LOW);
       digitalWrite(DIR_PIN2 , LOW);
-      while(busq < 100)
+      while(busq < 400)
       {
         mover(1,1,5000);
         mover(1,2,5000);
         busq++;
-        if(analogRead(encoder) > 600)
+        for(int i = 0; i < 40; i++)
         {
-          busq = 100;
+          dato1_f = meanFilter2.AddValue(analogRead(hall1));
+        }
+        read_hall1 = dato1_f/4;
+        if(read_hall1 > max_hall1)
+        {
+          busq = 400;
+          band_der = 1;
         }
       }
-    }    
-  }
-  slow_Calibration_hall1(s_dir);
-  digitalWrite(EN_PIN2,LOW);
-  digitalWrite(EN_PIN,HIGH);
-  //Brazo 2/////////////////////
-  int limite_verif;
-  int pos_ini_der = 0;
-  int pos_ini_izq = 0;
-  int dato_anterior;
-  int dato_actual;
-  int dato_sens_filt;
-  int dir_ini;
-  int band_dir = 0;
-  int pasos_comp = 0;
-  int pasos_media;
-  limite_verif = maximo * (0.90);
-  digitalWrite(DIR_PIN2,HIGH);
-  for(int y = 0; y < 20; y++)
-  {
-    dato_sens_filt = meanFilter3.AddValue(analogRead(hall2));
-  }
-  dato_anterior = dato_sens_filt;
-  for(int y = 0; y < 5; y++)
-  {
-    mover(1,2,5000);
-  }
-  for(int y = 0; y < 20; y++)
-  {
-    dato_sens_filt = meanFilter3.AddValue(analogRead(hall2));
-  }
-  dato_actual = dato_sens_filt;
-  dir_ini = dato_actual - dato_anterior;
-  if(dir_ini > 0)
-  {
-    digitalWrite(DIR_PIN2,HIGH);
-    band_dir = 0;
-  }
-  if(dir_ini < 0)
-  { 
-    digitalWrite(DIR_PIN2,LOW);
-    band_dir = 1;
-  }
-  while(dato_sens_filt < limite_verif)
-  {
-    mover(1,2,5000);
-    for(int y = 0; y < 20; y++)
-    {
-      dato_sens_filt = meanFilter3.AddValue(analogRead(hall2));
     }
-  }
-  while(dato_sens_filt > limite_verif)
-  {
-    digitalWrite(DIR_PIN2,LOW);
-    mover(1,2,5000);
-    for(int y = 0; y < 20; y++)
+    if(band_izq == 1)
     {
-      dato_sens_filt = meanFilter3.AddValue(analogRead(hall2));
-    }
-  }
-
-  pasos_comp = 0;
-
-  if(band_dir == 1)
-  {
-    digitalWrite(DIR_PIN2,LOW);
-    mover(1,2,5000);
-    for(int y = 0; y < 20; y++)
-    {
-      dato_sens_filt = meanFilter3.AddValue(analogRead(hall2));
-    }
-    while(dato_sens_filt > limite_verif)
-    {
-      mover(1,2,5000);
-      for(int y = 0; y < 20; y++)
+      mover(100,1,5000);
+      digitalWrite(DIR_PIN,LOW);
+      for(int i = 0; i < 40; i++)
       {
-        dato_sens_filt = meanFilter3.AddValue(analogRead(hall2));
+          dato1_f = meanFilter2.AddValue(analogRead(hall1));
+      }
+      read_hall1 = dato1_f/4;
+      while(read_hall1 < max_hall1)
+      {
+        mover(1,1,5000);
+        for(int i = 0; i < 40; i++)
+        {
+            dato1_f = meanFilter2.AddValue(analogRead(hall1));
+        }
+        read_hall1 = dato1_f/4;
       }
     }
+        
   }
-
-  for(int i = 0 ; i < 100 ; i++){
-    dato3[i] = -1 ;
-  } 
-  //go out from encoder
-  int k=0;
-  int val_sens;
-  int val_sens_filt;
-  int band_ini = 0;
-  int band_max = 0;
-  int band_fin = 0;
-  int pasos_ini;
-  int pasos_fin;
-  int limit;
-  int count_ini = 0;
-  int count_fin = 0; 
-  digitalWrite(DIR_PIN2, HIGH);
-  while(k < 100) { 
-    mover(1,2,5000);
-    for(int y = 0; y < 20; y++)
-    {
-      val_sens = meanFilter3.AddValue(analogRead(hall2));
-    }
-    delay(25);
-    val_sens_filt = meanFilter4.AddValue(val_sens);
-    if(val_sens_filt > maximo)
-    {
-      maximo = val_sens_filt;
-    }
-    dato3[k] = val_sens_filt;
-    delay(25);
-    k++;
-
-  }
-  limit = maximo * 0.98;
-  delay(50);
-  k = 100;
-  while(k > 0)
+  if(read_hall1 > max_hall1)
   {
-    if(dato3[k] > limit && band_ini == 0)
+    if(band_der == 0 && band_izq == 0)
     {
-      count_ini++;
-      if(count_ini == 9)
+      digitalWrite(DIR_PIN,HIGH);
+      mover(100,1,5000);
+      digitalWrite(DIR_PIN,LOW);
+      for(int i = 0; i < 40; i++)
       {
-        pasos_ini = k+10;
-        band_ini = 1;
+          dato1_f = meanFilter2.AddValue(analogRead(hall1));
+      }
+      read_hall1 = dato1_f/4;
+      while(read_hall1 < max_hall1)
+      {
+        mover(1,1,5000);
+        for(int i = 0; i < 40; i++)
+        {
+            dato1_f = meanFilter2.AddValue(analogRead(hall1));
+        }
+        read_hall1 = dato1_f/4;
       }
     }
-    if(dato3[k] < limit && band_ini == 1 && band_fin == 0)
-    {
-      count_fin++;
-      if(count_fin == 9)
-      {
-        pasos_fin = k+10;
-        band_fin = 1;
-      }
-    }
-    k--;
-  }
-  delay(50);
-  digitalWrite(DIR_PIN2, LOW);
-  int pas;
-  int media;
-  media = (pasos_ini - pasos_fin)/2;
-  pas = (100 - pasos_ini)+media;
-  for(int t =0; t < pas;t++)
-  {
-    mover(1,2,5000);
-    delay(50);
   }
   
-  digitalWrite(EN_PIN2,LOW);
-  digitalWrite(EN_PIN,LOW); 
-  driver.rms_current(500); 
-  driver2.rms_current(500);
+  delay(5000);
+  slow_Calibration_hall1(s_dir);
+  delay(5000);  
+}
+
+   //Verificacion del segundo brazo////////////////////////
+void CalibMotor::verif_cal_Positivob2(void){
+   digitalWrite(EN_PIN2,LOW);
+   digitalWrite(EN_PIN,LOW); 
+   int dato2_f;
+   flag = 1; 
+   int busq2 = 0;
+   int band2_b = 0;
+   int band2_der = 0;
+   int band2_izq = 0;
+   int dato1_f;
+   //go out from hall1
+   digitalWrite(DIR_PIN , HIGH);
+   digitalWrite(DIR_PIN2 , HIGH);
+   
+  for(int i = 0; i < 40; i++)
+  {
+    dato2_f = meanFilter2.AddValue(analogRead(hall2));
+  }
+  read_hall2 = dato1_f/4;
+  if(read_hall2 < max_hall2)
+  {
+    while(busq2 < 500)
+    {
+      //mover(1,1,5000);
+      mover(1,2,5000);
+      busq2++;
+      
+      for(int i = 0; i < 40; i++)
+      {
+          dato2_f = meanFilter2.AddValue(analogRead(hall2));
+      }
+      read_hall2 = dato2_f/4;
+
+      if(read_hall2 > max_hall2)
+      {
+        busq2 = 500;
+        band2_b = 1;
+        band2_izq = 1;
+      }
+    }
+    if(band2_b == 0)
+    {
+      busq2 = 0;
+      //digitalWrite(DIR_PIN , LOW);
+      digitalWrite(DIR_PIN2 , LOW);
+      while(busq2 < 1000)
+      {
+        //mover(1,1,5000);
+        mover(1,2,5000);
+        busq2++;
+        for(int i = 0; i < 40; i++)
+        {
+          dato2_f = meanFilter2.AddValue(analogRead(hall2));
+        }
+        read_hall2 = dato2_f/4;
+        if(read_hall2 > max_hall2)
+        {
+          busq2 = 1000;
+          band2_der = 1;
+        }
+      }
+    }
+    if(band2_izq == 1)
+    {
+      mover(500,2,5000);
+      digitalWrite(DIR_PIN2,LOW);
+      for(int i = 0; i < 40; i++)
+      {
+          dato2_f = meanFilter2.AddValue(analogRead(hall2));
+      }
+      read_hall2 = dato2_f/4;
+      while(read_hall2 < max_hall2)
+      {
+        mover(1,2,5000);
+        for(int i = 0; i < 40; i++)
+        {
+            dato2_f = meanFilter2.AddValue(analogRead(hall2));
+        }
+        read_hall2 = dato2_f/4;
+      }
+    }
+        
+  }
+  if(read_hall2 > max_hall2)
+  {
+    if(band2_der == 0 && band2_izq == 0)
+    {
+      digitalWrite(DIR_PIN2,HIGH);
+      mover(500,1,5000);
+      digitalWrite(DIR_PIN2,LOW);
+      for(int i = 0; i < 40; i++)
+      {
+          dato2_f = meanFilter2.AddValue(analogRead(hall2));
+      }
+      read_hall2 = dato2_f/4;
+      while(read_hall2 < max_hall2)
+      {
+        mover(1,2,5000);
+        for(int i = 0; i < 40; i++)
+        {
+            dato2_f = meanFilter2.AddValue(analogRead(hall2));
+        }
+        read_hall2 = dato2_f/4;
+      }
+    }
+  }
+  
+  delay(5000);
+  slow_Calibration_hall2(s_dir);
+  delay(5000);                   
+
+  
+ }
+////////////////////////
+
+ void CalibMotor::verif_cal_Negativob1(void){
+   digitalWrite(EN_PIN2,LOW);
+   digitalWrite(EN_PIN,LOW); 
+   int dato1_f;
+   flag = 1; 
+   int busq = 0;
+   int band_b = 0;
+   int band_der = 0;
+   int band_izq = 0;
+   //go out from hall1
+   digitalWrite(DIR_PIN , HIGH);
+   digitalWrite(DIR_PIN2 , HIGH);
+   
+   for(int i = 0; i < 40; i++)
+  {
+    dato1_f = meanFilter2.AddValue(analogRead(hall1));
+  }
+  read_hall1 = dato1_f/4;
+  if(read_hall1 > min_hall1)
+  {
+    while(busq < 200)
+    {
+      mover(1,1,5000);
+      mover(1,2,5000);
+      busq++;
+      
+      for(int i = 0; i < 40; i++)
+      {
+          dato1_f = meanFilter2.AddValue(analogRead(hall1));
+      }
+      read_hall1 = dato1_f/4;
+
+      if(read_hall1 < min_hall1)
+      {
+        busq = 200;
+        band_b = 1;
+        band_izq = 1;
+      }
+    }
+    if(band_b == 0)
+    {
+      busq = 0;
+      digitalWrite(DIR_PIN , LOW);
+      digitalWrite(DIR_PIN2 , LOW);
+      while(busq < 400)
+      {
+        mover(1,1,5000);
+        mover(1,2,5000);
+        busq++;
+        for(int i = 0; i < 40; i++)
+        {
+          dato1_f = meanFilter2.AddValue(analogRead(hall1));
+        }
+        read_hall1 = dato1_f/4;
+        if(read_hall1 < min_hall1)
+        {
+          busq = 400;
+          band_der = 1;
+        }
+      }
+    }
+    if(band_izq == 1)
+    {
+      mover(100,1,5000);
+      digitalWrite(DIR_PIN,LOW);
+      for(int i = 0; i < 40; i++)
+      {
+          dato1_f = meanFilter2.AddValue(analogRead(hall1));
+      }
+      read_hall1 = dato1_f/4;
+      while(read_hall1 > min_hall1)
+      {
+        mover(1,1,5000);
+        for(int i = 0; i < 40; i++)
+        {
+            dato1_f = meanFilter2.AddValue(analogRead(hall1));
+        }
+        read_hall1 = dato1_f/4;
+      }
+    }
+        
+  }
+  if(read_hall1 < min_hall1)
+  {
+    if(band_der == 0 && band_izq == 0)
+    {
+      digitalWrite(DIR_PIN,HIGH);
+      mover(100,1,5000);
+      digitalWrite(DIR_PIN,LOW);
+      for(int i = 0; i < 40; i++)
+      {
+          dato1_f = meanFilter2.AddValue(analogRead(hall1));
+      }
+      read_hall1 = dato1_f/4;
+      while(read_hall1 > min_hall1)
+      {
+        mover(1,1,5000);
+        for(int i = 0; i < 40; i++)
+        {
+            dato1_f = meanFilter2.AddValue(analogRead(hall1));
+        }
+        read_hall1 = dato1_f/4;
+      }
+    }
+  }
+  
+  delay(5000);
+  slow_Calibration_hall1_negativo(s_dir);
+  delay(5000);  
+ }
+   //Verificacion del segundo brazo////////////////////////
+
+void CalibMotor::verif_cal_Negativob2(void){
+   digitalWrite(EN_PIN2,LOW);
+   digitalWrite(EN_PIN,LOW); 
+   int dato2_f;
+   flag = 1; 
+   int busq2 = 0;
+   int band2_b = 0;
+   int band2_der = 0;
+   int band2_izq = 0;
+   int dato1_f;
+   //go out from hall1
+   digitalWrite(DIR_PIN , HIGH);
+   digitalWrite(DIR_PIN2 , HIGH);
+   
+  for(int i = 0; i < 40; i++)
+  {
+    dato2_f = meanFilter2.AddValue(analogRead(hall2));
+  }
+  read_hall2 = dato1_f/4;
+  if(read_hall2 > min_hall2)
+  {
+    while(busq2 < 500)
+    {
+      //mover(1,1,5000);
+      mover(1,2,5000);
+      busq2++;
+      
+      for(int i = 0; i < 40; i++)
+      {
+          dato2_f = meanFilter2.AddValue(analogRead(hall2));
+      }
+      read_hall2 = dato2_f/4;
+
+      if(read_hall2 < min_hall2)
+      {
+        busq2 = 500;
+        band2_b = 1;
+        band2_izq = 1;
+      }
+    }
+    if(band2_b == 0)
+    {
+      busq2 = 0;
+      //digitalWrite(DIR_PIN , LOW);
+      digitalWrite(DIR_PIN2 , LOW);
+      while(busq2 < 1000)
+      {
+        //mover(1,1,5000);
+        mover(1,2,5000);
+        busq2++;
+        for(int i = 0; i < 40; i++)
+        {
+          dato2_f = meanFilter2.AddValue(analogRead(hall2));
+        }
+        read_hall2 = dato2_f/4;
+        if(read_hall2 < min_hall2)
+        {
+          busq2 = 1000;
+          band2_der = 1;
+        }
+      }
+    }
+    if(band2_izq == 1)
+    {
+      mover(500,2,5000);
+      digitalWrite(DIR_PIN2,LOW);
+      for(int i = 0; i < 40; i++)
+      {
+          dato2_f = meanFilter2.AddValue(analogRead(hall2));
+      }
+      read_hall2 = dato2_f/4;
+      while(read_hall2 > min_hall2)
+      {
+        mover(1,2,5000);
+        for(int i = 0; i < 40; i++)
+        {
+            dato2_f = meanFilter2.AddValue(analogRead(hall2));
+        }
+        read_hall2 = dato2_f/4;
+      }
+    }
+        
+  }
+  if(read_hall2 < min_hall2)
+  {
+    if(band2_der == 0 && band2_izq == 0)
+    {
+      digitalWrite(DIR_PIN2,HIGH);
+      mover(500,2,5000);
+      digitalWrite(DIR_PIN2,LOW);
+      for(int i = 0; i < 40; i++)
+      {
+          dato2_f = meanFilter2.AddValue(analogRead(hall2));
+      }
+      read_hall2 = dato2_f/4;
+      while(read_hall2 > min_hall2)
+      {
+        mover(1,2,5000);
+        for(int i = 0; i < 40; i++)
+        {
+            dato2_f = meanFilter2.AddValue(analogRead(hall2));
+        }
+        read_hall2 = dato2_f/4;
+      }
+    }
+  }
+  
+  delay(5000);
+  slow_Calibration_hall2_negativo(s_dir);
+  delay(5000);                   
+
+  
  }
 
+///////////////////////
 
  int Cero_Hall1(void){
    flag = 1;
    digitalWrite(EN_PIN,LOW);
+   digitalWrite(EN_PIN2,LOW);
    int dato_hall1;
    int dato_filt;
    int min = 5000;
    int max = 0;
    int suma = 0;
    int promedio;
+   int suma_promedios = 0;
+   int datos_similares = 0;
+   int p = 0;
+   int dif_ref;
+   flag = 2;
+   int flag_c = 0;
+   digitalWrite(DIR_PIN,LOW);
+   digitalWrite(DIR_PIN2,LOW);
+   giro_normal();
+   delay(500);
+   while(p < 300)
+   {
+     if (digitalRead(DIAG_PIN) == 1){
+        flag = 1;
+        flag_c = 1; 
+        //Back a little  first arm
+        digitalWrite(DIR_PIN,HIGH);
+        mover(300,1,3000);
+
+        //Move second arm 90 degrees.    
+        digitalWrite(EN_PIN,LOW);
+        digitalWrite(EN_PIN2,LOW);
+        digitalWrite(DIR_PIN2,LOW);
+        mover(1600,2,2000);
+        p = 300;
+     }
+     p++;
+    delay(10);
+   }
+   if(flag_c == 0)
+   {
+     flag = 1; 
+     //Move second arm 90 degrees.    
+     digitalWrite(EN_PIN,LOW);
+     digitalWrite(EN_PIN2,LOW);
+     digitalWrite(DIR_PIN,HIGH);
+     mover(800,1,2000);
+
+   }
+
+   flag = 1;
    for(int x = 0; x < 5; x++)
    {
       for(int i = 0; i < 40; i++)
@@ -708,6 +1152,7 @@ void mover(int pasos, int motor_d, int Velocidad){
         dato_filt = meanFilter2.AddValue(analogRead(hall1));
       }
       dato_hall1 = dato_filt/4;
+      
       if(dato_hall1 > max)
       {
         max = dato_hall1;
@@ -737,6 +1182,7 @@ void mover(int pasos, int motor_d, int Velocidad){
         dato_filt = meanFilter2.AddValue(analogRead(hall1));
       }
       dato_hall1 = dato_filt/4;
+      
       if(dato_hall1 > max)
       {
         max = dato_hall1;
@@ -766,6 +1212,7 @@ void mover(int pasos, int motor_d, int Velocidad){
         dato_filt = meanFilter2.AddValue(analogRead(hall1));
       }
       dato_hall1 = dato_filt/4;
+      
       if(dato_hall1 > max)
       {
         max = dato_hall1;
@@ -795,6 +1242,7 @@ void mover(int pasos, int motor_d, int Velocidad){
         dato_filt = meanFilter2.AddValue(analogRead(hall1));
       }
       dato_hall1 = dato_filt/4;
+      
       if(dato_hall1 > max)
       {
         max = dato_hall1;
@@ -825,6 +1273,7 @@ void mover(int pasos, int motor_d, int Velocidad){
         dato_filt = meanFilter2.AddValue(analogRead(hall1));
       }
       dato_hall1 = dato_filt/4;
+      
       if(dato_hall1 > max)
       {
         max = dato_hall1;
@@ -902,9 +1351,11 @@ void mover(int pasos, int motor_d, int Velocidad){
        {
          min = vect_min[i];
        }
-     }
-
+       suma_promedios = suma_promedios + vect_prom[i];
+       datos_similares++;
+     } 
    }
+   nivel_cero1 = suma_promedios / datos_similares;
    Serial.println("max:  ");
    Serial.println(max);
    Serial.println("min:  ");
@@ -917,7 +1368,8 @@ void mover(int pasos, int motor_d, int Velocidad){
      Serial.println(vect_prom[i]);
 
    }
-
+   Serial.println("Nivel cero promedio");
+   Serial.println(nivel_cero1);
    Serial.println("vector similitud");
    for(int i = 0; i < 5; i++)
    {
@@ -943,13 +1395,47 @@ void mover(int pasos, int motor_d, int Velocidad){
 
   int Cero_Hall2(void){
    flag = 1;
-   digitalWrite(EN_PIN2,LOW);
+   digitalWrite(EN_PIN,HIGH);
    int dato_hall2;
    int dato_filt;
    int min = 5000;
    int max = 0;
    int suma = 0;
    int promedio;
+   int suma_promedios2 = 0;
+   int datos_similares2 = 0;
+   int p = 0;
+   int dif_ref;
+   int flag_c = 0;
+   flag = 3;
+   giro_normal();
+   delay(500);
+   while(p < 300)
+   {
+     if (digitalRead(DIAG_PIN2) == 1){
+        flag = 1; 
+        flag_c = 1;
+        //Move second arm 90 degrees.    
+        digitalWrite(EN_PIN,LOW);
+        digitalWrite(EN_PIN2,LOW);
+        digitalWrite(DIR_PIN2,HIGH);
+        mover(1600,2,2000);
+        p = 300;
+     }
+     p++;
+    delay(10);
+   }
+   if(flag_c == 0)
+   {
+     flag = 1; 
+     //Move second arm 90 degrees.    
+     digitalWrite(EN_PIN,LOW);
+     digitalWrite(EN_PIN2,LOW);
+     digitalWrite(DIR_PIN2,HIGH);
+     mover(800,2,2000);
+
+   }
+   flag = 1;
    for(int x = 0; x < 5; x++)
    {
       for(int i = 0; i < 40; i++)
@@ -957,6 +1443,7 @@ void mover(int pasos, int motor_d, int Velocidad){
         dato_filt = meanFilter2.AddValue(analogRead(hall2));
       }
       dato_hall2 = dato_filt/4;
+      
       if(dato_hall2 > max)
       {
         max = dato_hall2;
@@ -1015,6 +1502,7 @@ void mover(int pasos, int motor_d, int Velocidad){
         dato_filt = meanFilter2.AddValue(analogRead(hall2));
       }
       dato_hall2 = dato_filt/4;
+      
       if(dato_hall2 > max)
       {
         max = dato_hall2;
@@ -1044,6 +1532,7 @@ void mover(int pasos, int motor_d, int Velocidad){
         dato_filt = meanFilter2.AddValue(analogRead(hall2));
       }
       dato_hall2 = dato_filt/4;
+      
       if(dato_hall2 > max)
       {
         max = dato_hall2;
@@ -1074,6 +1563,7 @@ void mover(int pasos, int motor_d, int Velocidad){
         dato_filt = meanFilter2.AddValue(analogRead(hall2));
       }
       dato_hall2 = dato_filt/4;
+      
       if(dato_hall2 > max)
       {
         max = dato_hall2;
@@ -1151,9 +1641,12 @@ void mover(int pasos, int motor_d, int Velocidad){
        {
          min = vect_min2[i];
        }
+       suma_promedios2 = suma_promedios2 + vect_prom2[i];
+       datos_similares2++;
      }
 
    }
+   nivel_cero2 = suma_promedios2 / datos_similares2;
    Serial.println("max:  ");
    Serial.println(max);
    Serial.println("min:  ");
@@ -1166,6 +1659,8 @@ void mover(int pasos, int motor_d, int Velocidad){
      Serial.println(vect_prom2[i]);
 
    }
+   Serial.println("Nivel cero promedio2");
+   Serial.println(nivel_cero2);
 
    Serial.println("vector similitud2");
    for(int i = 0; i < 5; i++)
@@ -1189,15 +1684,300 @@ void mover(int pasos, int motor_d, int Velocidad){
 
  }
 
+ int Polo1(void)
+ {
+  int vect_polo1[100];
+  int maximo_polo1 = 0;
+  int minimo_polo1 = 5000;
+  int dif_max_abs1;
+  int dif_min_abs1;
+  digitalWrite(EN_PIN,LOW);
+  digitalWrite(EN_PIN2,LOW);
+
+  for(int i = 0 ; i < 100 ; i++){
+    vect_polo1[i] = -1 ;
+  } 
+  int k=0;
+  int val_sens;
+  digitalWrite(DIR_PIN,LOW);
+  
+  for(int t = 0; t < 100; t++)
+  {
+    mover(1,1,5000);
+  }
+  
+  digitalWrite(DIR_PIN, HIGH);
+  while(k < 100) { 
+    mover(1,1,5000);
+    for(int y = 0; y < 40; y++)
+    {
+      read_hall1 = (analogRead(hall1))/4;
+      val_sens = meanFilter2.AddValue(read_hall1);
+    }
+    delay(1);
+    if(val_sens > maximo_polo1)        //if(val_sens_filt > maximo)
+    {
+      maximo_polo1 = val_sens;     //maximo = val_sens_filt;
+    }
+    if(val_sens < minimo_polo1)        //if(val_sens_filt > maximo)
+    {
+      minimo_polo1 = val_sens;     //maximo = val_sens_filt;
+    }
+    vect_polo1[k] = val_sens;  //dato[k] = val_sens_filt;
+    //Serial.print(k);
+    //Serial.print("\t");
+    //Serial.println(vect_polo1[k]);
+    delay(1);
+    k++;
+  }
+  dif_max_abs1 = maximo_polo1 - nivel_cero1;
+  dif_min_abs1 = nivel_cero1 - minimo_polo1;
+  if(dif_max_abs1 > dif_min_abs1)
+  {
+      return 1;
+  }
+  if(dif_max_abs1 < dif_min_abs1)
+  {
+      return 0;
+  }
+}
 
 
+ int Polo2(void)
+ {
+  int vect_polo2[500];
+  int maximo_polo2 = 0;
+  int minimo_polo2 = 5000;
+  int dif_max_abs2;
+  int dif_min_abs2;
+  digitalWrite(EN_PIN,LOW);
+  digitalWrite(EN_PIN2,LOW);
 
+  for(int i = 0 ; i < 500 ; i++){
+    vect_polo2[i] = -1 ;
+  } 
+  int k=0;
+  int val_sens;
+  digitalWrite(DIR_PIN2,LOW);
+  
+  for(int t = 0; t < 500; t++)
+  {
+    mover(1,2,5000);
+  }
+  digitalWrite(DIR_PIN2,HIGH);
+  while(k < 500) { 
+    mover(1,2,5000);
+    for(int y = 0; y < 40; y++)
+    {
+      read_hall2 = (analogRead(hall2))/4;
+      val_sens = meanFilter2.AddValue(read_hall2);
+    }
+    delay(1);
+    if(val_sens > maximo_polo2)        //if(val_sens_filt > maximo)
+    {
+      maximo_polo2 = val_sens;     //maximo = val_sens_filt;
+    }
+    if(val_sens < minimo_polo2)        //if(val_sens_filt > maximo)
+    {
+      minimo_polo2 = val_sens;     //maximo = val_sens_filt;
+    }
+    vect_polo2[k] = val_sens;  //dato[k] = val_sens_filt;
+    //Serial.print(k);
+    //Serial.print("\t");
+    //Serial.println(vect_polo2[k]);
+    delay(1);
+    k++;
+  }
+  dif_max_abs2 = maximo_polo2 - nivel_cero2;
+  dif_min_abs2 = nivel_cero2 - minimo_polo2;
+  if(dif_max_abs2 > dif_min_abs2)
+  {
+      return 1;
+  }
+  if(dif_max_abs2 < dif_min_abs2)
+  {
+      return 0;
+  }
+}
 
+void slow_Calibration_hall2_negativo(int s_dir2){
+  int dato2_f;
+  digitalWrite(EN_PIN2,LOW);
+  for(int i = 0 ; i < 500 ; i++){
+    dato2[i] = -1 ;
+  }
+  int k=0;
+  int val_sens;
+  int val_sens_filt;
+  int band_ini = 0;
+  int band_max = 0;
+  int band_fin = 0;
+  int pasos_ini;
+  int pasos_fin;
+  int limit;
+  int count_ini = 0;
+  int count_fin = 0;
+  int dif_ref;
+  digitalWrite(DIR_PIN2,LOW);
+  for(int i = 0; i < 40; i++)
+  {
+    dato2_f = meanFilter2.AddValue(analogRead(hall2));
+  }
+  read_hall2 = dato2_f/4;
+  //while(read_hall2 > max_hall2)
+  for(int t = 0; t < 400; t++)
+  {
+    for(int i = 0; i < 40; i++)
+    {
+      dato2_f = meanFilter2.AddValue(analogRead(hall2));
+    }
+    read_hall2 = dato2_f/4;
+    mover(1,2,5000);
+  }
+  
+  digitalWrite(DIR_PIN2, HIGH);
+  while(k < 500) { 
+    mover(1,2,5000);
+    for(int y = 0; y < 40; y++)
+    {
+      read_hall2 = (analogRead(hall2))/4;
+      val_sens = meanFilter2.AddValue(read_hall2);
+    }
+    delay(1);
+    //val_sens_filt = meanFilter4.AddValue(val_sens);
+    
+    if(val_sens < minimo2)
+    {
+      minimo2 = val_sens;
+    }
+    dato2[k] = val_sens;
+    //Serial.print(k);
+    //Serial.print("\t");
+    //Serial.println(dato2[k]);
+    delay(1);
+    k++;
 
+  }
+  limit = minimo2 + ((nivel_cero2 - minimo2)*0.1);
+  k = 499;
+  while(k >= 0)
+  {
+    if(dato2[k] < limit && band_ini == 0)
+    {
+      count_ini++;
+      if(count_ini == 9)
+      {
+        pasos_ini = k+9;
+        band_ini = 1;
+      }
+    }
+    if(dato2[k] > limit && band_ini == 1 && band_fin == 0)
+    {
+      count_fin++;
+      if(count_fin == 9)
+      {
+        pasos_fin = k-9;
+        band_fin = 1;
+      }
+    }
+    k--;
+  }
+  
+  digitalWrite(DIR_PIN2, LOW);
+  int pas;
+  int media;
+  media = (pasos_ini - pasos_fin)/2;
+  pas = (499 - pasos_ini)+media;
+  mover(pas,2,5000); 
+}
 
+void slow_Calibration_hall1_negativo(int s_dir2){
+  int dato1_f;
+  digitalWrite(EN_PIN,LOW);
+  for(int i = 0 ; i < 100 ; i++){
+    dato[i] = -1 ;
+  }
+  int k=0;
+  int val_sens;
+  int val_sens_filt;
+  int band_ini = 0;
+  int band_max = 0;
+  int band_fin = 0;
+  int pasos_ini;
+  int pasos_fin;
+  int limit;
+  int count_ini = 0;
+  int count_fin = 0;
+  int dif_ref;
+  digitalWrite(DIR_PIN,LOW);
+  for(int i = 0; i < 40; i++)
+  {
+    dato1_f = meanFilter2.AddValue(analogRead(hall1));
+  }
+  read_hall1 = dato1_f/4;
+  //while(read_hall2 > max_hall2)
+  for(int t = 0; t < 80; t++)
+  {
+    for(int i = 0; i < 40; i++)
+    {
+      dato1_f = meanFilter2.AddValue(analogRead(hall1));
+    }
+    read_hall1 = dato1_f/4;
+    mover(1,1,5000);
+  }
+  
+  digitalWrite(DIR_PIN, HIGH);
+  while(k < 100) { 
+    mover(1,1,5000);
+    for(int y = 0; y < 40; y++)
+    {
+      read_hall1 = (analogRead(hall1))/4;
+      val_sens = meanFilter2.AddValue(read_hall1);
+    }
+    delay(1);
+    //val_sens_filt = meanFilter4.AddValue(val_sens);
+    
+    if(val_sens < minimo)
+    {
+      minimo = val_sens;
+    }
+    dato[k] = val_sens;
+    //Serial.print(k);
+    //Serial.print("\t");
+    //Serial.println(dato[k]);
+    delay(1);
+    k++;
 
-
-
-
-
-
+  }
+  limit = minimo + ((nivel_cero1 - minimo)*0.1);
+  k = 99;
+  while(k >= 0)
+  {
+    if(dato[k] < limit && band_ini == 0)
+    {
+      count_ini++;
+      if(count_ini == 9)
+      {
+        pasos_ini = k+9;
+        band_ini = 1;
+      }
+    }
+    if(dato[k] > limit && band_ini == 1 && band_fin == 0)
+    {
+      count_fin++;
+      if(count_fin == 9)
+      {
+        pasos_fin = k-9;
+        band_fin = 1;
+      }
+    }
+    k--;
+  }
+  
+  digitalWrite(DIR_PIN, LOW);
+  int pas;
+  int media;
+  media = (pasos_ini - pasos_fin)/2;
+  pas = (99 - pasos_ini)+media;
+  mover(pas,1,5000); 
+}

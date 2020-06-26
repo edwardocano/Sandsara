@@ -869,13 +869,15 @@ void ledsFunc( void * pvParameters ){
     //bool estado = true;
     for(;;){
         if (millis() - timeLeds> periodLeds){
+            
             FillLEDsFromPaletteColors(startIndex);
             FastLED.show();
             startIndex += 3;
             timeLeds = millis();
-            delay(1);
+            
             //estado = !estado;
             //digitalWrite(2,estado);
         }
+        delay(1);
     } 
 }
