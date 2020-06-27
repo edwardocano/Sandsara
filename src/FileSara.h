@@ -1,10 +1,12 @@
 #ifndef _FILESARA_H_
 #define _FILESARA_H_
 
-#include "FS.h"
-#include "SD.h"
-#include "SPI.h"
 #include "config.h"
+//#define FS_NO_GLOBALS
+//#include <FS.h>
+#include <SPI.h>
+#include "SdFat.h"
+
 
 /**
  * @class FileSara
@@ -67,7 +69,7 @@ class FileSara {
         static int numberOfLines(String );
         bool isValid();
     private:
-        int getType(String);
+        static int getType(String);
         int getComponents(String , double* , double*);
         int getComponentsBin(uint8_t* , double* , double* );
         String nextRow();

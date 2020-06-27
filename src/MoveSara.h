@@ -2,7 +2,7 @@
 #define _MOVESARA_H_
 
 //Speed
-#define millimeterSpeed 15;
+//#define millimeterSpeed 15;
 
 #include "AccelStepper.h"
 #include "MultiStepper.h"
@@ -42,6 +42,7 @@ class MoveSara {
         double x_home;
         double y_home;
         bool constantMotorSpeed = false;
+        int millimeterSpeed = 15;
 
     public:
         MoveSara();
@@ -55,6 +56,8 @@ class MoveSara {
         double getCurrentAngle();
         void setZCurrent(double );
         void setThetaCurrent(double );
+        void setSpeed(int );
+        int getSpeed();
         double getZCurrent();
         double getThetaCurrent();
         static void rotate(double& ,double& ,double );

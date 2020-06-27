@@ -1,16 +1,27 @@
-
 #include "BlueSara.h"
 #include <Update.h>
-#include <FS.h>
-#include <SD.h>
 
+//====Variables externas====
+extern SdFat SD;
+extern bool sdExists(String );
+extern bool sdRemove(String );
+//====
 // perform the actual update from a given stream
 int performUpdate(Stream &, size_t );
 // check given FS for valid update.bin and perform update if available
-int updateFromFS(fs::FS &, String );
+int updateFromFS(SdFat &, String );
 int programming(String );
 void rebootEspWithReason(String );
-
+//====
+extern String romGetPlaylist();
+extern int romGetOrdenMode();
+extern int romGetPosition();
+extern int romGetPallete();
+extern int romGetSpeedMotor();
+extern int romGetPeriodLed();
+extern String romGetBluetoothName();
+extern bool romGetCeroZone();
+//====
 //--------------Bluetooth--------------------------------------------------------
 //-------------------------------------------------------------------------------
 void callback(esp_spp_cb_event_t , esp_spp_cb_param_t* );
@@ -20,7 +31,12 @@ BlueSara::BlueSara(){
 }
 
 int BlueSara::init(String name){
-    SerialBT.begin(name); //Bluetooth device name
+    if (!SerialBT.begin(name)){ //Bluetooth device name
+        SerialBT.begin("Sandsara");
+#ifdef BLUECOMMENTS
+        Serial.println("No se inicializo con nombre por defecto");
+#endif
+    }
     SerialBT.register_callback(callback);
 #ifdef BLUECOMMENTS
     Serial.println("The device started, now you can pair it with bluetooth!");
@@ -60,6 +76,18 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * 10, se solicito un cambio de playlist, para recuperar el nombre llamar a la funcion getPlaylist().
  * 20, se solicito un cambio en ordenMode, para recuperar el numero llamar a la funcion getOrdenMode().
  * 30, se solicito un cambio en ledMode, para recueperar el numero llamar a la funcion getLedMode().
+ * 50, se solicita el cambio de velocidad de motores, la velocidad se almacena en la variable miembro speed. speed se obtiene con getSpeed().
+ * 60, se solicita el cambio de velocidad de los leds, la velocidad se almacena en la variable miembro periodLed. periodLed se obtiene con getPeriodLed().
+ * 70, se solicita cambio de nombre de bluetooth.
+ * 80, se solicita entrar en modo de suspencion.
+ * 90, se solicita entrar en modo de pausa.
+ * 100, se solicita salir del modo suspencion o pausa.
+ * 110, se envio la version del firmware por bluetooth.
+ * 120, se enviaron datos de sandsara
+ * 130, se solicita el nombre del programa actual.
+ * 140, se solicita el nombre del programa siguiente.
+ * 150, se solicita la lista de reproduccion completa.
+ * 970, se solicita un reset de fabrica.
  * -1, no se reconoce el comando enviado.
  * -2, se quiso enviar un numero de bytes incorrecto.
  * -3, se excedio el tiempo de respuesta del transmisor en la funcion readLine (depende de la variable timeOutBt, medida en milisegundos)
@@ -68,18 +96,37 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * -7, no coincide checksum.
  * -8, no se pudo crear el archivo.
  * -9, se han leido mas de X numero de caracteres sin encontrar un '\n' en la funcion readLine().
+ * -21, ordenMode no valido.
+ * -31, ledMode no valido.
  * -51, es un directorio
  * -52, el archivo esta vacio
  * -53, el archivo no se pudo abrir.02
  * -54, no se pudo finalizar la actualizacion
  * -55, no hay suficiente espacio para el OTA.
  * -56, Ocurrio un error al actualizar el firmware
+ * -60, Velocidad no permitida para los motores
+ * -70, periodo no permitido para los leds
+ * -80, nombre muy largo para bluetooth
+ * -81, No se pudo cambiar el nombre del bluetooth, pero se vera el cambio cuando se reinicie.
+ * -97, se intento un reset de fabrica pero no se confirmo.
  * @note interpreta los siguientes mensajes
  * code01, significa que va a transferer un archivo.
  * code02, significa que se esta solicitando el cambio de playlist.
  * code03, significa que se esta solicitando el cambio de orden de reproduccion.
  * code04, significa que se esta solicitando el cambio de paleta de leds.
+ * code05, significa que se solicita el cambio de velocidad de motores.
+ * code06, significa que se solicita el cambio de velocidad de los leds.
+ * code07, significa que se desea cambiar el nombre del bluetooth.
+ * code08, significa que se desea entrar en modo de suspencion.
+ * code09, significa que se desea pausar el programa.
+ * code10, significa que se desea salir del modo suspencion o pausa.
+ * code11, significa que se desea conocer la version del firmware
+ * code12, significa que se desea conocer los parametros guardados en ROM.
+ * code13, significa que se desea conocer el nombre del programa actual.
+ * code14, significa que se desea conocer el nombre del siguiente programa.
+ * code15, significa que se desea conocer la lista de reproduccion actual.
  * code66, actualizar firmware
+ * code80, Reiniciar Sandsara
  */
 int BlueSara::checkBlueTooth()
 {
@@ -114,7 +161,7 @@ int BlueSara::checkBlueTooth()
             Serial.print("Nombre del archivo: ");
             Serial.println(fileNameBt);
 #endif
-            if (SD.exists("/" + fileNameBt))
+            if (sdExists("/" + fileNameBt))
             {
                 codeError = -5;
                 writeBtln("error= -5"); //Ya existe el archivo
@@ -215,7 +262,7 @@ int BlueSara::checkBlueTooth()
                     if (codeError != 0)
                     {
                         file.close();
-                        SD.remove("/" + fileNameBt);
+                        sdRemove("/" + fileNameBt);
 #ifdef BLUECOMMENTS
                         Serial.println("transferencia cancelada");
 #endif
@@ -233,7 +280,7 @@ int BlueSara::checkBlueTooth()
                 writeBtln(String(codeError));
                 return codeError;
             }
-            playList = line;
+            playList = line + ".playlist";
             writeBtln("ok");
             return 10; //Se solicita el cambio de playlista
         }
@@ -248,6 +295,10 @@ int BlueSara::checkBlueTooth()
                 return codeError;
             }
             ordenMode = line.toInt();
+            if(ordenMode < 1 || ordenMode > 4){
+                writeBtln("error= -21");
+                return -21;
+            }
             writeBtln("ok");
             return 20; //Se solicita el cambio de playlista
         }
@@ -262,8 +313,134 @@ int BlueSara::checkBlueTooth()
                 return codeError;
             }
             ledMode = line.toInt();
+            if (ledMode < 0 || ledMode >10){
+                writeBtln("error= -31");
+                return -31;
+            }
             writeBtln("ok");
             return 30; //Se solicita el cambio de leds
+        }
+        else if (line.indexOf("code05") >= 0)
+        {
+            writeBtln("request-speedMotor");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            speed = line.toInt();
+            if (speed > MAX_SPEED_MOTOR || speed < MIN_SPEED_MOTOR){
+                writeBtln("error= -60"); //velocidad no permitida
+                return -60;
+            }
+            writeBtln("ok");
+            return 50; //Se solicita el cambio de leds
+        }
+        else if (line.indexOf("code06") >= 0)
+        {
+            writeBtln("request-speedLed");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            periodLed = line.toInt();
+            if (periodLed > MAX_PERIOD_LED || periodLed < MIN_PERIOD_LED){
+                writeBtln("error= -70"); //velocidad no permitida
+                return -70;
+            }
+            writeBtln("ok");
+            return 60; //Se solicita el cambio de leds
+        }
+        else if (line.indexOf("code07") >= 0)
+        {
+            writeBtln("request-bluetoothName");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            if (line.length() >= MAX_CHARACTERS_BTNAME){
+                writeBtln("error= -80");
+                return -80; //nombre muy largo para bluetooth
+            }
+            bluetoothName = line;
+            char deviceName[MAX_CHARACTERS_BTNAME];
+            line.toCharArray(deviceName, MAX_CHARACTERS_BTNAME);
+            if (esp_bt_dev_set_device_name(deviceName) != ESP_OK) {
+                writeBtln("error = -81");
+                return -81;
+            }
+            writeBtln("ok");
+            return 70; //Se cambio nombre de bluetooth
+        }
+        else if (line.indexOf("code08") >= 0)
+        {
+            writeBtln("ok");
+            return 80; //Se cambio nombre de bluetooth
+        }
+        else if (line.indexOf("code09") >= 0)
+        {
+            writeBtln("ok");
+            return 90; //Se cambio nombre de bluetooth
+        }
+        else if (line.indexOf("code10") >= 0)
+        {
+            writeBtln("ok");
+            return 100; //Se cambio nombre de bluetooth
+        }
+        else if (line.indexOf("code11") >= 0)
+        {
+            writeBt("version= ");
+            writeBt(String(v1Current));
+            writeBt(".");
+            writeBt(String(v2Current));
+            writeBt(".");
+            writeBtln(String(v3Current));
+            return 110; //Se cambio nombre de bluetooth
+        }
+        else if (line.indexOf("code12") >= 0)
+        {
+            writeBt("version= ");
+            writeBt(String(v1Current));
+            writeBt(".");
+            writeBt(String(v2Current));
+            writeBt(".");
+            writeBtln(String(v3Current));
+            writeBt("Nombre del bluetooth= ");
+            writeBtln(romGetBluetoothName());
+            writeBt("Velocidad de motores= ");
+            writeBtln(String(romGetSpeedMotor()));
+            writeBt("Paleta de colores= ");
+            writeBtln(String(romGetPallete()));
+            writeBt("Periodo de los leds= ");
+            writeBtln(String(romGetPeriodLed()));
+            writeBt("Lista de reproduccion= ");
+            writeBtln(romGetPlaylist());
+            writeBt("Orden de reproduccion= ");
+            writeBtln(String(romGetOrdenMode()));
+            writeBt("Zona cero= ");
+            writeBtln(String(romGetCeroZone()));
+            return 120; //Se cambio nombre de bluetooth
+        }
+        else if (line.indexOf("code13") >= 0)
+        {
+            return 130;
+        }
+        else if (line.indexOf("code14") >= 0)
+        {
+            return 140;
+        }
+        else if (line.indexOf("code15") >= 0)
+        {
+            
+            return 150;
         }
         else if (line.indexOf("code66") >= 0)
         {
@@ -281,14 +458,36 @@ int BlueSara::checkBlueTooth()
             {
                 writeBtln("ok");
                 rebootEspWithReason("Reiniciando");
-                return codeError; //ya no llega a este puntp
+                return codeError; //ya no llega a este punto
             }
             else{
                 writeBt("error=");
                 writeBtln(String(codeError - 50));
                 return codeError - 50; //No se pudo actualizar el firmware
             }
-            
+        }
+        else if (line.indexOf("code80") >= 0)
+        {
+            writeBtln("ok");
+            rebootEspWithReason("Reiniciando");
+            return -666; //Ya no llega a este punto
+        }
+        else if (line.indexOf("code97") >= 0)
+        {
+            writeBtln("request-Y/N");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            if (line.equals("Y")){
+                writeBtln("ok");
+                return 970;
+            }
+            writeBtln("reset Canceled");
+            return -97;
         }
         else
         {
@@ -317,11 +516,35 @@ String BlueSara::getPlaylist(){
 }
 
 /**
+ * @brief recupera la velocidad de los motores que se guardo por medio de bluetooth
+ * @return la varibale miembro speed que almacena la velocidad del robot
+ */
+int BlueSara::getSpeed(){
+    return speed;
+}
+
+/**
+ * @brief recupera el periodo de refresco de los leds que se guardo por medio de bluetooth
+ * @return la varibale miembro periodLed que almacena el tiempo de refresco de los leds.
+ */
+int BlueSara::getPeriodLed(){
+    return periodLed;
+}
+
+/**
  * @brief recupera el orden de la ultima solicitud de cambio de orden de reproduccion que se realizo.
  * @return el ultimo numero referente al oreden de reproduccion que se solicito por bluetooth.
  */
 int BlueSara::getOrdenMode(){
     return ordenMode;
+}
+
+/**
+ * @brief recupera el orden de la ultima solicitud de cambio de orden de reproduccion que se realizo.
+ * @return el ultimo numero referente al oreden de reproduccion que se solicito por bluetooth.
+ */
+String BlueSara::getBluetoothName(){
+    return bluetoothName;
 }
 
 /**
@@ -662,7 +885,7 @@ int performUpdate(Stream &updateSource, size_t updateSize)
  * -5, no hay suficiente espacio para el OTA.
  * -6, Ocurrio un error al actualizar el firmware
  */
-int updateFromFS(fs::FS &fs, String name)
+int updateFromFS(SdFat &fs, String name)
 {
     int errorCode;
     File updateBin = fs.open(name);
@@ -682,7 +905,7 @@ int updateFromFS(fs::FS &fs, String name)
             Serial.println("Try to start update");
             errorCode = performUpdate(updateBin, updateSize);
             updateBin.close();
-            fs.remove(name);
+            sdRemove(name);
             return errorCode; // se actualizo el firmware
         }
         else
@@ -695,7 +918,7 @@ int updateFromFS(fs::FS &fs, String name)
         updateBin.close();
 
         // whe finished remove the binary from sd card to indicate end of the process
-        fs.remove(name);
+        sdRemove(name);
     }
     else
     {

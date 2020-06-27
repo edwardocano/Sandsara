@@ -3,10 +3,11 @@
 
 //#define BLUECOMMENTS
 
-#include "FS.h"
-#include "SD.h"
-#include "SPI.h"
+#include "config.h"
+#include <SPI.h>
+#include "SdFat.h"
 #include "BluetoothSerial.h"
+#include "esp_bt_device.h"
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
@@ -32,8 +33,11 @@ class BlueSara {
         String playList = "";
         int ordenMode;
         int ledMode;
+        int speed;
+        int periodLed;
+        String bluetoothName;
     public:
-        BlueSara();
+        BlueSara(); 
         int init(String );
         int checkBlueTooth();
         int writeBt(String );
@@ -44,6 +48,9 @@ class BlueSara {
         String getPlaylist();
         int getOrdenMode();
         int getLedMode();
+        int getSpeed();
+        int getPeriodLed();
+        String getBluetoothName();
 };
 
 #endif

@@ -1,5 +1,11 @@
 #include "FileSara.h"
 #include "MoveSara.h"
+extern SdFat SD;
+
+//====prototipos de funcion====
+bool sdExists(String );
+bool sdRemove(String );
+//====
 
 /**
  * @brief es el contructor de la clase FileSara
@@ -81,6 +87,7 @@ FileSara::~FileSara()
  * -1 no se encontro el separador de los componentes (',' o ' ')
  * -4 no se encontro un segundo componente
  * -6 no es un tipo de archivo valido
+ * -10 ya no hay mas archivos por leer por posible problema con memoria sd.
  */
 int FileSara::getNextComponents(double *component1, double *component2)
 {
@@ -139,11 +146,12 @@ int FileSara::getStatus()
 }
 
 /**
- * Encuentra el tipo de archivo que se va a leer
- * @return un numero que representa uno de los siguientes tipos de archivo
- * 1 para un .txt
- * 2 para un .thr
- * 3 para un .bin
+ * @brief Encuentra el tipo de archivo que se va a leer.
+ * @return un numero que representa uno de los siguientes tipos de archivo.
+ * 1 para un .txt.
+ * 2 para un .thr.
+ * 3 para un .bin.
+ * -1 ninguno de los anteriores.
  */
 int FileSara::getType(String name_file)
 {
@@ -799,7 +807,8 @@ int FileSara::creatListOfFiles(String fileName)
     File file, root, fileObj;
     int numberOfFiles = 0;
     root = SD.open("/");
-    file = SD.open("/" + fileName, FILE_WRITE);
+    sdRemove(fileName);
+    file = SD.open(fileName, FILE_WRITE);
     if (!file)
     {
         return -1; //no se pudo crear el archivo
@@ -817,14 +826,16 @@ int FileSara::creatListOfFiles(String fileName)
         }
         if (!fileObj.isDirectory())
         {
-            String varName = fileObj.name();
+            char nameF[NAME_LENGTH];
+            fileObj.getName(nameF,NAME_LENGTH);
+            String varName = nameF;
             String varNameLower = varName;
             varNameLower.toLowerCase();
-            if (varNameLower.equals(fileName))
+            if (varNameLower.equals(fileName) || getType(varNameLower) == -1)
             {
                 continue;
             }
-            file.print(varName.substring(1) + "\r\n");
+            file.print(varName + "\r\n");
             numberOfFiles += 1;
         }
     }
@@ -840,6 +851,9 @@ int FileSara::numberOfLines(String dir){
     int character, count = 1;
     f = SD.open(dir);
     if (!f){
+        return 0;
+    }
+    if (f.isDirectory()){
         return 0;
     }
     while(true)
@@ -881,4 +895,12 @@ bool FileSara::isValid(){
     else{
         return false;
     }
+}
+
+bool sdExists(String dirName){
+    return SD.exists(dirName.c_str());
+}
+
+bool sdRemove(String dirName){
+    return SD.remove(dirName.c_str());
 }

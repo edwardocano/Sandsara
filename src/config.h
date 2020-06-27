@@ -1,5 +1,12 @@
 #pragma once
 
+/**
+ * VERSION v1Current.v2Current.v3Current
+ */
+#define v1Current 1
+#define v2Current 0
+#define v3Current 0
+
 //Es el valor de la resistencia colocada en los drivers, por ejemplo 0.11f representa 0.11 ohms.
 #define R_SENSE             0.11f
 
@@ -59,6 +66,7 @@
 //#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
 //#define DISABLE_MOTORS
+//#define DEBUGGIN_LED2
 
 /**
  * DISTANCIA_MAX es el radio maximo, desde el centro, que va a dibujar el robot
@@ -92,3 +100,73 @@
 #define radius_2 100.0
 
 #define PIN_ProducType 35
+
+/**
+ * Direcciones de la ROM
+ */
+#define EEPROM_SIZE 512
+
+#define ADDRESSPLAYLIST 0
+#define ADDRESSPOSITION 41
+#define ADDRESSORDENMODE 50
+#define ADDRESSPALLETE 60
+#define ADDRESSSPEEDMOTOR 70
+#define ADDRESSPERIODLED 80
+#define ADDRESSBTNAME 90
+#define ADDRESSCEROZONE 140
+
+/**
+ * Restricciones
+ */
+#define MAX_CHARS_PLAYLIST 40
+#define MAX_SPEED_MOTOR 200
+#define MIN_SPEED_MOTOR 1
+#define MAX_PERIOD_LED 2000
+#define MIN_PERIOD_LED 1
+#define MAX_PALLETE 10
+#define MIN_PALLETE 0
+#define MAX_CHARACTERS_BTNAME 30
+
+//Disable interrupts during updating leds
+//#define FASTLED_ALLOW_INTERRUPTS 0
+
+/**
+ * Valores por defecto de Sandsara
+ */
+#define SPEED_MOTOR_DEFAULT 25
+#define PLAYLIST_DEFAULT "/"
+#define PALLETE_DEFAULT 1
+#define PERIOD_LED_DEFAULT 10
+#define ORDENMODE_DEFAULT 3
+#define BLUETOOTHNAME "Sandsara"
+
+/**
+ * Valores para saber si ya se realizo la busqueda de la zona cero
+ */
+#define CEROZONE_PERFORMED 233
+#define CEROZONE_NO_PERFORMED 177
+
+/**
+ * delay de leds y codigos de palletas
+ */
+#define DELAYCOLORCODE 10
+#define CODE_NOSD_PALLETE 71
+#define CODE_UPDATING_PALLETE 72
+#define CODE_CALIBRATING_PALLETE 73
+#define CODE_SDEMPTY_PALLETE 74
+
+/**
+ * El numero que avanzan los leds en la paleta de colores
+ */
+#define INCREMENTINDEXPALLETE 3
+
+/**
+ * Configuracion de la SD
+ */
+#define SPI_SPEED_TO_SD SD_SCK_MHZ(16)
+#define SD_CS_PIN 5
+
+/**
+ * Buffer de tamano de nombre de un archivo en sd
+ */
+#define NAME_LENGTH 60
