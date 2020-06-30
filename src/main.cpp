@@ -45,6 +45,7 @@ String nextProgramGlobal;
 String currentPlaylistGlobal;
 int currentPositionListGlobal;
 int delayLeds;
+int pListFileGlobal;
 //====variables de estado====
 bool pauseModeGlobal = false;
 bool suspensionModeGlobal = false;
@@ -95,6 +96,7 @@ int romSetCeroZone(bool );
 int orderRandom(String ,int);
 void setFrom1(int [], int);
 void removeIndex(int [], int , int );
+int runFile(String );
 //====
 //====Variable leds====
 //====Neopixel====
@@ -306,8 +308,7 @@ void loop()
  */
 int run_sandsara(String playList, int ordenMode)
 {
-    double component_1, component_2, distance;
-    int pListFile = 1;
+    pListFileGlobal = 1;
     int numberOfFiles;
     String fileName;
     ordenModeChanged = false;
@@ -377,14 +378,14 @@ int run_sandsara(String playList, int ordenMode)
         #ifdef DEBUGGING_DATA
             Serial.println("Abrira el siguiente archivo disponible");
         #endif
-        errorCode = FileSara::getLineNumber(pListFile, playList, fileName);
+        errorCode = FileSara::getLineNumber(pListFileGlobal, playList, fileName);
         if (errorCode < 0)
         {
             //====playList no valida asi que regresa
             delay(1000);
             return errorCode;
         }
-        errorCode = FileSara::getLineNumber(pListFile + 1, playList, nextProgramGlobal);
+        errorCode = FileSara::getLineNumber(pListFileGlobal + 1, playList, nextProgramGlobal);
         if (errorCode < 0)
         {
             nextProgramGlobal = "none";
@@ -401,207 +402,225 @@ int run_sandsara(String playList, int ordenMode)
                 Serial.println("No hay archivo disponible");
             #endif
             delay(1000);
-            pListFile += 1;
+            pListFileGlobal += 1;
             continue;
         }
         if (current_file.isDirectory())
         {
             delay(1000);
-            pListFile += 1;
+            pListFileGlobal += 1;
             continue;
         }
-        else
-        {
-            int working_status = 0;
-            char nameF[NAME_LENGTH];
-            current_file.getName(nameF,NAME_LENGTH);
-            fileName = nameF;
-            current_file.close();
-            //====recuperar el nombre del programa y su posicion en la lista
-            currentProgramGlobal = fileName;
-            currentPositionListGlobal = pListFile;
-            //====
-            double couplingAngle, startFileAngle, endFileAngle;
-            int posisionCase;
-            FileSara file(fileName);
-            if (file.fileType < 0){
-                pListFile += 1;
-                continue;
-            }
+        char nameF[NAME_LENGTH];
+        current_file.getName(nameF,NAME_LENGTH);
+        fileName = nameF;
+        current_file.close();
+        //====Correr programa====
+        errorCode = runFile(fileName);
+        //====
+        if (errorCode == -70)   {continue;}
+        if (errorCode == -71)   {break;}
+        if (errorCode != 10)    {return errorCode;}
+        //====Aumentar la posicion en la lista de reproduccion====
+        pListFileGlobal += 1;
+        //====
+    }
+    return 0;
+}
+/**
+ * @brief ejecuta un programa
+ * @param dirFile, direccion en la SD del programa.
+ * @return un codigo de error
+ * -70, es en lugar del continue
+ * -71, es en lugar de un break
+ *  10, no se presento algun return
+ *  20, se cambio programa.
+ */
+int runFile(String fileName){
+    double component_1, component_2, distance;
+    int working_status = 0;
+    //====recuperar el nombre del programa y su posicion en la lista
+    currentProgramGlobal = fileName;
+    currentPositionListGlobal = pListFileGlobal;
+    //====
+    double couplingAngle, startFileAngle, endFileAngle;
+    int posisionCase;
+    FileSara file(fileName);
+    if (file.fileType < 0){
+        pListFileGlobal += 1;
+        return -70;
+    }
 
-            double zInit = halo.getCurrentModule();
-            //se selecciona modo de lectura
-            file.autoSetMode(zInit);
-            if (!file.isValid()){
-                pListFile += 1;
-                continue;
-            }
-            #ifdef PROCESSING_SIMULATOR
-                Serial.print("fileName: ");
-                Serial.println(fileName);
-            #endif
-            startFileAngle = file.getStartAngle();
-            startFileAngle = MoveSara::normalizeAngle(startFileAngle);
-            endFileAngle = file.getFinalAngle();
-            endFileAngle = MoveSara::normalizeAngle(endFileAngle);
-            
-            posisionCase = halo.position();
-            if (posisionCase == 2){
-                couplingAngle = startFileAngle;
-            }
-            else if (posisionCase == 0){
-                couplingAngle = endFileAngle;
+    double zInit = halo.getCurrentModule();
+    //se selecciona modo de lectura
+    file.autoSetMode(zInit);
+    if (!file.isValid()){
+        pListFileGlobal += 1;
+        return -70;
+    }
+    #ifdef PROCESSING_SIMULATOR
+        Serial.print("fileName: ");
+        Serial.println(fileName);
+    #endif
+    startFileAngle = file.getStartAngle();
+    startFileAngle = MoveSara::normalizeAngle(startFileAngle);
+    endFileAngle = file.getFinalAngle();
+    endFileAngle = MoveSara::normalizeAngle(endFileAngle);
+    
+    posisionCase = halo.position();
+    if (posisionCase == 2){
+        couplingAngle = startFileAngle;
+    }
+    else if (posisionCase == 0){
+        couplingAngle = endFileAngle;
+    }
+    else{
+        couplingAngle = endFileAngle;
+    }
+    if (true){
+        double zf, thetaf, zi, thetai, zFinal, thetaFinal;
+        thetaf = MoveSara::normalizeAngle(file.getStartAngle() - couplingAngle);
+        zf = file.getStartModule();
+        thetai = halo.getCurrentAngle();
+        zi = halo.getCurrentModule();
+        halo.setZCurrent(zi);
+        halo.setThetaCurrent(thetai);
+        Serial.print("zi: ");
+        Serial.println(zi);
+        Serial.print("thetai: ");
+        Serial.println(thetai);
+        if (thetai > thetaf){
+            if (thetai - thetaf > PI){
+                thetaFinal = thetai + (2*PI - (thetai - thetaf));
             }
             else{
-                couplingAngle = endFileAngle;
+                thetaFinal = thetaf;
             }
-            if (true){
-                double zf, thetaf, zi, thetai, zFinal, thetaFinal;
-                thetaf = MoveSara::normalizeAngle(file.getStartAngle() - couplingAngle);
-                zf = file.getStartModule();
-                thetai = halo.getCurrentAngle();
-                zi = halo.getCurrentModule();
-                halo.setZCurrent(zi);
-                halo.setThetaCurrent(thetai);
-                Serial.print("zi: ");
-                Serial.println(zi);
-                Serial.print("thetai: ");
-                Serial.println(thetai);
-                if (thetai > thetaf){
-                    if (thetai - thetaf > PI){
-                        thetaFinal = thetai + (2*PI - (thetai - thetaf));
-                    }
-                    else{
-                        thetaFinal = thetaf;
-                    }
-                }
-                else{
-                    if (thetaf - thetai> PI){
-                        thetaFinal = thetai - (2*PI - (thetaf - thetai));
-                    }
-                    else{
-                        thetaFinal = thetaf;
-                    }
-                }
-                errorCode = movePolarTo(zf, thetaFinal, 0);
+        }
+        else{
+            if (thetaf - thetai> PI){
+                thetaFinal = thetai - (2*PI - (thetaf - thetai));
+            }
+            else{
+                thetaFinal = thetaf;
+            }
+        }
+        errorCode = movePolarTo(zf, thetaFinal, 0);
+        if (errorCode != 0){
+            return errorCode;
+        }
+    }
+    //si es thr, se guardan los valores del primer punto para que tenga referencia de donde empezar a moverse.
+    if (file.fileType == 2)
+    {
+        working_status = file.getNextComponents(&component_1, &component_2);
+        while (working_status == 3)
+        {
+            working_status = file.getNextComponents(&component_1, &component_2);
+        }
+        halo.setZCurrent(component_1);
+        halo.setThetaCurrent(component_2 - couplingAngle);
+    }
+
+    //parara hasta que el codigo de error del archivo sea diferente de cero.
+    while (true)
+    {
+        //se obtienen los siguientes componentes
+        working_status = file.getNextComponents(&component_1, &component_2);                
+        if (working_status == 3)
+        {
+            continue;
+        }
+        if (working_status != 0)
+        {
+            Serial.print("workingStatus= ");
+            Serial.println(working_status);
+            break;
+        }
+        //====revisar bluetooth====
+        errorCode = haloBt.checkBlueTooth();
+        executeCode(errorCode);
+        //dependiendo del tipo de archivo se ejecuta la funcion correspondiente de movimiento.
+        if (file.fileType == 1 || file.fileType == 3)
+        {
+            MoveSara::rotate(component_1, component_2, -couplingAngle);
+            distance = halo.module(component_1, component_2, halo.x_current, halo.y_current);
+            if (distance > 1.1)
+            {
+                errorCode = moveInterpolateTo(component_1, component_2, distance);
                 if (errorCode != 0){
                     return errorCode;
                 }
             }
-            //si es thr, se guardan los valores del primer punto para que tenga referencia de donde empezar a moverse.
-            if (file.fileType == 2)
+            else
             {
-                working_status = file.getNextComponents(&component_1, &component_2);
-                while (working_status == 3)
-                {
-                    working_status = file.getNextComponents(&component_1, &component_2);
-                }
-                halo.setZCurrent(component_1);
-                halo.setThetaCurrent(component_2 - couplingAngle);
+                halo.moveTo(component_1, component_2);
             }
-
-            //parara hasta que el codigo de error del archivo sea diferente de cero.
-            while (true)
-            {
-                //se obtienen los siguientes componentes
-                working_status = file.getNextComponents(&component_1, &component_2);                
-                if (working_status == 3)
-                {
-                    continue;
-                }
-                if (working_status != 0)
-                {
-                    Serial.print("workingStatus= ");
-                    Serial.println(working_status);
-                    break;
-                }
-                //====revisar bluetooth====
-                errorCode = haloBt.checkBlueTooth();
-                executeCode(errorCode);
-                //dependiendo del tipo de archivo se ejecuta la funcion correspondiente de movimiento.
-                if (file.fileType == 1 || file.fileType == 3)
-                {
-                    MoveSara::rotate(component_1, component_2, -couplingAngle);
-                    distance = halo.module(component_1, component_2, halo.x_current, halo.y_current);
-                    if (distance > 1.1)
-                    {
-                        errorCode = moveInterpolateTo(component_1, component_2, distance);
-                        if (errorCode != 0){
-                            return errorCode;
-                        }
-                    }
-                    else
-                    {
-                        halo.moveTo(component_1, component_2);
-                    }
-                }
-                else if (file.fileType == 2)
-                {
-                    errorCode = movePolarTo(component_1, component_2, couplingAngle);
-                    if (errorCode != 0){
-                        return errorCode;
-                    }
-                }
-                else
-                {
-                    break;
-                }
-            }
-            halo.setZCurrent(halo.getCurrentModule());
-            if (halo.getCurrentAngle() > PI){
-                halo.setThetaCurrent(halo.getCurrentAngle() - 2*PI);
-            }
-            else{
-                halo.setThetaCurrent(halo.getCurrentAngle());
-            }
-            //====Revisar si hubo problemas con la sd====
-            if (working_status == -10)
-            {
-                Serial.println("There were problems for reading SD");
-                Serial.println("Se mandara a cero");
-                movePolarTo(0, 0, 0, true);
-                #ifdef PROCESSING_SIMULATOR
-                    Serial.println("finished");
-                #endif
-                return -10;
-            }
-            //====
-            posisionCase = halo.position(); 
-            Serial.print("posisionCase: ");
-            Serial.println(posisionCase);
-            if (posisionCase == 2){
-                movePolarTo(DISTANCIA_MAX, 0, 0, true);
-            }
-            else if (posisionCase == 0){
-                Serial.println("Se mandara a cero");
-                movePolarTo(0, 0, 0, true);
-                //haloCalib.verificacion_cal();
-            }
-            #ifdef PROCESSING_SIMULATOR
-                Serial.println("finished");
-            #endif
-            //====Revisar si se desea suspender====
-            if (suspensionModeGlobal){
-                ledsOffGlobal = true;
-            }
-            while(suspensionModeGlobal){
-                int errorCode = haloBt.checkBlueTooth();
-                executeCode(errorCode);
-                delay(1);
-            }
-            ledsOffGlobal = false;
-            //====
-            //====Revisar si se desea cambiar de lista de reproduccion u ordenMode====
-            if(playlistChanged || ordenModeChanged){
-                playlistChanged = false;
-                ordenModeChanged = false;
-                return 1;
-            }
-            //====
         }
-        pListFile += 1;
+        else if (file.fileType == 2)
+        {
+            errorCode = movePolarTo(component_1, component_2, couplingAngle);
+            if (errorCode != 0){
+                return errorCode;
+            }
+        }
+        else
+        {
+            break;
+        }
     }
-    return 0;
+    halo.setZCurrent(halo.getCurrentModule());
+    if (halo.getCurrentAngle() > PI){
+        halo.setThetaCurrent(halo.getCurrentAngle() - 2*PI);
+    }
+    else{
+        halo.setThetaCurrent(halo.getCurrentAngle());
+    }
+    //====Revisar si hubo problemas con la sd====
+    if (working_status == -10)
+    {
+        Serial.println("There were problems for reading SD");
+        Serial.println("Se mandara a cero");
+        movePolarTo(0, 0, 0, true);
+        #ifdef PROCESSING_SIMULATOR
+            Serial.println("finished");
+        #endif
+        return -10;
+    }
+    //====
+    posisionCase = halo.position(); 
+    Serial.print("posisionCase: ");
+    Serial.println(posisionCase);
+    if (posisionCase == 2){
+        movePolarTo(DISTANCIA_MAX, 0, 0, true);
+    }
+    else if (posisionCase == 0){
+        Serial.println("Se mandara a cero");
+        movePolarTo(0, 0, 0, true);
+        //haloCalib.verificacion_cal();
+    }
+    #ifdef PROCESSING_SIMULATOR
+        Serial.println("finished");
+    #endif
+    //====Revisar si se desea suspender====
+    if (suspensionModeGlobal){
+        ledsOffGlobal = true;
+    }
+    while(suspensionModeGlobal){
+        int errorCode = haloBt.checkBlueTooth();
+        executeCode(errorCode);
+        delay(1);
+    }
+    ledsOffGlobal = false;
+    //====
+    //====Revisar si se desea cambiar de lista de reproduccion u ordenMode====
+    if(playlistChanged || ordenModeChanged){
+        playlistChanged = false;
+        ordenModeChanged = false;
+        return 1;
+    }
+    //====
+    return 10;
 }
 
 //=========================================================
@@ -740,7 +759,7 @@ void executeCode(int errorCode){
         pauseModeGlobal = false;
     }
     else if (errorCode == 90){
-        if (!pauseModeGlobal && !suspensionModeGlobal){
+        if (!pauseModeGlobal){// && !suspensionModeGlobal){
             pauseModeGlobal = true;
             while(pauseModeGlobal){
                 int errorCode = haloBt.checkBlueTooth();
