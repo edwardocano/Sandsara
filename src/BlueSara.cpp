@@ -456,6 +456,7 @@ int BlueSara::checkBlueTooth()
                 return codeError;
             }
             positionList = line.toInt();
+            writeBtln("ok");
             return 160;
         }
         else if (line.indexOf("code17") >= 0)
@@ -473,6 +474,7 @@ int BlueSara::checkBlueTooth()
                 writeBtln("error= -171");
                 return -171;
             }
+            writeBtln("ok");
             return 170;
         }
         else if (line.indexOf("code66") >= 0)
