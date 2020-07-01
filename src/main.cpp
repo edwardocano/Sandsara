@@ -46,6 +46,8 @@ String currentPlaylistGlobal;
 int currentPositionListGlobal;
 int delayLeds;
 int pListFileGlobal;
+bool changePositionList;
+bool changeProgram;
 //====variables de estado====
 bool pauseModeGlobal = false;
 bool suspensionModeGlobal = false;
@@ -97,6 +99,7 @@ int orderRandom(String ,int);
 void setFrom1(int [], int);
 void removeIndex(int [], int , int );
 int runFile(String );
+void goHome();
 //====
 //====Variable leds====
 //====Neopixel====
@@ -420,6 +423,16 @@ int run_sandsara(String playList, int ordenMode)
         //====
         if (errorCode == -70)   {continue;}
         if (errorCode == -71)   {break;}
+        if (errorCode == 20)    {pListFileGlobal = haloBt.getPositionList(); continue;}
+        if (errorCode == 30)    {
+            while(errorCode == 30){
+                fileName = haloBt.getProgram();
+                errorCode = runFile(fileName);
+            }
+            if (errorCode == 20)    {pListFileGlobal = haloBt.getPositionList(); continue;}
+            pListFileGlobal += 1;
+            continue;
+        }
         if (errorCode != 10)    {return errorCode;}
         //====Aumentar la posicion en la lista de reproduccion====
         pListFileGlobal += 1;
@@ -434,7 +447,8 @@ int run_sandsara(String playList, int ordenMode)
  * -70, es en lugar del continue
  * -71, es en lugar de un break
  *  10, no se presento algun return
- *  20, se cambio programa.
+ *  20, se desea cambiar de programa por posicion.
+ *  30, se desea cambiar de programa por nombre
  */
 int runFile(String fileName){
     double component_1, component_2, distance;
@@ -525,6 +539,24 @@ int runFile(String fileName){
     //parara hasta que el codigo de error del archivo sea diferente de cero.
     while (true)
     {
+        //====comprobar si se desea cambiar de archivo====
+        if (changePositionList){
+            changePositionList = false;
+            goHome();
+            #ifdef PROCESSING_SIMULATOR
+                Serial.println("finished");
+            #endif
+            return 20;
+        }
+        if (changeProgram){
+            changeProgram = false;
+            goHome();
+            #ifdef PROCESSING_SIMULATOR
+                Serial.println("finished");
+            #endif
+            return 30;
+        }
+        //====
         //se obtienen los siguientes componentes
         working_status = file.getNextComponents(&component_1, &component_2);                
         if (working_status == 3)
@@ -569,6 +601,7 @@ int runFile(String fileName){
             break;
         }
     }
+    //====Actualizar z y theta current====
     halo.setZCurrent(halo.getCurrentModule());
     if (halo.getCurrentAngle() > PI){
         halo.setThetaCurrent(halo.getCurrentAngle() - 2*PI);
@@ -576,6 +609,7 @@ int runFile(String fileName){
     else{
         halo.setThetaCurrent(halo.getCurrentAngle());
     }
+    //====
     //====Revisar si hubo problemas con la sd====
     if (working_status == -10)
     {
@@ -589,8 +623,8 @@ int runFile(String fileName){
     }
     //====
     posisionCase = halo.position(); 
-    Serial.print("posisionCase: ");
-    Serial.println(posisionCase);
+    //Serial.print("posisionCase: ");
+    //Serial.println(posisionCase);
     if (posisionCase == 2){
         movePolarTo(DISTANCIA_MAX, 0, 0, true);
     }
@@ -622,7 +656,20 @@ int runFile(String fileName){
     //====
     return 10;
 }
-
+/**
+ * @brief regresa a la pocision 0,0
+ * 
+ */
+void goHome(){
+    halo.setZCurrent(halo.getCurrentModule());
+    if (halo.getCurrentAngle() > PI){
+        halo.setThetaCurrent(halo.getCurrentAngle() - 2*PI);
+    }
+    else{
+        halo.setThetaCurrent(halo.getCurrentAngle());
+    }
+    movePolarTo(0, 0, 0, true);
+}
 //=========================================================
 /**
  * @brief Se usa esta funcion para avanzar de la posicion actual a un punto nuevo en linea recta por medio de puntos equidistantes a un 1 mm.
@@ -802,6 +849,12 @@ void executeCode(int errorCode){
             haloBt.writeBtln(fileName);
             i++;
         }
+    }
+    else if (errorCode == 160){
+        changePositionList = true;
+    }
+    else if (errorCode == 170){
+        changeProgram = true;
     }
     else if (errorCode == 970){
         romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
