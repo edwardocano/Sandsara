@@ -48,6 +48,7 @@ int delayLeds;
 int pListFileGlobal;
 bool changePositionList;
 bool changeProgram;
+bool stopProgramChangeGlobal = true;
 //====variables de estado====
 bool pauseModeGlobal = false;
 bool suspensionModeGlobal = false;
@@ -99,7 +100,7 @@ int orderRandom(String ,int);
 void setFrom1(int [], int);
 void removeIndex(int [], int , int );
 int runFile(String );
-void goHomeSpiral();
+void goHomeSpiral(bool = true);
 //====
 //====Variable leds====
 //====Neopixel====
@@ -542,19 +543,32 @@ int runFile(String fileName){
         //====comprobar si se desea cambiar de archivo====
         if (changePositionList){
             changePositionList = false;
-            goHomeSpiral();
-            #ifdef PROCESSING_SIMULATOR
-                Serial.println("finished");
-            #endif
-            return 20;
-        }
-        if (changeProgram){
             changeProgram = false;
             goHomeSpiral();
             #ifdef PROCESSING_SIMULATOR
                 Serial.println("finished");
             #endif
-            return 30;
+            if (changeProgram){
+                return 30;
+            }
+            else{
+                return 20;
+            }
+            
+        }
+        if (changeProgram){
+            changePositionList = false;
+            changeProgram = false;
+            goHomeSpiral();
+            #ifdef PROCESSING_SIMULATOR
+                Serial.println("finished");
+            #endif
+            if (changePositionList){
+                return 20;
+            }
+            else{
+                return 30;
+            }
         }
         //====
         //se obtienen los siguientes componentes
@@ -660,7 +674,7 @@ int runFile(String fileName){
  * @brief regresa a la pocision 0,0
  * 
  */
-void goHomeSpiral(){
+void goHomeSpiral(bool stop){
     float degreesToRotate;
     halo.setZCurrent(halo.getCurrentModule());
     if (halo.getCurrentAngle() > PI){
@@ -672,7 +686,9 @@ void goHomeSpiral(){
     degreesToRotate = halo.getCurrentModule()/EVERY_MILIMITERS * 2*PI;
     halo.setSpeed(SPEED_TO_CENTER);
     //degreesToRotate = 0;
+    stopProgramChangeGlobal = stop;
     movePolarTo(0, degreesToRotate, 0, true);
+    stopProgramChangeGlobal = true;
     halo.setSpeed(romGetSpeedMotor());
 }
 //=========================================================
@@ -697,10 +713,10 @@ int moveInterpolateTo(double x, double y, double distance)
     for (int i = 1; i <= intervals; i++)
     {
         //====comprobar si se desea cambiar de archivo====
-        if (changePositionList){
+        if (changePositionList && stopProgramChangeGlobal){
             return 0;
         }
-        if (changeProgram){
+        if (changeProgram && stopProgramChangeGlobal){
             return 0;
         }
         //====
@@ -750,10 +766,10 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     for (long i = 1; i < slices; i++)
     {
         //====comprobar si se desea cambiar de archivo====
-        if (changePositionList){
+        if (changePositionList && stopProgramChangeGlobal){
             return 0;
         }
-        if (changeProgram){
+        if (changeProgram && stopProgramChangeGlobal){
             return 0;
         }
         //====
@@ -873,9 +889,11 @@ void executeCode(int errorCode){
     }
     else if (errorCode == 160){
         changePositionList = true;
+        changeProgram = false;
     }
     else if (errorCode == 170){
         changeProgram = true;
+        changePositionList = false;
     }
     else if (errorCode == 970){
         romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
