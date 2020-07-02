@@ -886,6 +886,7 @@ void executeCode(int errorCode){
             haloBt.writeBtln(fileName);
             i++;
         }
+        haloBt.writeBtln("ok");
     }
     else if (errorCode == 160){
         changePositionList = true;
