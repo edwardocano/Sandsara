@@ -153,21 +153,24 @@ void setup()
     //====Recuperar speedMotor====
     speedMotorGlobal = romGetSpeedMotor();
     if (speedMotorGlobal > MAX_SPEED_MOTOR || speedMotorGlobal < MIN_SPEED_MOTOR){
-        speedMotorGlobal = 25;
+        speedMotorGlobal = SPEED_MOTOR_DEFAULT;
+        romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
     }
     halo.setSpeed(speedMotorGlobal);
     //====
     //====Recuperar Paleta de color para leds====
     ledModeGlobal = romGetPallete();
     if (ledModeGlobal > MAX_PALLETE || ledModeGlobal < MIN_PALLETE){
-        ledModeGlobal = 1;
+        ledModeGlobal = PALLETE_DEFAULT;
+        romSetPallete(PALLETE_DEFAULT);
     }
     changePalette(ledModeGlobal);
     //====
     //====Recuperar Periodo de refresco de los leds====
     periodLedsGlobal = romGetPeriodLed();
     if (periodLedsGlobal > MAX_PERIOD_LED || periodLedsGlobal < MIN_PERIOD_LED){
-        periodLedsGlobal = 50;
+        periodLedsGlobal = PERIOD_LED_DEFAULT;
+        romSetPeriodLed(PERIOD_LED_DEFAULT);
     }
     //====
     //====Recuperar nombre del bluetooth====
