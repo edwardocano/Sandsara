@@ -36,6 +36,8 @@ class BlueSara {
         int speed;
         int periodLed;
         String bluetoothName;
+        String program;
+        int positionList;
     public:
         BlueSara(); 
         int init(String );
@@ -51,6 +53,8 @@ class BlueSara {
         int getSpeed();
         int getPeriodLed();
         String getBluetoothName();
+        String getProgram();
+        int getPositionList();
 };
 
 #endif

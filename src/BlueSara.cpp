@@ -5,6 +5,7 @@
 extern SdFat SD;
 extern bool sdExists(String );
 extern bool sdRemove(String );
+extern bool sdExists(String );
 //====
 // perform the actual update from a given stream
 int performUpdate(Stream &, size_t );
@@ -87,6 +88,8 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * 130, se solicita el nombre del programa actual.
  * 140, se solicita el nombre del programa siguiente.
  * 150, se solicita la lista de reproduccion completa.
+ * 160, se solicita cambiar de posicion en la playlist, ver getPositionList().
+ * 170, se solicita reproducir un archivo, ver getProgram().
  * 970, se solicita un reset de fabrica.
  * -1, no se reconoce el comando enviado.
  * -2, se quiso enviar un numero de bytes incorrecto.
@@ -109,6 +112,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * -80, nombre muy largo para bluetooth
  * -81, No se pudo cambiar el nombre del bluetooth, pero se vera el cambio cuando se reinicie.
  * -97, se intento un reset de fabrica pero no se confirmo.
+ * -171, se desea correr un programa que no existe en la SD.
  * @note interpreta los siguientes mensajes
  * code01, significa que va a transferer un archivo.
  * code02, significa que se esta solicitando el cambio de playlist.
@@ -439,8 +443,39 @@ int BlueSara::checkBlueTooth()
         }
         else if (line.indexOf("code15") >= 0)
         {
-            
             return 150;
+        }
+        else if (line.indexOf("code16") >= 0)
+        {
+            writeBtln("request-newPosition");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            positionList = line.toInt();
+            writeBtln("ok");
+            return 160;
+        }
+        else if (line.indexOf("code17") >= 0)
+        {
+            writeBtln("request-programName");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            program = line;
+            if (!sdExists(program)){
+                writeBtln("error= -171");
+                return -171;
+            }
+            writeBtln("ok");
+            return 170;
         }
         else if (line.indexOf("code66") >= 0)
         {
@@ -937,4 +972,20 @@ void rebootEspWithReason(String reason){
     Serial.println(reason);
     delay(1000);
     ESP.restart();
+}
+
+/**
+ * @brief obtiene el nombre del archivo que se desea reproducir.
+ * @return el nombre del archivo que se desea reproducir.
+ */
+String BlueSara::getProgram(){
+    return program;
+}
+
+/**
+ * @brief obtiene la posicion en la playlist que se desea reproducir.
+ * @return la posicion en la playlist que se desea reproducir.
+ */
+int BlueSara::getPositionList(){
+    return positionList;
 }
