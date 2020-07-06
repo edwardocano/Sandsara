@@ -158,6 +158,13 @@ void setup()
     }
     halo.setSpeed(speedMotorGlobal);
     //====
+    //====Recuperar Periodo de refresco de los leds====
+    periodLedsGlobal = romGetPeriodLed();
+    if (periodLedsGlobal > MAX_PERIOD_LED || periodLedsGlobal < MIN_PERIOD_LED){
+        periodLedsGlobal = PERIOD_LED_DEFAULT;
+        romSetPeriodLed(PERIOD_LED_DEFAULT);
+    }
+    //====
     //====Recuperar Paleta de color para leds====
     ledModeGlobal = romGetPallete();
     if (ledModeGlobal > MAX_PALLETE || ledModeGlobal < MIN_PALLETE){
@@ -166,13 +173,7 @@ void setup()
     }
     changePalette(ledModeGlobal);
     //====
-    //====Recuperar Periodo de refresco de los leds====
-    periodLedsGlobal = romGetPeriodLed();
-    if (periodLedsGlobal > MAX_PERIOD_LED || periodLedsGlobal < MIN_PERIOD_LED){
-        periodLedsGlobal = PERIOD_LED_DEFAULT;
-        romSetPeriodLed(PERIOD_LED_DEFAULT);
-    }
-    //====
+    
     //====Recuperar nombre del bluetooth====
     bluetoothNameGlobal = romGetBluetoothName();
     //====
@@ -231,6 +232,10 @@ void setup()
     //====recuperar valores de playlist y ordenMode====    
     playListGlobal = romGetPlaylist();
     ordenModeGlobal = romGetOrdenMode();
+    if (ordenModeGlobal < MIN_REPRODUCTION_MODE || ordenModeGlobal > MAX_REPRODUCTION_MODE){
+        ordenModeGlobal = 3;
+        romSetOrdenMode(3);
+    }
     changePalette(romGetPallete());
     if (playListGlobal.equals("/")){
         Serial.print("No hay una playlist guardada, se reproduciran todos los archivos en la sd");
@@ -253,9 +258,9 @@ void setup()
     //====Buscar por nueva actualizacion====
     findUpdate();
     //====
-#ifdef PROCESSING_SIMULATOR
-    Serial.println("inicia");
-#endif
+    #ifdef PROCESSING_SIMULATOR
+        Serial.println("inicia");
+    #endif
     
     
     //=====si existe el archivos llamado playlist.playlist se ejecutara esa playlist====
