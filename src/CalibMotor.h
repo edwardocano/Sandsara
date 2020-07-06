@@ -6,6 +6,7 @@
 #include <AccelStepper.h>
 #include "MeanFilterLib.h"
 #include <HardwareSerial.h>
+#include <EEPROM.h>
 #include "config.h"
 
 class CalibMotor{

@@ -104,7 +104,7 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 #define DELAYVAL 50
 
 #define LED_PIN     32
-#define NUM_LEDS    30
+#define NUM_LEDS    36
 #define BRIGHTNESS  64
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
@@ -186,9 +186,9 @@ void setup()
     delay(500); 
     //====
     //====Seleccionar tipo de producto====
-    pinMode(PIN_ProducType, INPUT);
+    //pinMode(PIN_ProducType, INPUT);
     delay(1000);
-    productType = digitalRead(PIN_ProducType);
+    productType = analogRead(PIN_ProducType);
     //====Calibrar====
     Serial.println("init func");
     haloCalib.init();
