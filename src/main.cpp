@@ -104,18 +104,13 @@ void goHomeSpiral(bool = true);
 void bluetoothThread(void* );
 //====
 //====Variable leds====
-//====Neopixel====
-#define PIN 15
-#define NUMPIXELS 30 // numero de pixels en la tira
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-#define DELAYVAL 50
-
 #define LED_PIN     32
 #define NUM_LEDS    24
 #define BRIGHTNESS  64
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
 CRGB leds[NUM_LEDS];
+//====
 
 CRGBPalette256 currentPalette;
 TBlendType    currentBlending;
@@ -284,12 +279,6 @@ void setup()
                     0);          /* pin task to core 0 */                  
     delay(500); 
     //====
-    while (true)
-    {
-        delay(1000);
-    }
-    
-    
 }
 
 void loop()
@@ -1193,44 +1182,6 @@ bool romGetCeroZone(){
 
 //=======================================Leds========================================
 //===================================================================================
-void Neo_Pixel(int color)
-{
-
-    for (int i = 0; i < NUMPIXELS; i++)
-    { // Va recorriendo cada pixel
-
-        if (color == 1) //se alterna el color verde y rojo en los leds, uso el operador modulo para alternar los leds
-        {
-            if ((i % 2) == 0)
-            {
-                pixels.setPixelColor(i, pixels.Color(0, 150, 0));
-                pixels.show();
-            }
-            else
-            {
-                pixels.setPixelColor(i, pixels.Color(255, 0, 0)); //i maneja el led a encender pixel.Color permite configurar el color
-                pixels.show();                                    // Envia la señal al led que tomara el color RGB seleccionado
-            }
-        }
-        if (color == 2) //pone todos los leds en color rojo
-        {
-            pixels.setPixelColor(i, pixels.Color(255, 0, 0)); //i maneja el led a encender pixel.Color permite configurar el color
-            pixels.show();                                    // Envia la señal al led que tomara el color RGB seleccionado
-        }
-        if (color == 3) //los leds toman colores aleatorios
-        {
-            pixels.setPixelColor(i, rainbow()); //i maneja el led a encender
-            pixels.show();                      // Envia la señal al led que tomara el color RGB seleccionado
-        }
-    }
-    pixels.clear(); //
-}
-//Función para leds de color aleatorio
-uint32_t rainbow()
-{
-    return pixels.Color(random(0, 255), random(0, 255), random(0, 255));
-}
-
 //====================Libreria fastled==========================
 void FillLEDsFromPaletteColors( uint8_t colorIndex)
 {
