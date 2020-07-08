@@ -117,10 +117,10 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 #define COLOR_ORDER GRB
 CRGB leds[NUM_LEDS];
 
-CRGBPalette16 currentPalette;
+CRGBPalette256 currentPalette;
 TBlendType    currentBlending;
 
-extern CRGBPalette16 myRedWhiteBluePalette;
+extern CRGBPalette256 myRedWhiteBluePalette;
 extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
 
 unsigned long timeLeds;
@@ -143,10 +143,10 @@ void setup()
     Serial.begin(115200);
     //====
     //====Inicializar Paletas====
-    NO_SD_PALLETE= CRGBPalette16( CRGB::Black, CRGB::Red, CRGB::Red, CRGB::Black);
-    UPTADATING_PALLETE = CRGBPalette16( CRGB::Black, CRGB::Yellow, CRGB::Yellow, CRGB::Black);
-    CALIBRATING_PALLETE = CRGBPalette16( CRGB::Black, CRGB::Blue, CRGB::Blue    , CRGB::Black);
-    SDEMPTY_PALLETE = CRGBPalette16( CRGB::Black, CRGB::OrangeRed, CRGB::OrangeRed    , CRGB::Black);
+    NO_SD_PALLETE= CRGBPalette256( CRGB::Black, CRGB::Red, CRGB::Red, CRGB::Black);
+    UPTADATING_PALLETE = CRGBPalette256( CRGB::Black, CRGB::Yellow, CRGB::Yellow, CRGB::Black);
+    CALIBRATING_PALLETE = CRGBPalette256( CRGB::Black, CRGB::Blue, CRGB::Blue    , CRGB::Black);
+    SDEMPTY_PALLETE = CRGBPalette256( CRGB::Black, CRGB::OrangeRed, CRGB::OrangeRed    , CRGB::Black);
     //====
     //====Inicializacion de SD====
     EEPROM.begin(EEPROM_SIZE);
@@ -1238,10 +1238,19 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
     startIndex = colorIndex;
     for( int i = 0; i < NUM_LEDS; i++) {
         leds[i] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
+        /*Serial.print("led ");
+        Serial.print(i);
+        Serial.print(" = ");
+        Serial.print(leds[i].red);
+        Serial.print("\t");
+        Serial.print(leds[i].green);
+        Serial.print("\t");
+        Serial.println(leds[i].blue);*/
+        //delay(1000);
         if (incrementIndexGlobal){
-            colorIndex =startIndex + float(i)*(255.0/float(NUM_LEDS-1));
-            Serial.print("index= ");
-            Serial.println(colorIndex);
+            colorIndex =startIndex + float(i+1)*(255.0/float(NUM_LEDS));
+            /*Serial.print("index= ");
+            Serial.println(colorIndex);*/
         }
     }
 }
@@ -1257,7 +1266,7 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
 
 void changePalette(int pallet)
 {
-    if     ( pallet ==  0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
+    if     ( pallet == 0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
     else if( pallet == 1)   { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;           incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
     else if( pallet == 2)   { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
     else if( pallet == 3)   { SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
@@ -1290,9 +1299,12 @@ void SetupTotallyRandomPalette()
 void SetupBlackAndWhiteStripedPalette()
 {
     // 'black out' all 16 palette entries...
-    fill_solid( currentPalette, 16, CRGB::Black);
+    fill_solid( currentPalette, 256, CRGB::Black);
     // and set every fourth one to white.
-    currentPalette[0] = CRGB::White;
+    for(int i = 0; i < 16; i++){
+        currentPalette[i] = CRGB::White;
+    }
+    
     //currentPalette[4] = CRGB::White;
     //currentPalette[8] = CRGB::White;
     //currentPalette[12] = CRGB::White;
@@ -1306,7 +1318,7 @@ void SetupPurpleAndGreenPalette()
     CRGB green  = CHSV( HUE_GREEN, 255, 255);
     CRGB black  = CRGB::Black;
     
-    currentPalette = CRGBPalette16(
+    currentPalette = CRGBPalette256(
                                    green,  green,  black,  black,
                                    purple, purple, black,  black,
                                    green,  green,  black,  black,
