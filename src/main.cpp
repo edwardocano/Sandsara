@@ -101,6 +101,7 @@ void setFrom1(int [], int);
 void removeIndex(int [], int , int );
 int runFile(String );
 void goHomeSpiral(bool = true);
+void bluetoothThread(void* );
 //====
 //====Variable leds====
 //====Neopixel====
@@ -110,7 +111,7 @@ Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 #define DELAYVAL 50
 
 #define LED_PIN     32
-#define NUM_LEDS    36
+#define NUM_LEDS    24
 #define BRIGHTNESS  64
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
@@ -129,6 +130,7 @@ bool productType;
 //====
 //====Thred====
 TaskHandle_t Task1;
+TaskHandle_t Task2;
 //====
 //====Calibracion====
 CalibMotor haloCalib;
@@ -184,7 +186,7 @@ void setup()
     //====Recuperar ceroZone variable====
     ceroZoneGlobal = romGetCeroZone();
     //====
-    //====new task====
+    //====new task for leds====
     xTaskCreatePinnedToCore(
                     ledsFunc,   /* Task function. */
                     "Task1",     /* name of task. */
@@ -271,6 +273,22 @@ void setup()
     //=====
     Serial.print("Task1 running on core ");
     Serial.println(xPortGetCoreID());
+    //====new task for leds====
+    xTaskCreatePinnedToCore(
+                    bluetoothThread,   /* Task function. */
+                    "Task2",     /* name of task. */
+                    10000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    4,           /* priority of the task */
+                    &Task2,      /* Task handle to keep track of created task */
+                    0);          /* pin task to core 0 */                  
+    delay(500); 
+    //====
+    while (true)
+    {
+        delay(1000);
+    }
+    
     
 }
 
@@ -296,8 +314,8 @@ void loop()
         changePalette(CODE_SDEMPTY_PALLETE);
         SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD);
     }
-    errorCode = haloBt.checkBlueTooth();
-    executeCode(errorCode);
+    /*errorCode = haloBt.checkBlueTooth();
+    executeCode(errorCode);*/
     delay(3000);
 }
 
@@ -592,8 +610,8 @@ int runFile(String fileName){
             break;
         }
         //====revisar bluetooth====
-        errorCode = haloBt.checkBlueTooth();
-        executeCode(errorCode);
+        /*errorCode = haloBt.checkBlueTooth();
+        executeCode(errorCode);*/
         //dependiendo del tipo de archivo se ejecuta la funcion correspondiente de movimiento.
         if (file.fileType == 1 || file.fileType == 3)
         {
@@ -663,9 +681,9 @@ int runFile(String fileName){
         ledsOffGlobal = true;
     }
     while(suspensionModeGlobal){
-        int errorCode = haloBt.checkBlueTooth();
-        executeCode(errorCode);
-        delay(1);
+        /*int errorCode = haloBt.checkBlueTooth();
+        executeCode(errorCode);*/
+        delay(100);
     }
     ledsOffGlobal = false;
     //====
@@ -732,8 +750,8 @@ int moveInterpolateTo(double x, double y, double distance)
         x_aux += delta_x;
         y_aux += delta_y;
         halo.moveTo(x_aux, y_aux);
-        errorCode = haloBt.checkBlueTooth();
-        executeCode(errorCode);
+        /*errorCode = haloBt.checkBlueTooth();
+        executeCode(errorCode);*/
     }
     halo.moveTo(x, y);
     return 0;
@@ -797,8 +815,8 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
         else
         {
             halo.moveTo(xAux, yAux, littleMovement);
-            errorCode = haloBt.checkBlueTooth();
-            executeCode(errorCode);
+            /*errorCode = haloBt.checkBlueTooth();
+            executeCode(errorCode);*/
         }
     }
     xAux = zNext * cos(thetaNext);
@@ -807,6 +825,16 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     halo.setThetaCurrent(thetaNext);
     halo.setZCurrent(zNext);
     return 0;
+}
+/**
+ * @brief mantiene en poling el bluetooth.
+ */
+void bluetoothThread(void * pvParameters ){
+    for(;;){
+        errorCode = haloBt.checkBlueTooth();
+        executeCode(errorCode);
+        vTaskDelay(100);
+    }
 }
 
 /**
@@ -854,8 +882,8 @@ void executeCode(int errorCode){
         if (!pauseModeGlobal){// && !suspensionModeGlobal){
             pauseModeGlobal = true;
             while(pauseModeGlobal){
-                int errorCode = haloBt.checkBlueTooth();
-                executeCode(errorCode);
+                /*int errorCode = haloBt.checkBlueTooth();
+                executeCode(errorCode);*/
                 delay(1);
             }
         }
@@ -1207,11 +1235,13 @@ uint32_t rainbow()
 void FillLEDsFromPaletteColors( uint8_t colorIndex)
 {
     uint8_t brightness = 255;
-    
+    startIndex = colorIndex;
     for( int i = 0; i < NUM_LEDS; i++) {
         leds[i] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
         if (incrementIndexGlobal){
-            colorIndex += INCREMENTINDEXPALLETE;
+            colorIndex =startIndex + float(i)*(255.0/float(NUM_LEDS-1));
+            Serial.print("index= ");
+            Serial.println(colorIndex);
         }
     }
 }
@@ -1263,9 +1293,9 @@ void SetupBlackAndWhiteStripedPalette()
     fill_solid( currentPalette, 16, CRGB::Black);
     // and set every fourth one to white.
     currentPalette[0] = CRGB::White;
-    currentPalette[4] = CRGB::White;
-    currentPalette[8] = CRGB::White;
-    currentPalette[12] = CRGB::White;
+    //currentPalette[4] = CRGB::White;
+    //currentPalette[8] = CRGB::White;
+    //currentPalette[12] = CRGB::White;
     
 }
 
@@ -1338,6 +1368,10 @@ void ledsFunc( void * pvParameters ){
                 estado = !estado;
                 digitalWrite(2,estado);
         #endif
+        /*while (true)
+        {
+            delay(1000);
+        }*/
         vTaskDelay(delayLeds);
     } 
 }
