@@ -177,5 +177,5 @@
  * Parametros de ida al centro en espiral
  * cada EVERY_MILIMITERS en modulo de recorrido dara una vuelta.
  */
-#define EVERY_MILIMITERS 5
+#define EVERY_MILIMITERS 10
 #define SPEED_TO_CENTER 200

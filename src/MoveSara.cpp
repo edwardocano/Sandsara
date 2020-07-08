@@ -6,6 +6,7 @@
 //extern void ledsFunc();
 double m[no_picos * 2], b[no_picos * 2];
 extern bool productType;
+extern bool pauseModeGlobal;
 
 //====Prototipos de funcion====
 double dkX(double , double );
@@ -152,7 +153,12 @@ void MoveSara::moveTo(double x, double y, bool littleMovement)
 {
     double q1, q2, distance;
     long steps_of_q1, steps_of_q2;
-    
+    if (pauseModeGlobal){
+        while (pauseModeGlobal)
+        {
+            delay(200);
+        }
+    }
     ik(x, y, &q1, &q2);
     if (x == 0 && y == 0){
         Serial.print("q1: ");

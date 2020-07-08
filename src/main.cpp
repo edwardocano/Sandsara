@@ -130,7 +130,27 @@ TaskHandle_t Task2;
 //====Calibracion====
 CalibMotor haloCalib;
 //====
+//====Paletas para codigos de colores
+DEFINE_GRADIENT_PALETTE( breathRed ) {
+        0,     0,   0,  0,   //black
+        128,   255, 0,  0,   //red
+        255,   0,   0,  0};
+        
+DEFINE_GRADIENT_PALETTE( breathBlue ) {
+        0,     0,   0,  0,   //black
+        128,   0, 0,  255,   //azul
+        255,   0,   0,  0};
 
+DEFINE_GRADIENT_PALETTE( breathYellow ) {
+        0,     0,   0,  0,   //black
+        128,   255, 255,  0,   //yellow
+        255,   0,   0,  0};
+
+DEFINE_GRADIENT_PALETTE( breathOrange ) {
+        0,     0,   0,  0,   //black
+        128,   255, 60,  0,   //orange
+        255,   0,   0,  0};                    
+//====        
 void setup()
 {
     delay(3000); // power-up safety delay
@@ -138,10 +158,10 @@ void setup()
     Serial.begin(115200);
     //====
     //====Inicializar Paletas====
-    NO_SD_PALLETE= CRGBPalette256( CRGB::Black, CRGB::Red, CRGB::Red, CRGB::Black);
-    UPTADATING_PALLETE = CRGBPalette256( CRGB::Black, CRGB::Yellow, CRGB::Yellow, CRGB::Black);
-    CALIBRATING_PALLETE = CRGBPalette256( CRGB::Black, CRGB::Blue, CRGB::Blue    , CRGB::Black);
-    SDEMPTY_PALLETE = CRGBPalette256( CRGB::Black, CRGB::OrangeRed, CRGB::OrangeRed    , CRGB::Black);
+    NO_SD_PALLETE= breathRed;
+    UPTADATING_PALLETE = breathYellow;
+    CALIBRATING_PALLETE = breathBlue;
+    SDEMPTY_PALLETE = breathOrange;
     //====
     //====Inicializacion de SD====
     EEPROM.begin(EEPROM_SIZE);
@@ -336,7 +356,7 @@ int run_sandsara(String playList, int ordenMode)
     if (ordenMode == 1 || ordenMode == 2){
         File file;
         file = SD.open(playList);
-        if (file){
+        if (file && !file.isDirectory()){
             file.close();
             numberOfFiles = FileSara::numberOfLines(playList);
             if (numberOfFiles < 0){
@@ -438,9 +458,9 @@ int run_sandsara(String playList, int ordenMode)
         errorCode = runFile(fileName);
         //====
         if (errorCode == -70)   {continue;}
-        if (errorCode == -71)   {break;}
-        if (errorCode == 20)    {pListFileGlobal = haloBt.getPositionList(); continue;}
-        if (errorCode == 30)    {
+        else if (errorCode == -71)   {break;}
+        else if (errorCode == 20)    {pListFileGlobal = haloBt.getPositionList(); continue;}
+        else if (errorCode == 30)    {
             while(errorCode == 30){
                 fileName = haloBt.getProgram();
                 errorCode = runFile(fileName);
@@ -449,7 +469,16 @@ int run_sandsara(String playList, int ordenMode)
             pListFileGlobal += 1;
             continue;
         }
-        if (errorCode != 10)    {return errorCode;}
+        else if (errorCode == 40){
+            while (suspensionModeGlobal)
+            {
+                ledsOffGlobal = true;
+                delay(500);
+            }
+            ledsOffGlobal = false;
+            continue;
+        }
+        else if (errorCode != 10)    {return errorCode;}
         //====Aumentar la posicion en la lista de reproduccion====
         pListFileGlobal += 1;
         //====
@@ -462,9 +491,11 @@ int run_sandsara(String playList, int ordenMode)
  * @return un codigo de error
  * -70, es en lugar del continue
  * -71, es en lugar de un break
+ *   1, se desea cambiar de ordenMode o Playlist
  *  10, no se presento algun return
  *  20, se desea cambiar de programa por posicion.
  *  30, se desea cambiar de programa por nombre
+ *  40, se desea suspender.
  */
 int runFile(String fileName){
     double component_1, component_2, distance;
@@ -559,7 +590,7 @@ int runFile(String fileName){
         if (changePositionList){
             changePositionList = false;
             changeProgram = false;
-            goHomeSpiral();
+            goHomeSpiral(false);
             #ifdef PROCESSING_SIMULATOR
                 Serial.println("finished");
             #endif
@@ -574,7 +605,7 @@ int runFile(String fileName){
         if (changeProgram){
             changePositionList = false;
             changeProgram = false;
-            goHomeSpiral();
+            goHomeSpiral(false);
             #ifdef PROCESSING_SIMULATOR
                 Serial.println("finished");
             #endif
@@ -585,8 +616,32 @@ int runFile(String fileName){
                 return 30;
             }
         }
+        //====Revisar si se suspende o pausa====
+        if (pauseModeGlobal == true){
+            while (pauseModeGlobal)
+            {
+                delay(200);
+            }
+        }
+        if (suspensionModeGlobal == true){
+            goHomeSpiral(false);
+            #ifdef PROCESSING_SIMULATOR
+                Serial.println("finished");
+            #endif
+            return 40;
+        }
+        //====Revisar si se cambia playlist u ordenMode====
+        if (playlistChanged || ordenModeChanged){
+            goHomeSpiral(false);
+            playlistChanged = false;
+            ordenModeChanged = false;
+            #ifdef PROCESSING_SIMULATOR
+                Serial.println("finished");
+            #endif
+            return 1;
+        }
         //====
-        //se obtienen los siguientes componentes
+        //====se obtienen los siguientes componentes
         working_status = file.getNextComponents(&component_1, &component_2);                
         if (working_status == 3)
         {
@@ -666,22 +721,22 @@ int runFile(String fileName){
         Serial.println("finished");
     #endif
     //====Revisar si se desea suspender====
-    if (suspensionModeGlobal){
+    /*if (suspensionModeGlobal){
+
         ledsOffGlobal = true;
-    }
-    while(suspensionModeGlobal){
-        /*int errorCode = haloBt.checkBlueTooth();
-        executeCode(errorCode);*/
-        delay(100);
-    }
-    ledsOffGlobal = false;
+        while(suspensionModeGlobal){
+            delay(100);
+        }
+        ledsOffGlobal = false;
+    }*/
+    
     //====
     //====Revisar si se desea cambiar de lista de reproduccion u ordenMode====
-    if(playlistChanged || ordenModeChanged){
+    /*if(playlistChanged || ordenModeChanged){
         playlistChanged = false;
         ordenModeChanged = false;
         return 1;
-    }
+    }*/
     //====
     return 10;
 }
@@ -727,14 +782,12 @@ int moveInterpolateTo(double x, double y, double distance)
     int intervals = distance;
     for (int i = 1; i <= intervals; i++)
     {
-        //====comprobar si se desea cambiar de archivo====
-        if (changePositionList && stopProgramChangeGlobal){
-            return 0;
-        }
-        if (changeProgram && stopProgramChangeGlobal){
+        //====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
+        if ((changePositionList || changeProgram || suspensionModeGlobal || playlistChanged || ordenModeChanged) && stopProgramChangeGlobal){
             return 0;
         }
         //====
+        //====Comprobar si se pausa
         //ledsFunc();
         x_aux += delta_x;
         y_aux += delta_y;
@@ -780,11 +833,8 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     deltaZ = (zNext - zCurrent) / slices;
     for (long i = 1; i < slices; i++)
     {
-        //====comprobar si se desea cambiar de archivo====
-        if (changePositionList && stopProgramChangeGlobal){
-            return 0;
-        }
-        if (changeProgram && stopProgramChangeGlobal){
+        //====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
+        if ((changePositionList || changeProgram || suspensionModeGlobal || playlistChanged || ordenModeChanged) && stopProgramChangeGlobal){
             return 0;
         }
         //====
@@ -868,14 +918,7 @@ void executeCode(int errorCode){
         pauseModeGlobal = false;
     }
     else if (errorCode == 90){
-        if (!pauseModeGlobal){// && !suspensionModeGlobal){
-            pauseModeGlobal = true;
-            while(pauseModeGlobal){
-                /*int errorCode = haloBt.checkBlueTooth();
-                executeCode(errorCode);*/
-                delay(1);
-            }
-        }
+        pauseModeGlobal = true;
     }
     else if (errorCode == 100){
         pauseModeGlobal = false;
