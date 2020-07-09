@@ -25,7 +25,7 @@ class BlueSara {
         //int debugCount = 0;
         //int codeErrorC;
         int indexWord, bytesToRead;
-        uint8_t dataBt[10000];
+        uint8_t dataBt[BUFFER_BLUETOOTH];
         const int MAX_BYTES_PER_SENDING = sizeof(dataBt);
         String line;
         String fileNameBt;

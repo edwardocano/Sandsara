@@ -179,3 +179,9 @@
  */
 #define EVERY_MILIMITERS 10
 #define SPEED_TO_CENTER 200
+
+/**
+ * BUFFER_BLUETOOTH es la memoria que se reserva para recibir los archivos
+ */
+
+#define BUFFER_BLUETOOTH 30000

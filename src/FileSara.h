@@ -68,8 +68,8 @@ class FileSara {
         static int getLineNumber(int , String , String& );
         static int numberOfLines(String );
         bool isValid();
-    private:
         static int getType(String);
+    private:
         int getComponents(String , double* , double*);
         int getComponentsBin(uint8_t* , double* , double* );
         String nextRow();
