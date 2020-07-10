@@ -160,12 +160,12 @@ void MoveSara::moveTo(double x, double y, bool littleMovement)
         }
     }
     ik(x, y, &q1, &q2);
-    if (x == 0 && y == 0){
+    /*if (x == 0 && y == 0){
         Serial.print("q1: ");
         Serial.print(q1);
         Serial.print("\tq2: ");
         Serial.println(q2);
-    }
+    }*/
     x = dkX(q1, q2);
     y = dkY(q1, q2);
     distance = module(x, y, x_current, y_current);

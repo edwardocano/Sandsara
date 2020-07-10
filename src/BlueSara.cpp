@@ -8,6 +8,9 @@ extern bool sdRemove(String );
 extern bool sdExists(String );
 extern bool pauseModeGlobal;
 //====
+//====
+uint8_t dataBt[BUFFER_BLUETOOTH];
+//====
 // perform the actual update from a given stream
 int performUpdate(Stream &, size_t );
 // check given FS for valid update.bin and perform update if available
@@ -183,6 +186,7 @@ int BlueSara::checkBlueTooth()
                 else
                 {
                     pauseModeGlobal = true;
+                    unsigned long timeVar, timeVarTotal = 0, cont = 0;
                     for (;;) //while (true)
                     {
                         //yield();
@@ -200,10 +204,10 @@ int BlueSara::checkBlueTooth()
                         {
                             indexWord = line.indexOf("bytes=");
                             bytesToRead = line.substring(6).toInt();
-#ifdef BLUECOMMENTS
-                            Serial.print("bytesToRead: ");
-                            Serial.println(bytesToRead);
-#endif
+                            #ifdef BLUECOMMENTS
+                                Serial.print("bytesToRead: ");
+                                Serial.println(bytesToRead);
+                            #endif
                             if (bytesToRead <= 0 || bytesToRead > BUFFER_BLUETOOTH)
                             {
                                 codeError = -2;
@@ -242,9 +246,15 @@ int BlueSara::checkBlueTooth()
                                 writeBtln("error= -7"); //no coincide checksum
                                 break;
                             }
-                            
+                            timeVar = millis();
                             file.write(dataBt, bytesToRead);
-                            
+                            timeVar = millis() - timeVar;
+                            timeVarTotal += timeVar;
+                            cont += 1;
+                            Serial.print("tiempo");
+                            Serial.print(cont);
+                            Serial.print(": ");
+                            Serial.println(timeVar);
                             /*for (int i = 0; i < bytesToRead; i++)
                             {
                                 Serial.print(char(dataBt[i]));
@@ -253,6 +263,8 @@ int BlueSara::checkBlueTooth()
                         //else if (line.equals("done"))
                         else if (line.indexOf("done") >= 0)
                         {
+                            Serial.print("tiempo total:");
+                            Serial.println(timeVarTotal);
                             file.close();
                             pauseModeGlobal = false;
                             writeBtln("ok");
@@ -820,6 +832,8 @@ static unsigned *MD5Hash(uint8_t *msg, int mlen)
 
     {
         grps = 1 + (mlen + 8) / 64;
+        Serial.print("memoria disponible en heap: ");
+        Serial.println(xPortGetFreeHeapSize());
         msg2 = (unsigned char *)malloc(64 * grps);
         memcpy(msg2, (unsigned char *)msg, mlen);
         msg2[mlen] = (unsigned char)0x80;

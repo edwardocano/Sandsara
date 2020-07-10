@@ -183,5 +183,4 @@
 /**
  * BUFFER_BLUETOOTH es la memoria que se reserva para recibir los archivos
  */
-
 #define BUFFER_BLUETOOTH 30000

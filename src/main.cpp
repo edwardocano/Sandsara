@@ -546,10 +546,10 @@ int runFile(String fileName){
         zi = halo.getCurrentModule();
         halo.setZCurrent(zi);
         halo.setThetaCurrent(thetai);
-        Serial.print("zi: ");
+        /*Serial.print("zi: ");
         Serial.println(zi);
         Serial.print("thetai: ");
-        Serial.println(thetai);
+        Serial.println(thetai);*/
         if (thetai > thetaf){
             if (thetai - thetaf > PI){
                 thetaFinal = thetai + (2*PI - (thetai - thetaf));
