@@ -12,10 +12,7 @@
 class CalibMotor{
     public:
         CalibMotor();
-        void verif_cal_Positivob1();
-        void verif_cal_Positivob2();
-        void verif_cal_Negativob1();
-        void verif_cal_Negativob2();
+        void verificacion_cal();
     private:
 
     public:
