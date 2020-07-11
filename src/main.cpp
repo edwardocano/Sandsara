@@ -6,6 +6,7 @@
 #define FASTLED_ESP32_I2S true
 #include <FastLED.h>
 #include "CalibMotor.h"
+#include "Testing.h"
 
 //#define FS_NO_GLOBALS
 //#include <FS.h>
@@ -101,17 +102,21 @@ void setFrom1(int [], int);
 void removeIndex(int [], int , int );
 int runFile(String );
 void goHomeSpiral(bool = true);
+
 //====
 //====Variable leds====
 //====Neopixel====
-#define PIN 15
-#define NUMPIXELS 30 // numero de pixels en la tira
+#ifdef __AVR__
+ #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
+#endif
+#define PIN 32
+#define NUMPIXELS 36 // numero de pixels en la tira
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 #define DELAYVAL 50
 
 #define LED_PIN     32
 #define NUM_LEDS    36
-#define BRIGHTNESS  64
+#define BRIGHTNESS  255
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
 CRGB leds[NUM_LEDS];
@@ -132,7 +137,8 @@ TaskHandle_t Task1;
 //====
 //====Calibracion====
 CalibMotor haloCalib;
-//====
+//====Testing========
+Testing haloTest;
 
 void setup()
 {
@@ -149,7 +155,39 @@ void setup()
     //====Inicializacion de SD====
     EEPROM.begin(EEPROM_SIZE);
     delay(500);
-    //====
+	//=============Testing=============
+	int dat_pin;
+	dat_pin = analogRead(PIN_ProducType);
+	if(dat_pin > 1000 && dat_pin < 4000)
+	{
+		haloTest.Test();	
+	}
+    ////////////////////////////////////////////
+    int cont_reset;
+    cont_reset = EEPROM.read(500);
+    Serial.println("Numero de reinicios");
+    Serial.println(cont_reset);
+    delay(6000);
+    
+    if(EEPROM.read(500) == 255)
+    {
+        ////////////
+            EEPROM.write(500,0);
+            EEPROM.commit();
+            delay(1000);
+    /////////////////////
+    }
+    if(EEPROM.read(500) < 255)
+    {
+        cont_reset = EEPROM.read(500);
+        cont_reset = cont_reset + 1;
+
+        EEPROM.write(500,cont_reset);
+        EEPROM.commit();
+        delay(1000);
+    }
+    ////////////////////////////////////////////
+    
     //====Recuperar speedMotor====
     speedMotorGlobal = romGetSpeedMotor();
     if (speedMotorGlobal > MAX_SPEED_MOTOR || speedMotorGlobal < MIN_SPEED_MOTOR){
@@ -203,7 +241,7 @@ void setup()
     Serial.println("init func");
     haloCalib.init();
     Serial.println("start func");
-    //haloCalib.start();
+    haloCalib.start();
     Serial.println("Salio de start");
     pinMode(EN_PIN, OUTPUT);
     pinMode(EN_PIN2, OUTPUT);
@@ -227,7 +265,6 @@ void setup()
         return;
     }
     root = SD.open("/");
-    delay(1000);
     //====
     //====recuperar valores de playlist y ordenMode====    
     playListGlobal = romGetPlaylist();
@@ -291,6 +328,8 @@ void loop()
         }
         changePalette(ledModeGlobal);
         Serial.println("Card present");
+        
+
     }
     else if (errorCode == -4){
         changePalette(CODE_SDEMPTY_PALLETE);
@@ -718,6 +757,7 @@ int moveInterpolateTo(double x, double y, double distance)
     delta_x = cos(alpha);
     delta_y = sin(alpha);
     int intervals = distance;
+	int dat_pin;
     for (int i = 1; i <= intervals; i++)
     {
         //====comprobar si se desea cambiar de archivo====
@@ -733,6 +773,26 @@ int moveInterpolateTo(double x, double y, double distance)
         y_aux += delta_y;
         halo.moveTo(x_aux, y_aux);
         errorCode = haloBt.checkBlueTooth();
+        
+		///////////////////////
+		////////PRUEBA/////////
+		//if(analogRead(PIN_ProducType) > 4000)
+		dat_pin = analogRead(PIN_ProducType);
+	    if(dat_pin > 700 && dat_pin < 3000)
+		{
+			//Serial.println("Se mandara a cero");
+            movePolarTo(0, 0, 0, true);
+			int cont_reset;
+            cont_reset = EEPROM.read(500);
+            //Serial.println("Numero de reinicios");
+            //Serial.println(cont_reset);
+			delay(600000);
+			return 0;
+		}
+		//////////////////////
+		//////////////////////
+
+
         executeCode(errorCode);
     }
     halo.moveTo(x, y);
@@ -1324,6 +1384,16 @@ void ledsFunc( void * pvParameters ){
     FastLED.setBrightness( BRIGHTNESS );
     //====
     for(;;){
+        while(true)
+        {
+            for(int t = 0; t < 36; t++)
+            {
+                leds[t] = CRGB::White;
+            }
+            FastLED.show();
+            vTaskDelay(2000);
+
+        }
         if (ledsOffGlobal){
             FastLED.clear();
             FastLED.show();
@@ -1476,3 +1546,4 @@ void removeIndex(int list[], int index, int elements){
         list[i] = list[i+1];
     }
 }
+
