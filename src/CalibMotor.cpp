@@ -6,7 +6,6 @@ MeanFilter<long> meanFilter(5);
 MeanFilter<long> meanFilter2(40);
 MeanFilter<long> meanFilter3(10);
 MeanFilter<long> meanFilter4(10);
-
 int flag = 0;
 int avoid = 0;
 int avoid2 = 0; 
