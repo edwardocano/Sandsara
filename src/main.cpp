@@ -181,7 +181,7 @@ void setup()
     cont_reset = EEPROM.read(500);
     Serial.println("Numero de reinicios");
     Serial.println(cont_reset);
-    delay(6000);
+    //delay(6000);
     
     if(EEPROM.read(500) == 255)
     {
@@ -829,27 +829,6 @@ int moveInterpolateTo(double x, double y, double distance)
         x_aux += delta_x;
         y_aux += delta_y;
         halo.moveTo(x_aux, y_aux);
-        //errorCode = haloBt.checkBlueTooth();
-        
-		///////////////////////
-		////////PRUEBA/////////
-		//if(analogRead(PIN_ProducType) > 4000)
-		dat_pin = analogRead(PIN_ProducType);
-	    if(dat_pin > 700 && dat_pin < 3000)
-		{
-			//Serial.println("Se mandara a cero");
-            movePolarTo(0, 0, 0, true);
-			int cont_reset;
-            cont_reset = EEPROM.read(500);
-            //Serial.println("Numero de reinicios");
-            //Serial.println(cont_reset);
-			delay(600000);
-			return 0;
-		}
-		//////////////////////
-		//////////////////////
-
-
         executeCode(errorCode);
         /*errorCode = haloBt.checkBlueTooth();
         executeCode(errorCode);*/
