@@ -152,6 +152,10 @@ int BlueSara::checkBlueTooth()
         }
         if (line.indexOf("transferir") >= 0)
         {
+            Serial.print("Entro a readLine ");
+            Serial.println(ESP.getFreeHeap());
+            Serial.print("memoria disponible en heap: ");
+            Serial.println(xPortGetFreeHeapSize());
             //SerialBT.println("request=name");
             writeBtln("request-name");
             codeError = readLine(line);
@@ -251,10 +255,10 @@ int BlueSara::checkBlueTooth()
                             timeVar = millis() - timeVar;
                             timeVarTotal += timeVar;
                             cont += 1;
-                            Serial.print("tiempo");
+                            /*Serial.print("tiempo");
                             Serial.print(cont);
                             Serial.print(": ");
-                            Serial.println(timeVar);
+                            Serial.println(timeVar);*/
                             /*for (int i = 0; i < bytesToRead; i++)
                             {
                                 Serial.print(char(dataBt[i]));
@@ -553,7 +557,7 @@ int BlueSara::checkBlueTooth()
             writeBtln("error= -1"); //Comando incorrecto
             codeError = -1;         //comando incorrecto
         }
-
+        pauseModeGlobal = false;
         return codeError;
     }
     return 0;
@@ -707,6 +711,8 @@ int BlueSara::readBt(uint8_t dataBt[], int bytesToRead)
     int i = 0;
     unsigned long tInit = millis();
     unsigned long wdtFeedTime = millis();
+    //unsigned long proofTime = millis();
+    //static unsigned long proofTimeTotal = 0;
     //Serial.println("Entra a while");
     delay(20);
     while (i < bytesToRead)
@@ -717,6 +723,9 @@ int BlueSara::readBt(uint8_t dataBt[], int bytesToRead)
             dataBt[i] = SerialBT.read();
             //Serial.write(dataBt[i]);
             i += 1;
+            /*if (i == 1){
+                proofTime = millis();
+            }*/
         }
         if (millis() - tInit > timeOutBt)
         {
@@ -739,9 +748,12 @@ int BlueSara::readBt(uint8_t dataBt[], int bytesToRead)
         Serial.println("Entro por exceso de data tu crees");
         SerialBT.read();
     }*/
-#ifdef BLUECOMMENTS
-    Serial.println("salio de readBt normal");
-#endif
+    #ifdef BLUECOMMENTS
+        Serial.println("salio de readBt normal");
+    #endif
+    /*proofTimeTotal += millis() - proofTime;
+    Serial.print("Tiempo de transmision: ");
+    Serial.println(proofTimeTotal);*/
     return 0;
 }
 
@@ -832,8 +844,8 @@ static unsigned *MD5Hash(uint8_t *msg, int mlen)
 
     {
         grps = 1 + (mlen + 8) / 64;
-        Serial.print("memoria disponible en heap: ");
-        Serial.println(xPortGetFreeHeapSize());
+        /*Serial.print("memoria disponible en heap: ");
+        Serial.println(xPortGetFreeHeapSize());*/
         msg2 = (unsigned char *)malloc(64 * grps);
         memcpy(msg2, (unsigned char *)msg, mlen);
         msg2[mlen] = (unsigned char)0x80;

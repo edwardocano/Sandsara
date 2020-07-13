@@ -205,7 +205,7 @@ void setup()
     xTaskCreatePinnedToCore(
                     ledsFunc,   /* Task function. */
                     "Task1",     /* name of task. */
-                    10000,       /* Stack size of task */
+                    5000,       /* Stack size of task */
                     NULL,        /* parameter of the task */
                     5,           /* priority of the task */
                     &Task1,      /* Task handle to keep track of created task */
@@ -292,7 +292,7 @@ void setup()
     xTaskCreatePinnedToCore(
                     bluetoothThread,   /* Task function. */
                     "Task2",     /* name of task. */
-                    10000,       /* Stack size of task */
+                    5000,       /* Stack size of task */
                     NULL,        /* parameter of the task */
                     4,           /* priority of the task */
                     &Task2,      /* Task handle to keep track of created task */
