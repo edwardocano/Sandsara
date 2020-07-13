@@ -102,29 +102,21 @@ void setFrom1(int [], int);
 void removeIndex(int [], int , int );
 int runFile(String );
 void goHomeSpiral(bool = true);
-
+void bluetoothThread(void* );
 //====
 //====Variable leds====
-//====Neopixel====
-#ifdef __AVR__
- #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
-#endif
-#define PIN 32
-#define NUMPIXELS 36 // numero de pixels en la tira
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-#define DELAYVAL 50
-
 #define LED_PIN     32
-#define NUM_LEDS    36
-#define BRIGHTNESS  255
+#define NUM_LEDS    24
+#define BRIGHTNESS  64
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
 CRGB leds[NUM_LEDS];
+//====
 
-CRGBPalette16 currentPalette;
+CRGBPalette256 currentPalette;
 TBlendType    currentBlending;
 
-extern CRGBPalette16 myRedWhiteBluePalette;
+extern CRGBPalette256 myRedWhiteBluePalette;
 extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
 
 unsigned long timeLeds;
@@ -134,12 +126,34 @@ bool productType;
 //====
 //====Thred====
 TaskHandle_t Task1;
+TaskHandle_t Task2;
 //====
 //====Calibracion====
 CalibMotor haloCalib;
 //====Testing========
 Testing haloTest;
+//====
+//====Paletas para codigos de colores
+DEFINE_GRADIENT_PALETTE( breathRed ) {
+        0,     0,   0,  0,   //black
+        128,   255, 0,  0,   //red
+        255,   0,   0,  0};
+        
+DEFINE_GRADIENT_PALETTE( breathBlue ) {
+        0,     0,   0,  0,   //black
+        128,   0, 0,  255,   //azul
+        255,   0,   0,  0};
 
+DEFINE_GRADIENT_PALETTE( breathYellow ) {
+        0,     0,   0,  0,   //black
+        128,   255, 255,  0,   //yellow
+        255,   0,   0,  0};
+
+DEFINE_GRADIENT_PALETTE( breathOrange ) {
+        0,     0,   0,  0,   //black
+        128,   255, 60,  0,   //orange
+        255,   0,   0,  0};                    
+//====        
 void setup()
 {
     delay(3000); // power-up safety delay
@@ -147,10 +161,10 @@ void setup()
     Serial.begin(115200);
     //====
     //====Inicializar Paletas====
-    NO_SD_PALLETE= CRGBPalette16( CRGB::Black, CRGB::Red, CRGB::Red, CRGB::Black);
-    UPTADATING_PALLETE = CRGBPalette16( CRGB::Black, CRGB::Yellow, CRGB::Yellow, CRGB::Black);
-    CALIBRATING_PALLETE = CRGBPalette16( CRGB::Black, CRGB::Blue, CRGB::Blue    , CRGB::Black);
-    SDEMPTY_PALLETE = CRGBPalette16( CRGB::Black, CRGB::OrangeRed, CRGB::OrangeRed    , CRGB::Black);
+    NO_SD_PALLETE= breathRed;
+    UPTADATING_PALLETE = breathYellow;
+    CALIBRATING_PALLETE = breathBlue;
+    SDEMPTY_PALLETE = breathOrange;
     //====
     //====Inicializacion de SD====
     EEPROM.begin(EEPROM_SIZE);
@@ -222,11 +236,11 @@ void setup()
     //====Recuperar ceroZone variable====
     ceroZoneGlobal = romGetCeroZone();
     //====
-    //====new task====
+    //====new task for leds====
     xTaskCreatePinnedToCore(
                     ledsFunc,   /* Task function. */
                     "Task1",     /* name of task. */
-                    10000,       /* Stack size of task */
+                    5000,       /* Stack size of task */
                     NULL,        /* parameter of the task */
                     5,           /* priority of the task */
                     &Task1,      /* Task handle to keep track of created task */
@@ -308,7 +322,17 @@ void setup()
     //=====
     Serial.print("Task1 running on core ");
     Serial.println(xPortGetCoreID());
-    
+    //====new task for leds====
+    xTaskCreatePinnedToCore(
+                    bluetoothThread,   /* Task function. */
+                    "Task2",     /* name of task. */
+                    5000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    4,           /* priority of the task */
+                    &Task2,      /* Task handle to keep track of created task */
+                    0);          /* pin task to core 0 */                  
+    delay(500); 
+    //====
 }
 
 void loop()
@@ -335,8 +359,8 @@ void loop()
         changePalette(CODE_SDEMPTY_PALLETE);
         SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD);
     }
-    errorCode = haloBt.checkBlueTooth();
-    executeCode(errorCode);
+    /*errorCode = haloBt.checkBlueTooth();
+    executeCode(errorCode);*/
     delay(3000);
 }
 
@@ -368,7 +392,7 @@ int run_sandsara(String playList, int ordenMode)
     if (ordenMode == 1 || ordenMode == 2){
         File file;
         file = SD.open(playList);
-        if (file){
+        if (file && !file.isDirectory()){
             file.close();
             numberOfFiles = FileSara::numberOfLines(playList);
             if (numberOfFiles < 0){
@@ -470,9 +494,9 @@ int run_sandsara(String playList, int ordenMode)
         errorCode = runFile(fileName);
         //====
         if (errorCode == -70)   {continue;}
-        if (errorCode == -71)   {break;}
-        if (errorCode == 20)    {pListFileGlobal = haloBt.getPositionList(); continue;}
-        if (errorCode == 30)    {
+        else if (errorCode == -71)   {break;}
+        else if (errorCode == 20)    {pListFileGlobal = haloBt.getPositionList(); continue;}
+        else if (errorCode == 30)    {
             while(errorCode == 30){
                 fileName = haloBt.getProgram();
                 errorCode = runFile(fileName);
@@ -481,7 +505,16 @@ int run_sandsara(String playList, int ordenMode)
             pListFileGlobal += 1;
             continue;
         }
-        if (errorCode != 10)    {return errorCode;}
+        else if (errorCode == 40){
+            while (suspensionModeGlobal)
+            {
+                ledsOffGlobal = true;
+                delay(500);
+            }
+            ledsOffGlobal = false;
+            continue;
+        }
+        else if (errorCode != 10)    {return errorCode;}
         //====Aumentar la posicion en la lista de reproduccion====
         pListFileGlobal += 1;
         //====
@@ -494,9 +527,11 @@ int run_sandsara(String playList, int ordenMode)
  * @return un codigo de error
  * -70, es en lugar del continue
  * -71, es en lugar de un break
+ *   1, se desea cambiar de ordenMode o Playlist
  *  10, no se presento algun return
  *  20, se desea cambiar de programa por posicion.
  *  30, se desea cambiar de programa por nombre
+ *  40, se desea suspender.
  */
 int runFile(String fileName){
     double component_1, component_2, distance;
@@ -547,10 +582,10 @@ int runFile(String fileName){
         zi = halo.getCurrentModule();
         halo.setZCurrent(zi);
         halo.setThetaCurrent(thetai);
-        Serial.print("zi: ");
+        /*Serial.print("zi: ");
         Serial.println(zi);
         Serial.print("thetai: ");
-        Serial.println(thetai);
+        Serial.println(thetai);*/
         if (thetai > thetaf){
             if (thetai - thetaf > PI){
                 thetaFinal = thetai + (2*PI - (thetai - thetaf));
@@ -591,7 +626,7 @@ int runFile(String fileName){
         if (changePositionList){
             changePositionList = false;
             changeProgram = false;
-            goHomeSpiral();
+            goHomeSpiral(false);
             #ifdef PROCESSING_SIMULATOR
                 Serial.println("finished");
             #endif
@@ -606,7 +641,7 @@ int runFile(String fileName){
         if (changeProgram){
             changePositionList = false;
             changeProgram = false;
-            goHomeSpiral();
+            goHomeSpiral(false);
             #ifdef PROCESSING_SIMULATOR
                 Serial.println("finished");
             #endif
@@ -617,8 +652,32 @@ int runFile(String fileName){
                 return 30;
             }
         }
+        //====Revisar si se suspende o pausa====
+        if (pauseModeGlobal == true){
+            while (pauseModeGlobal)
+            {
+                delay(200);
+            }
+        }
+        if (suspensionModeGlobal == true){
+            goHomeSpiral(false);
+            #ifdef PROCESSING_SIMULATOR
+                Serial.println("finished");
+            #endif
+            return 40;
+        }
+        //====Revisar si se cambia playlist u ordenMode====
+        if (playlistChanged || ordenModeChanged){
+            goHomeSpiral(false);
+            playlistChanged = false;
+            ordenModeChanged = false;
+            #ifdef PROCESSING_SIMULATOR
+                Serial.println("finished");
+            #endif
+            return 1;
+        }
         //====
-        //se obtienen los siguientes componentes
+        //====se obtienen los siguientes componentes
         working_status = file.getNextComponents(&component_1, &component_2);                
         if (working_status == 3)
         {
@@ -631,8 +690,8 @@ int runFile(String fileName){
             break;
         }
         //====revisar bluetooth====
-        errorCode = haloBt.checkBlueTooth();
-        executeCode(errorCode);
+        /*errorCode = haloBt.checkBlueTooth();
+        executeCode(errorCode);*/
         //dependiendo del tipo de archivo se ejecuta la funcion correspondiente de movimiento.
         if (file.fileType == 1 || file.fileType == 3)
         {
@@ -698,22 +757,22 @@ int runFile(String fileName){
         Serial.println("finished");
     #endif
     //====Revisar si se desea suspender====
-    if (suspensionModeGlobal){
+    /*if (suspensionModeGlobal){
+
         ledsOffGlobal = true;
-    }
-    while(suspensionModeGlobal){
-        int errorCode = haloBt.checkBlueTooth();
-        executeCode(errorCode);
-        delay(1);
-    }
-    ledsOffGlobal = false;
+        while(suspensionModeGlobal){
+            delay(100);
+        }
+        ledsOffGlobal = false;
+    }*/
+    
     //====
     //====Revisar si se desea cambiar de lista de reproduccion u ordenMode====
-    if(playlistChanged || ordenModeChanged){
+    /*if(playlistChanged || ordenModeChanged){
         playlistChanged = false;
         ordenModeChanged = false;
         return 1;
-    }
+    }*/
     //====
     return 10;
 }
@@ -760,19 +819,17 @@ int moveInterpolateTo(double x, double y, double distance)
 	int dat_pin;
     for (int i = 1; i <= intervals; i++)
     {
-        //====comprobar si se desea cambiar de archivo====
-        if (changePositionList && stopProgramChangeGlobal){
-            return 0;
-        }
-        if (changeProgram && stopProgramChangeGlobal){
+        //====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
+        if ((changePositionList || changeProgram || suspensionModeGlobal || playlistChanged || ordenModeChanged) && stopProgramChangeGlobal){
             return 0;
         }
         //====
+        //====Comprobar si se pausa
         //ledsFunc();
         x_aux += delta_x;
         y_aux += delta_y;
         halo.moveTo(x_aux, y_aux);
-        errorCode = haloBt.checkBlueTooth();
+        //errorCode = haloBt.checkBlueTooth();
         
 		///////////////////////
 		////////PRUEBA/////////
@@ -794,6 +851,8 @@ int moveInterpolateTo(double x, double y, double distance)
 
 
         executeCode(errorCode);
+        /*errorCode = haloBt.checkBlueTooth();
+        executeCode(errorCode);*/
     }
     halo.moveTo(x, y);
     return 0;
@@ -833,11 +892,8 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     deltaZ = (zNext - zCurrent) / slices;
     for (long i = 1; i < slices; i++)
     {
-        //====comprobar si se desea cambiar de archivo====
-        if (changePositionList && stopProgramChangeGlobal){
-            return 0;
-        }
-        if (changeProgram && stopProgramChangeGlobal){
+        //====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
+        if ((changePositionList || changeProgram || suspensionModeGlobal || playlistChanged || ordenModeChanged) && stopProgramChangeGlobal){
             return 0;
         }
         //====
@@ -857,8 +913,8 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
         else
         {
             halo.moveTo(xAux, yAux, littleMovement);
-            errorCode = haloBt.checkBlueTooth();
-            executeCode(errorCode);
+            /*errorCode = haloBt.checkBlueTooth();
+            executeCode(errorCode);*/
         }
     }
     xAux = zNext * cos(thetaNext);
@@ -867,6 +923,16 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     halo.setThetaCurrent(thetaNext);
     halo.setZCurrent(zNext);
     return 0;
+}
+/**
+ * @brief mantiene en poling el bluetooth.
+ */
+void bluetoothThread(void * pvParameters ){
+    for(;;){
+        errorCode = haloBt.checkBlueTooth();
+        executeCode(errorCode);
+        vTaskDelay(100);
+    }
 }
 
 /**
@@ -911,14 +977,7 @@ void executeCode(int errorCode){
         pauseModeGlobal = false;
     }
     else if (errorCode == 90){
-        if (!pauseModeGlobal){// && !suspensionModeGlobal){
-            pauseModeGlobal = true;
-            while(pauseModeGlobal){
-                int errorCode = haloBt.checkBlueTooth();
-                executeCode(errorCode);
-                delay(1);
-            }
-        }
+        pauseModeGlobal = true;
     }
     else if (errorCode == 100){
         pauseModeGlobal = false;
@@ -1225,53 +1284,26 @@ bool romGetCeroZone(){
 
 //=======================================Leds========================================
 //===================================================================================
-void Neo_Pixel(int color)
-{
-
-    for (int i = 0; i < NUMPIXELS; i++)
-    { // Va recorriendo cada pixel
-
-        if (color == 1) //se alterna el color verde y rojo en los leds, uso el operador modulo para alternar los leds
-        {
-            if ((i % 2) == 0)
-            {
-                pixels.setPixelColor(i, pixels.Color(0, 150, 0));
-                pixels.show();
-            }
-            else
-            {
-                pixels.setPixelColor(i, pixels.Color(255, 0, 0)); //i maneja el led a encender pixel.Color permite configurar el color
-                pixels.show();                                    // Envia la señal al led que tomara el color RGB seleccionado
-            }
-        }
-        if (color == 2) //pone todos los leds en color rojo
-        {
-            pixels.setPixelColor(i, pixels.Color(255, 0, 0)); //i maneja el led a encender pixel.Color permite configurar el color
-            pixels.show();                                    // Envia la señal al led que tomara el color RGB seleccionado
-        }
-        if (color == 3) //los leds toman colores aleatorios
-        {
-            pixels.setPixelColor(i, rainbow()); //i maneja el led a encender
-            pixels.show();                      // Envia la señal al led que tomara el color RGB seleccionado
-        }
-    }
-    pixels.clear(); //
-}
-//Función para leds de color aleatorio
-uint32_t rainbow()
-{
-    return pixels.Color(random(0, 255), random(0, 255), random(0, 255));
-}
-
 //====================Libreria fastled==========================
 void FillLEDsFromPaletteColors( uint8_t colorIndex)
 {
     uint8_t brightness = 255;
-    
+    startIndex = colorIndex;
     for( int i = 0; i < NUM_LEDS; i++) {
         leds[i] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
+        /*Serial.print("led ");
+        Serial.print(i);
+        Serial.print(" = ");
+        Serial.print(leds[i].red);
+        Serial.print("\t");
+        Serial.print(leds[i].green);
+        Serial.print("\t");
+        Serial.println(leds[i].blue);*/
+        //delay(1000);
         if (incrementIndexGlobal){
-            colorIndex += INCREMENTINDEXPALLETE;
+            colorIndex =startIndex + float(i+1)*(255.0/float(NUM_LEDS));
+            /*Serial.print("index= ");
+            Serial.println(colorIndex);*/
         }
     }
 }
@@ -1287,7 +1319,7 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
 
 void changePalette(int pallet)
 {
-    if     ( pallet ==  0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
+    if     ( pallet == 0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
     else if( pallet == 1)   { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;           incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
     else if( pallet == 2)   { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
     else if( pallet == 3)   { SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
@@ -1320,12 +1352,15 @@ void SetupTotallyRandomPalette()
 void SetupBlackAndWhiteStripedPalette()
 {
     // 'black out' all 16 palette entries...
-    fill_solid( currentPalette, 16, CRGB::Black);
+    fill_solid( currentPalette, 256, CRGB::Black);
     // and set every fourth one to white.
-    currentPalette[0] = CRGB::White;
-    currentPalette[4] = CRGB::White;
-    currentPalette[8] = CRGB::White;
-    currentPalette[12] = CRGB::White;
+    for(int i = 0; i < 16; i++){
+        currentPalette[i] = CRGB::White;
+    }
+    
+    //currentPalette[4] = CRGB::White;
+    //currentPalette[8] = CRGB::White;
+    //currentPalette[12] = CRGB::White;
     
 }
 
@@ -1336,7 +1371,7 @@ void SetupPurpleAndGreenPalette()
     CRGB green  = CHSV( HUE_GREEN, 255, 255);
     CRGB black  = CRGB::Black;
     
-    currentPalette = CRGBPalette16(
+    currentPalette = CRGBPalette256(
                                    green,  green,  black,  black,
                                    purple, purple, black,  black,
                                    green,  green,  black,  black,
@@ -1408,6 +1443,10 @@ void ledsFunc( void * pvParameters ){
                 estado = !estado;
                 digitalWrite(2,estado);
         #endif
+        /*while (true)
+        {
+            delay(1000);
+        }*/
         vTaskDelay(delayLeds);
     } 
 }
