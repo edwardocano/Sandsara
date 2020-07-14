@@ -255,7 +255,7 @@ void setup()
     Serial.println("init func");
     haloCalib.init();
     Serial.println("start func");
-    haloCalib.start();
+    //haloCalib.start();
     Serial.println("Salio de start");
     pinMode(EN_PIN, OUTPUT);
     pinMode(EN_PIN2, OUTPUT);
@@ -829,7 +829,7 @@ int moveInterpolateTo(double x, double y, double distance)
         x_aux += delta_x;
         y_aux += delta_y;
         halo.moveTo(x_aux, y_aux);
-        executeCode(errorCode);
+        //executeCode(errorCode);
         /*errorCode = haloBt.checkBlueTooth();
         executeCode(errorCode);*/
     }
@@ -1398,7 +1398,7 @@ void ledsFunc( void * pvParameters ){
     FastLED.setBrightness( BRIGHTNESS );
     //====
     for(;;){
-        while(true)
+        /*while(true)
         {
             for(int t = 0; t < 36; t++)
             {
@@ -1407,7 +1407,7 @@ void ledsFunc( void * pvParameters ){
             FastLED.show();
             vTaskDelay(2000);
 
-        }
+        }*/
         if (ledsOffGlobal){
             FastLED.clear();
             FastLED.show();

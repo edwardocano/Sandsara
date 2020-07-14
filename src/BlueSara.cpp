@@ -619,10 +619,20 @@ String BlueSara::getBluetoothName(){
 int BlueSara::writeBt(String msg)
 {
     //Serial.println("Entro a writeBt");
-    uint8_t *msg8 = (uint8_t *)msg.c_str();
+    uint8_t* msg8 = (uint8_t *) calloc(msg.length() + 1, 1);
+    Serial.print("enviando: ");
+    Serial.println(msg);
+    Serial.print("tamano: ");
+    Serial.println(msg.length());
+    msg8 = (uint8_t *) msg.c_str();
+    Serial.print("enviando msg8: ");
+    Serial.println(*msg8);
+    Serial.print("tamano: ");
+    Serial.println(sizeof(msg8));
     SerialBT.write(msg8, msg.length());
-    //SerialBT.flush();
+    SerialBT.flush();
     delay(20);
+    //free(msg8);
     //Serial.println("salio a writeBt");
     return 0;
 }
