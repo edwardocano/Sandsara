@@ -111,31 +111,70 @@ int CalibMotor::init()
 	digitalWrite(EN_PIN2, LOW);
 	digitalWrite(DIR_PIN2, LOW);
 
-	driver.begin();
-	driver.pdn_disable(true);
-	driver.toff(4);
-	driver.blank_time(24);
-	driver.rms_current(500);
-	driver.microsteps(MICROSTEPPING);
-	driver.TCOOLTHRS(0xFFFFF); // 20bit max
-	driver.semin(0);
-	//driver.semax(2);
-	driver.shaft(false);
-	driver.sedn(0b01);
-	driver.SGTHRS(STALL_VALUE);
+	driver.begin();                   
 
-	driver2.begin();
-	driver2.pdn_disable(true);
-	driver2.toff(4);
-	driver2.blank_time(24);
-	driver2.rms_current(500);
-	driver2.microsteps(MICROSTEPPING);
-	driver2.TCOOLTHRS(0xFFFFF); // 20bit max
-	driver2.semin(0);
+	driver.pdn_disable(true);         // Activa la comunicacion PDN/UART
+	
+	driver.toff(4);                   // Establece el tiempo de disminucion lenta (tiempo de apagado) [1 ... 15]
+	                                  // Esta configuración también limita la frecuencia máxima de chopper. Para operar con StealthChop
+									  // En caso de operar solo con StealthChop, cualquier configuración está bien.
+	
+	driver.blank_time(24);
+	
+	driver.rms_current(500);          // Fija el valor de la corriente
+
+	driver.microsteps(MICROSTEPPING); // Se define el valor de microstepps
+
+	driver.TCOOLTHRS(0xFFFFF);        // Velocidad umbral inferior para encender la energía inteligente CoolStep y StallGuard a la salida del DIAG
+	
+	driver.semin(0);                  // Umbral inferior CoolStep [0 ... 15].
+                                      // Si SG_RESULT cae por debajo de este umbral, CoolStep aumenta la corriente a ambas bobinas.
+                                      // 0: deshabilitar CoolStep
 	//driver.semax(2);
-	driver2.shaft(false);
-	driver2.sedn(0b01);
-	driver2.SGTHRS(STALL_VALUE2);
+
+	driver.shaft(false);              //Establece el sentido de giro del motor mediante la comunicacion UART
+
+	driver.sedn(0b01);                // Establece el número de lecturas de StallGuard2 por encima del umbral superior necesario
+                                      // por cada disminución de corriente de la corriente del motor.
+	
+	driver.SGTHRS(STALL_VALUE);       // Nivel de umbral StallGuard4 [0 ... 255] para la detección de bloqueo. Compensa
+  									  // características específicas del motor y controla la sensibilidad. Un valor más alto da un valor más alto
+  									  // sensibilidad. Un valor más alto hace que StallGuard4 sea más sensible y requiere menos torque para
+  									  // indica una oposicion al movimiento. 
+
+	
+	
+	driver2.begin();
+
+	driver2.pdn_disable(true);         // Activa la comunicacion PDN/UART
+
+	driver2.toff(4);                   // Establece el tiempo de disminucion lenta (tiempo de apagado) [1 ... 15]
+	                                   // Esta configuración también limita la frecuencia máxima de chopper. Para operar con StealthChop
+									   // En caso de operar solo con StealthChop, cualquier configuración está bien.
+
+	driver2.blank_time(24);
+
+	driver2.rms_current(500);          // Fija el valor de la corriente
+
+	driver2.microsteps(MICROSTEPPING); // Se define el valor de microstepps
+
+	driver2.TCOOLTHRS(0xFFFFF);        // Velocidad umbral inferior para encender la energía inteligente CoolStep y StallGuard a la salida del DIAG
+
+	driver2.semin(0);                  // Umbral inferior CoolStep [0 ... 15].
+                                       // Si SG_RESULT cae por debajo de este umbral, CoolStep aumenta la corriente a ambas bobinas.
+                                       // 0: deshabilitar CoolStep
+
+	//driver.semax(2);
+
+	driver2.shaft(false);              // Establece el sentido de giro del motor mediante la comunicacion UART
+
+	driver2.sedn(0b01);                // Establece el número de lecturas de StallGuard2 por encima del umbral superior necesario
+                                       // por cada disminución de corriente de la corriente del motor.
+
+	driver2.SGTHRS(STALL_VALUE2);      // Nivel de umbral StallGuard4 [0 ... 255] para la detección de bloqueo. Compensa
+  									   // características específicas del motor y controla la sensibilidad. Un valor más alto da un valor más alto
+  									   // sensibilidad. Un valor más alto hace que StallGuard4 sea más sensible y requiere menos torque para
+  									   // indica una oposicion al movimiento. 
 
 	EEPROM.begin(EEPROM_SIZE);
 }
@@ -148,6 +187,9 @@ int CalibMotor::start()
 	int mean;
 	int dif_ref;
 	int cont_turn = 0;
+	int pas_hall1;
+	int pas_hall2;
+	int value2_f;
 	flag = 0;
 
 	Flag_adjust_ini = Check_ini();
@@ -399,21 +441,116 @@ int CalibMotor::start()
 					Pole_sens1 = EEPROM.read(401);
 					Pole_sens2 = EEPROM.read(402);
 				}
+
 				if (Pole_sens1 == 1)
 				{
-					slow_Calibration_hall1();
+					//if(Flag_adjust_ini == 1)
+					//{
+						slow_Calibration_hall1();
+					//}
+					/*
+					if(Flag_adjust_ini == 0)
+					{
+						L = EEPROM.read(415);
+						H = EEPROM.read(416);
+						pas_hall1 = (L << 8) | H;
+						digitalWrite(EN_PIN, LOW);
+						digitalWrite(DIR_PIN, LOW);
+						move(pas_hall1, 1, 5000);
+
+					}
+					*/
+					
 				}
 				if (Pole_sens1 == 0)
 				{
-					slow_Calibration_hall1_negative();
+					//if(Flag_adjust_ini == 1)
+					//{
+						slow_Calibration_hall1_negative();
+					//}
+					/*
+					if(Flag_adjust_ini == 0)
+					{
+						L = EEPROM.read(415);
+						H = EEPROM.read(416);
+						pas_hall1 = (L << 8) | H;
+						digitalWrite(EN_PIN, LOW);
+						digitalWrite(DIR_PIN, LOW);
+						move(pas_hall1, 1, 5000);
+					}
+					*/
 				}
 				if (Pole_sens2 == 1)
 				{
-					slow_Calibration_hall2();
+					//digitalWrite(EN_PIN2, LOW);
+
+					//if(Flag_adjust_ini == 1)
+					//{
+						slow_Calibration_hall2();
+					//}
+					/*
+					if (Flag_adjust_ini == 0)
+					{
+						digitalWrite(DIR_PIN2, HIGH);
+						for (int i = 0; i < 40; i++)
+						{
+							value2_f = meanFilter2.AddValue(analogRead(hall2));
+						}
+						read_hall2 = value2_f / 4;
+						while (read_hall2 < max_hall2)
+						{
+							move(1, 2, 8000);
+							for (int y = 0; y < 40; y++)
+							{
+								read_hall2 = (analogRead(hall2)) / 4;
+								read_hall2 = meanFilter2.AddValue(read_hall2);
+							}
+						}
+						delay(1000);
+						L = EEPROM.read(417);
+						H = EEPROM.read(418);
+						pas_hall2 = (L << 8) | H;
+						
+						digitalWrite(DIR_PIN2, HIGH);
+						move(pas_hall2, 2, 5000);
+					}
+					*/
 				}
 				if (Pole_sens2 == 0)
 				{
-					slow_Calibration_hall2_negative();
+					//if(Flag_adjust_ini == 1)
+					//{
+						slow_Calibration_hall2_negative();
+					//}
+					/*
+					if(Flag_adjust_ini == 0)
+					{
+						digitalWrite(EN_PIN2, LOW);
+
+						digitalWrite(DIR_PIN2, HIGH);
+						for (int i = 0; i < 40; i++)
+						{
+							value2_f = meanFilter2.AddValue(analogRead(hall2));
+						}
+						read_hall2 = value2_f / 4;
+						while (read_hall2 < max_hall2)
+						{
+							move(1, 2, 8000);
+							for (int y = 0; y < 40; y++)
+							{
+								read_hall2 = (analogRead(hall2)) / 4;
+								read_hall2 = meanFilter2.AddValue(read_hall2);
+							}
+						}
+						delay(1000);
+						L = EEPROM.read(417);
+						H = EEPROM.read(418);
+						pas_hall2 = (L << 8) | H;
+						
+						digitalWrite(DIR_PIN2, HIGH);
+						move(pas_hall2, 2, 5000);
+					}
+					*/
 				}
 				driver.rms_current(500);
 				driver2.rms_current(500);
@@ -559,19 +696,116 @@ int CalibMotor::start()
 
 				if (Pole_sens1 == 1)
 				{
-					slow_Calibration_hall1();
+					//if(Flag_adjust_ini == 1)
+					//{
+						slow_Calibration_hall1();
+					//}
+					/*
+					if(Flag_adjust_ini == 0)
+					{
+						L = EEPROM.read(415);
+						H = EEPROM.read(416);
+						pas_hall1 = (L << 8) | H;
+						digitalWrite(EN_PIN, LOW);
+						digitalWrite(DIR_PIN, LOW);
+						move(pas_hall1, 1, 8000);
+
+					}
+					*/
+					
 				}
 				if (Pole_sens1 == 0)
 				{
-					slow_Calibration_hall1_negative();
+					//if(Flag_adjust_ini == 1)
+					//{
+						slow_Calibration_hall1_negative();
+					//}
+					/*
+					if(Flag_adjust_ini == 0)
+					{
+						L = EEPROM.read(415);
+						H = EEPROM.read(416);
+						pas_hall1 = (L << 8) | H;
+						digitalWrite(EN_PIN, LOW);
+						digitalWrite(DIR_PIN, LOW);
+						move(pas_hall1, 1, 8000);
+					}
+					*/
 				}
 				if (Pole_sens2 == 1)
 				{
-					slow_Calibration_hall2();
+					//digitalWrite(EN_PIN2, LOW);
+					
+					//if(Flag_adjust_ini == 1)
+					//{
+						slow_Calibration_hall2();
+					//}
+					/*
+					if (Flag_adjust_ini == 0)
+					{
+						digitalWrite(DIR_PIN2, LOW);
+						move(100, 2, 8000);
+						digitalWrite(DIR_PIN2, HIGH);
+						for (int i = 0; i < 40; i++)
+						{
+							value2_f = meanFilter2.AddValue(analogRead(hall2));
+						}
+						read_hall2 = value2_f / 4;
+						while (read_hall2 < max_hall2)
+						{
+							move(1, 2, 8000);
+							for (int y = 0; y < 40; y++)
+							{
+								read_hall2 = (analogRead(hall2)) / 4;
+								read_hall2 = meanFilter2.AddValue(read_hall2);
+							}
+						}
+						delay(1000);
+						L = EEPROM.read(417);
+						H = EEPROM.read(418);
+						pas_hall2 = (L << 8) | H;
+						
+						digitalWrite(DIR_PIN2, HIGH);
+						move(pas_hall2, 2, 8000);
+					}
+					*/
 				}
 				if (Pole_sens2 == 0)
 				{
-					slow_Calibration_hall2_negative();
+					//if(Flag_adjust_ini == 1)
+					//{
+						slow_Calibration_hall2_negative();
+					//}
+					/*
+					if(Flag_adjust_ini == 0)
+					{
+						digitalWrite(EN_PIN2, LOW);
+                        digitalWrite(DIR_PIN2, LOW);
+						move(100, 2, 8000);
+						digitalWrite(DIR_PIN2, HIGH);
+						for (int i = 0; i < 40; i++)
+						{
+							value2_f = meanFilter2.AddValue(analogRead(hall2));
+						}
+						read_hall2 = value2_f / 4;
+						while (read_hall2 < max_hall2)
+						{
+							move(1, 2, 8000);
+							for (int y = 0; y < 40; y++)
+							{
+								read_hall2 = (analogRead(hall2)) / 4;
+								read_hall2 = meanFilter2.AddValue(read_hall2);
+							}
+						}
+						delay(1000);
+						L = EEPROM.read(417);
+						H = EEPROM.read(418);
+						pas_hall2 = (L << 8) | H;
+						
+						digitalWrite(DIR_PIN2, HIGH);
+						move(pas_hall2, 2, 8000);
+					}
+					*/
 				}
 				driver.rms_current(500);
 				driver2.rms_current(500);
@@ -699,6 +933,13 @@ void slow_Calibration_hall1()
 	int half;
 	half = (steps_ini - steps_fin) / 2;
 	pas = (99 - steps_ini) + half;
+    A = pas;
+	H = highByte(A);
+	L = lowByte(A);
+	EEPROM.write(415, H);
+	EEPROM.commit();
+	EEPROM.write(416, L);
+	EEPROM.commit();
 	move(pas, 1, 5000);
 }
 
@@ -922,7 +1163,14 @@ void slow_Calibration_hall2()
 	}
 	delay(1000);
 	//pas = ((599 - steps_ini) + half) - 8;
-	pas = half1 + 20;
+	pas = half1 + 15;
+	A = pas;
+	H = highByte(A);
+	L = lowByte(A);
+	EEPROM.write(417, H);
+	EEPROM.commit();
+	EEPROM.write(418, L);
+	EEPROM.commit();
 	move(pas, 2, 5000);
 }
 
@@ -1023,7 +1271,14 @@ void slow_Calibration_hall1_negative()
 	int half;
 	half = (steps_ini - steps_fin) / 2;
 	pas = (99 - steps_ini) + half;
-	move(pas, 1, 5000);
+	A = pas;
+	H = highByte(A);
+	L = lowByte(A);
+	EEPROM.write(415, H);
+	EEPROM.commit();
+	EEPROM.write(416, L);
+	EEPROM.commit();
+	move(pas, 1, 8000);
 }
 
 /**
@@ -1247,7 +1502,14 @@ void slow_Calibration_hall2_negative()
 	}
 	delay(1000);
 	//pas = ((599 - steps_ini) + half) - 8;
-	pas = half1 + 20;
+	pas = half1 + 15;
+	A = pas;
+	H = highByte(A);
+	L = lowByte(A);
+	EEPROM.write(417, H);
+	EEPROM.commit();
+	EEPROM.write(418, L);
+	EEPROM.commit();
 	move(pas, 2, 8000);
 }
 

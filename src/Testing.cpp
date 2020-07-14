@@ -16,6 +16,72 @@ CalibMotor haloCalibTest;
 Adafruit_NeoPixel pixels_test(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 #define DELAYVAL 50
 
+
+
+//====================TESTING=====================
+// - La funcion info_motor1 verifica la conexion con el driver del motor 1.
+//   * Si se conecto correctamente devuelve:                                               "M1 OK"
+//   * Si no se conecto correctamente devuelve:                                            "M1 Fail"
+
+// - La funcion info_motor2 verifica la conexion con el driver del motor 2.
+//   * Si se conecto correctamente devuelve:                                               "M2 OK"
+//   * Si no se conecto correctamente devuelve:                                            "M2 Fail"
+
+// - Se lee el valor del pin de configuracion.
+//   * Devuelve el mensaje                                                                  "Pin config"
+//   * Despues devuelve el valor analogico que se lee en el pin de configuracion:           [0 ...4095]
+
+// - Se inicializa la comunicacion con la microSD y muestra el tamaño de la memoria en MB.
+//   * Si no logra leer la microSD deviuelve el mensaje:                                    "Card Fail"
+//   * Si logra leer la microSD devuelve el mensaje:                                        "Card OK"
+//   * Posteriormente de leer la microSD devuelve el mensaje:                               "Card size"
+//     y el tamaño de memoria en MB.
+
+// - Se realiza la lectura analogica de los sensores Hall.
+//   * Inicia enviando el mensaje :                                                         "Test Hall"
+//   * Si el valor del sensor 1 se encuentra dentro del rango correcto imprime:             "Hall 1 OK"
+//   * Si el valor del sensor 1 no se encuentra dentro del rango correcto imprime:          "Hall 1 Fail"
+//   * Si el valor del sensor 2 se encuentra dentro del rango correcto imprime:             "Hall 2 OK"
+//   * Si el valor del sensor 2 no se encuentra dentro del rango correcto imprime:          "Hall 2 Fail"
+
+// - Se configura el motor dos a 500mA , 16 microsteeps, y se mueve 1600 pasos. 
+//   * Muestra el mensaje:                                                                   "Currente M2"
+//     y posteriormente un valor cercano a la configuracion de 500mA
+//   * Muestra el mensaje:                                                                   "Microsteps M2"
+//     y posteriormente el valor 16 correspondiente a los microsteeps.
+
+// - Se configura el motor dos a 700mA , 32 microsteeps, y se mueve 3200 pasos.
+//   * Muestra el mensaje:                                                                   "Currente M2"
+//     y posteriormente un valor cercano a la configuracion de 700mA
+//   * Muestra el mensaje:                                                                   "Microsteps M2"
+//     y posteriormente el valor 32 correspondiente a los microsteeps.
+
+// - Se configura el motor dos a 900mA , 64 microsteeps, y se mueve 6400 pasos.
+//   * Muestra el mensaje:                                                                   "Currente M2"
+//     y posteriormente un valor cercano a la configuracion de 900mA
+//   * Muestra el mensaje:                                                                   "Microsteps M2"
+//     y posteriormente el valor 64 correspondiente a los microsteeps.
+
+// - Se configura el motor uno a 500mA , 16 microsteeps, y se mueve 1600 pasos. 
+//   * Muestra el mensaje:                                                                   "Currente M1"
+//     y posteriormente un valor cercano a la configuracion de 500mA
+//   * Muestra el mensaje:                                                                   "Microsteps M1"
+//     y posteriormente el valor 16 correspondiente a los microsteeps.
+// - Se configura el motor uno a 700mA , 32 microsteeps, y se mueve 3200 pasos.
+//   * Muestra el mensaje:                                                                   "Currente M1"
+//     y posteriormente un valor cercano a la configuracion de 700mA
+//   * Muestra el mensaje:                                                                   "Microsteps M1"
+//     y posteriormente el valor 32 correspondiente a los microsteeps.
+// - Se configura el motor uno a 900mA , 64 microsteeps, y se mueve 6400 pasos.
+//   * Muestra el mensaje:                                                                   "Currente M1"
+//     y posteriormente un valor cercano a la configuracion de 900mA
+//   * Muestra el mensaje:                                                                   "Microsteps M1"
+//     y posteriormente el valor 64 correspondiente a los microsteeps.
+
+// - Se enciende la tira de de leds con su configuracion de mayor consumo energetico.
+
+// - Se configuran ambos motores a 500 mA y a 16 microsteeps y giran en el mismo sentido.
+
 void Testing::Test()
 {
 	haloCalibTest.init();
@@ -32,10 +98,10 @@ void Testing::Test()
 	//====Inicializar SD====
 	while (!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
 	{
-		Serial.println("Card failed, or not present");
+		Serial.println("Card Fail");
 		delay(200);
 	}
-	Serial.println("Card present");
+	Serial.println("Card OK");
 	root = SD.open("/");
 
 	cardSize = SD.card()->cardSize();
@@ -45,7 +111,7 @@ void Testing::Test()
 
 	delay(1000);
 
-	Serial.println("Prueba sensor Hall");
+	Serial.println("Test Hall");
 	delay(5000);
 	//===============Sensor_Hall==================
 	int dato_hall1 = 0;
@@ -55,19 +121,19 @@ void Testing::Test()
 	dato_hall2 = analogRead(hall2);
 	if (dato_hall1 > 1500 && dato_hall1 < 2200)
 	{
-		Serial.println("Sensor Hall 1 OK");
+		Serial.println("Hall 1 OK");
 	}
 	else
 	{
-		Serial.println("Sensor Hall 1 Fail");
+		Serial.println("Hall 1 Fail");
 	}
 	if (dato_hall2 > 1500 && dato_hall2 < 2200)
 	{
-		Serial.println("Sensor Hall 2 OK");
+		Serial.println("Hall 2 OK");
 	}
 	else
 	{
-		Serial.println("Sensor Hall 2 Fail");
+		Serial.println("Hall 2 Fail");
 	}
 
 	//==============================================
@@ -81,9 +147,9 @@ void Testing::Test()
 	digitalWrite(DIR_PIN2, LOW);
 	driver2.rms_current(500);
 	driver2.microsteps(16);
-	Serial.println("Currente_motor2");
+	Serial.println("Currente M2");
 	Serial.println(driver2.rms_current());
-	Serial.println("Microsteps_motor2");
+	Serial.println("Microsteps M2");
 	Serial.println(driver2.microsteps());
 	mover(1600, 2, 1000);
 	delay(500);
@@ -91,9 +157,9 @@ void Testing::Test()
 	digitalWrite(DIR_PIN2, HIGH);
 	driver2.rms_current(700);
 	driver2.microsteps(32);
-	Serial.println("Currente_motor2");
+	Serial.println("Currente M2");
 	Serial.println(driver2.rms_current());
-	Serial.println("Microsteps_motor2");
+	Serial.println("Microsteps M2");
 	Serial.println(driver2.microsteps());
 	mover(3200, 2, 1000);
 	delay(500);
@@ -101,9 +167,9 @@ void Testing::Test()
 	digitalWrite(DIR_PIN2, LOW);
 	driver2.rms_current(900);
 	driver2.microsteps(64);
-	Serial.println("Currente_motor2");
+	Serial.println("Currente M2");
 	Serial.println(driver2.rms_current());
-	Serial.println("Microsteps_motor2");
+	Serial.println("Microsteps M2");
 	Serial.println(driver2.microsteps());
 	mover(6400, 2, 1000);
 	delay(500);
@@ -111,9 +177,9 @@ void Testing::Test()
 	digitalWrite(DIR_PIN, LOW);
 	driver.rms_current(500);
 	driver.microsteps(16);
-	Serial.println("Currente_motor1");
+	Serial.println("Currente M1");
 	Serial.println(driver.rms_current());
-	Serial.println("Microsteps_motor1");
+	Serial.println("Microsteps M1");
 	Serial.println(driver.microsteps());
 	mover(1600, 1, 1000);
 	delay(500);
@@ -121,9 +187,9 @@ void Testing::Test()
 	digitalWrite(DIR_PIN, HIGH);
 	driver.rms_current(700);
 	driver.microsteps(32);
-	Serial.println("Currente_motor1");
+	Serial.println("Currente M1");
 	Serial.println(driver.rms_current());
-	Serial.println("Microsteps_motor1");
+	Serial.println("Microsteps M1");
 	Serial.println(driver.microsteps());
 	mover(3200, 1, 1000);
 	delay(500);
@@ -131,9 +197,9 @@ void Testing::Test()
 	digitalWrite(DIR_PIN, LOW);
 	driver.rms_current(900);
 	driver.microsteps(64);
-	Serial.println("Currente_motor1");
+	Serial.println("Currente M1");
 	Serial.println(driver.rms_current());
-	Serial.println("Microsteps_motor1");
+	Serial.println("Microsteps M1");
 	Serial.println(driver.microsteps());
 	mover(6400, 1, 1000);
 	delay(500);
@@ -167,28 +233,28 @@ void Testing::Test()
 void info_motor1()
 {
 	uint8_t result_1 = driver.test_connection();
-	if (result_1)
+	if (result_1 == 1)
 	{
-		Serial.println(F("failed motor 1 connection"));
+		Serial.println(F("M1 Fail"));
 		Serial.println(result_1);
 	}
 	if (result_1 == 0)
 	{
-		Serial.println(F("motor1 conectted"));
+		Serial.println(F("M1 OK"));
 	}
 }
 
 void info_motor2()
 {
 	uint8_t result_2 = driver2.test_connection();
-	if (result_2)
+	if (result_2 == 1)
 	{
-		Serial.println(F("failed motor 2 connection"));
+		Serial.println(F("M2 Fail"));
 		Serial.println(result_2);
 	}
 	if (result_2 == 0)
 	{
-		Serial.println(F("motor 2 conectted"));
+		Serial.println(F("M2 OK"));
 	}
 }
 
