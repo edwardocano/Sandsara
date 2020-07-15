@@ -769,10 +769,10 @@ void goHomeSpiral(bool stop){
         halo.setThetaCurrent(halo.getCurrentAngle());
     }
     degreesToRotate = halo.getCurrentModule()/EVERY_MILIMITERS * 2*PI;
-    halo.setSpeed(15);
+    halo.setSpeed(SPEED_TO_CENTER);
     //degreesToRotate = 0;
     stopProgramChangeGlobal = stop;
-    movePolarTo(0, 0, 0, true);
+    movePolarTo(0, degreesToRotate, 0, true);
     stopProgramChangeGlobal = true;
     halo.setSpeed(romGetSpeedMotor());
 }
