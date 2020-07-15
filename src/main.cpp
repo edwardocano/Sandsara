@@ -59,6 +59,7 @@ CRGBPalette16 NO_SD_PALLETE;
 CRGBPalette16 UPTADATING_PALLETE;
 CRGBPalette16 CALIBRATING_PALLETE;
 CRGBPalette16 SDEMPTY_PALLETE;
+CRGBPalette256 customPallete;
 //====
 MoveSara halo;
 BlueSara haloBt;
@@ -91,6 +92,8 @@ int romGetSpeedMotor();
 int romSetPeriodLed(int );
 int romGetPeriodLed();
 int romSetBluetoothName(String );
+int romGetCustomPallete(CRGBPalette256 &);
+int romSetCustomPallete(uint8_t* ,uint8_t* , uint8_t* ,uint8_t*, int);
 String romGetBluetoothName();
 void findUpdate();
 extern int programming(String );
@@ -103,6 +106,8 @@ void removeIndex(int [], int , int );
 int runFile(String );
 void goHomeSpiral(bool = true);
 void bluetoothThread(void* );
+int romSetIncrementIndexPallete(bool );
+bool romGetIncrementIndexPallete();
 //====
 //====Variable leds====
 #define LED_PIN     32
@@ -153,7 +158,11 @@ DEFINE_GRADIENT_PALETTE( breathOrange ) {
         0,     0,   0,  0,   //black
         128,   255, 60,  0,   //orange
         255,   0,   0,  0};                    
-//====        
+//====
+//====Paleta dinamica====
+byte bytes[12];
+//====
+
 void setup()
 {
     delay(3000); // power-up safety delay
@@ -165,6 +174,19 @@ void setup()
     UPTADATING_PALLETE = breathYellow;
     CALIBRATING_PALLETE = breathBlue;
     SDEMPTY_PALLETE = breathOrange;
+    bytes[0] = 0;
+    bytes[1] = 255;
+    bytes[2] = 0;
+    bytes[3] = 0;
+    bytes[4] = 125;
+    bytes[5] = 0;
+    bytes[6] = 255;
+    bytes[7] = 0;
+    bytes[8] = 255;
+    bytes[9] = 0;
+    bytes[10] = 0;
+    bytes[11] = 255;
+    customPallete.loadDynamicGradientPalette(bytes);
     //====
     //====Inicializacion de SD====
     EEPROM.begin(EEPROM_SIZE);
@@ -1260,7 +1282,94 @@ bool romGetCeroZone(){
     }
     return false;
 }
+/**
+ * @brief guarda la variable incrementIndexPallete.
+ * @param incrementIndex es el valor que se va a guardar.
+ * @return un codigo de error
+ */
+int romSetIncrementIndexPallete(bool incrementIndex){
+    if (incrementIndex){
+        EEPROM.write(ADDRESSCUSTOMPALLETE_INCREMENTINDEX, 255);
+    }
+    else{
+        EEPROM.write(ADDRESSCUSTOMPALLETE_INCREMENTINDEX, 0);
+    }
+    EEPROM.commit();
+    return 0;
+}
+/**
+ * @brief guarda la variable incrementIndexPallete.
+ * @return true o false dependiendo lo que haya guardado en la memoria.
+ */
+bool romGetIncrementIndexPallete(){
+    uint8_t var = EEPROM.read(ADDRESSCUSTOMPALLETE_INCREMENTINDEX);
+    if (var > 0){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+/**
+ * @brief guarda una custom pallete en la memoria ROM.
+ * @param positions es la posicion del color en la paleta de colores va de 0 a 255.
+ * @param red es un array que contiene los valores de Red de las posiciones en la paleta de colores.
+ * @param green es un array que contiene los valores de green de las posiciones en la paleta de colores.
+ * @param blue es un array que contiene los valores de blue de las posiciones en la paleta de colores.
+ * @return un codigo de error que puede siginificar lo siguiente
+ * 0, guardo la nueva pallete correctamente
+ * -1, el numero de colores no es correcto.
+ */
+int romSetCustomPallete(uint8_t* positions ,uint8_t* red , uint8_t* green, uint8_t* blue, int numberOfColors){
+    if (numberOfColors > 16 || numberOfColors < 1){
+        return -1;
+    }
+    EEPROM.write(ADDRESSCUSTOMPALLETE_COLORS, numberOfColors);
+    for (int i = 0; i < numberOfColors; i++){
+        EEPROM.write(ADDRESSCUSTOMPALLETE_POSITIONS + i, *(positions + i));
+        EEPROM.write(ADDRESSCUSTOMPALLETE_RED + i, *(red + 1));
+        EEPROM.write(ADDRESSCUSTOMPALLETE_GREEN + i, *(green + 1));
+        EEPROM.write(ADDRESSCUSTOMPALLETE_BLUE + i, *(blue + 1));
+    }
+    EEPROM.commit();
+    return 0;
+}
 
+/**
+ * @brief guarda una custom pallete en la memoria ROM.
+ * @param positions es la posicion del color en la paleta de colores va de 0 a 255.
+ * @param red es un array que contiene los valores de Red de las posiciones en la paleta de colores.
+ * @param green es un array que contiene los valores de green de las posiciones en la paleta de colores.
+ * @param blue es un array que contiene los valores de blue de las posiciones en la paleta de colores.
+ * @return un codigo de error que puede significar lo siguiente.
+ * 0, todo salio normal.
+ * -1, no habia un valor valido en ADDRESSCUSTOMPALLETE_COLORS y regreso un palleta predefinida.
+ */
+int romGetCustomPallete(CRGBPalette256 &pallete){
+    uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
+    if (numberOfColors > 16 || numberOfColors < 1){
+        uint8_t bytes[8];
+        bytes[0] = 0;
+        bytes[1] = 255;
+        bytes[2] = 0;
+        bytes[3] = 0;
+        bytes[4] = 255;
+        bytes[5] = 0;
+        bytes[6] = 255;
+        bytes[7] = 0;
+        customPallete.loadDynamicGradientPalette(bytes);
+        return -1;
+    }
+    uint8_t newPallete[4*numberOfColors];
+    for (int i = 0; i < numberOfColors; i++){
+        newPallete[i*4 + 0] = EEPROM.read(ADDRESSCUSTOMPALLETE_POSITIONS + i);
+        newPallete[i*4 + 1] = EEPROM.read(ADDRESSCUSTOMPALLETE_RED + i);
+        newPallete[i*4 + 2] = EEPROM.read(ADDRESSCUSTOMPALLETE_GREEN + i);
+        newPallete[i*4 + 3] = EEPROM.read(ADDRESSCUSTOMPALLETE_BLUE + i);
+    }
+    pallete.loadDynamicGradientPalette(newPallete);
+    return 0;
+}
 //=======================================Leds========================================
 //===================================================================================
 //====================Libreria fastled==========================
@@ -1298,22 +1407,25 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
 
 void changePalette(int pallet)
 {
-    if     ( pallet == 0)  { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
-    else if( pallet == 1)   { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;           incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
-    else if( pallet == 2)   { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
-    else if( pallet == 3)   { SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
-    else if( pallet == 4)   { SetupTotallyRandomPalette();              currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
-    else if( pallet == 5)   { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND;           incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
-    else if( pallet == 6)   { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
-    else if( pallet == 7)   { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
-    else if( pallet == 8)   { currentPalette = PartyColors_p;           currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
-    else if( pallet == 9)   { currentPalette = myRedWhiteBluePalette_p; currentBlending = NOBLEND;           incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
-    else if( pallet == 10)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
-    else if( pallet == CODE_NOSD_PALLETE    )     { currentPalette = NO_SD_PALLETE;           currentBlending = LINEARBLEND;       incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;    }
-    else if( pallet == CODE_UPDATING_PALLETE)     { currentPalette = UPTADATING_PALLETE;      currentBlending = LINEARBLEND;       incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;    }
-    else if( pallet == CODE_CALIBRATING_PALLETE)  { currentPalette = CALIBRATING_PALLETE;     currentBlending = LINEARBLEND;       incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;    }
-    else if( pallet == CODE_SDEMPTY_PALLETE)  { currentPalette = SDEMPTY_PALLETE;     currentBlending = LINEARBLEND;       incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;    }
-    else                    { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;       incrementIndexGlobal = true;   delayLeds = romGetPeriodLed(); }
+    incrementIndexGlobal = romGetIncrementIndexPallete();
+    delayLeds = romGetPeriodLed();
+    if     ( pallet == 0)  { currentPalette = RainbowColors_p;          currentBlending = LINEARBLEND;}
+    else if( pallet == 1)   { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;}
+    else if( pallet == 2)   { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND;}
+    else if( pallet == 3)   { SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND;}
+    else if( pallet == 4)   { SetupTotallyRandomPalette();              currentBlending = LINEARBLEND;}
+    else if( pallet == 5)   { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND;}
+    else if( pallet == 6)   { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND;}
+    else if( pallet == 7)   { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND;}
+    else if( pallet == 8)   { currentPalette = PartyColors_p;           currentBlending = LINEARBLEND;}
+    else if( pallet == 9)   { currentPalette = myRedWhiteBluePalette_p; currentBlending = NOBLEND;}
+    else if( pallet == 10)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND;}
+    else if( pallet == 11)  { romGetCustomPallete(currentPalette);      currentBlending = LINEARBLEND;}
+    else if( pallet == CODE_NOSD_PALLETE    )     { currentPalette = NO_SD_PALLETE;           incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;}
+    else if( pallet == CODE_UPDATING_PALLETE)     { currentPalette = UPTADATING_PALLETE;      incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;}
+    else if( pallet == CODE_CALIBRATING_PALLETE)  { currentPalette = CALIBRATING_PALLETE;     incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;}
+    else if( pallet == CODE_SDEMPTY_PALLETE)      { currentPalette = SDEMPTY_PALLETE;         incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;}
+    else   { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;}
 }
 
 // This function fills the palette with totally random colors.
@@ -1408,6 +1520,12 @@ void ledsFunc( void * pvParameters ){
             vTaskDelay(2000);
 
         }*/
+        currentPalette = customPallete;
+        FillLEDsFromPaletteColors(startIndex);
+        FastLED.show();
+        startIndex += 1;
+        vTaskDelay(delayLeds);
+        continue;
         if (ledsOffGlobal){
             FastLED.clear();
             FastLED.show();
@@ -1419,8 +1537,8 @@ void ledsFunc( void * pvParameters ){
         FastLED.show();
         startIndex += 1;
         #ifdef DEBUGGIN_LED2
-                estado = !estado;
-                digitalWrite(2,estado);
+            estado = !estado;
+            digitalWrite(2,estado);
         #endif
         /*while (true)
         {
@@ -1564,4 +1682,5 @@ void removeIndex(int list[], int index, int elements){
         list[i] = list[i+1];
     }
 }
+
 
