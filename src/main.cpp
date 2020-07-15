@@ -50,6 +50,8 @@ int pListFileGlobal;
 bool changePositionList;
 bool changeProgram;
 bool stopProgramChangeGlobal = true;
+bool stop_boton;
+bool inter_calib = false;
 //====variables de estado====
 bool pauseModeGlobal = false;
 bool suspensionModeGlobal = false;
@@ -176,32 +178,6 @@ void setup()
 	{
 		haloTest.Test();	
 	}
-    ////////////////////////////////////////////
-    int cont_reset;
-    cont_reset = EEPROM.read(500);
-    Serial.println("Numero de reinicios");
-    Serial.println(cont_reset);
-    //delay(6000);
-    
-    if(EEPROM.read(500) == 255)
-    {
-        ////////////
-            EEPROM.write(500,0);
-            EEPROM.commit();
-            delay(1000);
-    /////////////////////
-    }
-    if(EEPROM.read(500) < 255)
-    {
-        cont_reset = EEPROM.read(500);
-        cont_reset = cont_reset + 1;
-
-        EEPROM.write(500,cont_reset);
-        EEPROM.commit();
-        delay(1000);
-    }
-    ////////////////////////////////////////////
-    
     //====Recuperar speedMotor====
     speedMotorGlobal = romGetSpeedMotor();
     if (speedMotorGlobal > MAX_SPEED_MOTOR || speedMotorGlobal < MIN_SPEED_MOTOR){
@@ -255,7 +231,7 @@ void setup()
     Serial.println("init func");
     haloCalib.init();
     Serial.println("start func");
-    //haloCalib.start();
+    haloCalib.start();
     Serial.println("Salio de start");
     pinMode(EN_PIN, OUTPUT);
     pinMode(EN_PIN2, OUTPUT);
@@ -749,10 +725,13 @@ int runFile(String fileName){
         movePolarTo(DISTANCIA_MAX, 0, 0, true);
     }
     else if (posisionCase == 0){
-        Serial.println("Se mandara a cero");
-        movePolarTo(0, 0, 0, true);
-        //haloCalib.verificacion_cal();
-    }
+		if (inter_calib == true)
+		{
+			Serial.println("Se mandara a cero");
+			movePolarTo(0, 0, 0, true);
+			haloCalib.verificacion_cal();
+		}
+	}
     #ifdef PROCESSING_SIMULATOR
         Serial.println("finished");
     #endif
@@ -790,10 +769,10 @@ void goHomeSpiral(bool stop){
         halo.setThetaCurrent(halo.getCurrentAngle());
     }
     degreesToRotate = halo.getCurrentModule()/EVERY_MILIMITERS * 2*PI;
-    halo.setSpeed(SPEED_TO_CENTER);
+    halo.setSpeed(15);
     //degreesToRotate = 0;
     stopProgramChangeGlobal = stop;
-    movePolarTo(0, degreesToRotate, 0, true);
+    movePolarTo(0, 0, 0, true);
     stopProgramChangeGlobal = true;
     halo.setSpeed(romGetSpeedMotor());
 }
