@@ -17,8 +17,8 @@ int p = 0;
 int motor_degrees = 0;
 int Speed = 5000;
 int value[100];
-int value2[600];
-int value2_r[600];
+int value2[500];
+int value2_r[500];
 int vect_prom[5];
 int vect_simi[5];
 int vect_max[5];
@@ -189,6 +189,7 @@ int CalibMotor::start()
 	int pas_hall1;
 	int pas_hall2;
 	int value2_f;
+	int cont_turn1 = 0;
 	flag = 0;
 
 	Flag_adjust_ini = Check_ini();
@@ -286,11 +287,12 @@ int CalibMotor::start()
 	{
 		digitalWrite(EN_PIN2, HIGH);
 		digitalWrite(DIR_PIN2, HIGH);
-
+        cont_turn1++;
 		if (analogRead(PIN_ProducType) > 4000)
 		{
-			if (digitalRead(DIAG_PIN) == 1)
+			if (digitalRead(DIAG_PIN) == 1 || cont_turn == 1480)
 			{
+				cont_turn1 = 0;
 				flag = 1;
 				//Back a little  first arm
 				digitalWrite(DIR_PIN, HIGH);
@@ -362,7 +364,7 @@ int CalibMotor::start()
 					cont_turn++;
 					if (analogRead(PIN_ProducType) > 4000)
 					{
-						if ((digitalRead(DIAG_PIN2) == 1 and avoid2 == 1) || cont_turn == 1280)
+						if ((digitalRead(DIAG_PIN2) == 1 and avoid2 == 1) || cont_turn == 1480)
 						{
 							cont_turn = 0;
 							flag = 1;
@@ -515,16 +517,18 @@ int CalibMotor::start()
 					if (analogRead(PIN_ProducType) > 4000)
 					{
 
-						if ((digitalRead(DIAG_PIN2) == 1 and avoid2 == 1) || cont_turn == 1280)
+						if ((digitalRead(DIAG_PIN2) == 1 and avoid2 == 1) || cont_turn == 1480)
 						{
 							cont_turn = 0;
 							flag = 1;
 							//secuencia donde el brazo se encuentra entre ambos picos//regresa main 30 grados, el otro gira 90, y ambos se mueven juntos.
 							//main arm 30 degree
 							delay(250);
+							digitalWrite(EN_PIN2, HIGH);
 							digitalWrite(DIR_PIN, HIGH);
 							move(540, 1, 5000);
 							//second arm 90 degree
+							digitalWrite(EN_PIN2, LOW);
 							digitalWrite(DIR_PIN2, LOW);
 							move(3200, 2, 2000);
 
@@ -765,11 +769,11 @@ void slow_Calibration_hall2()
 {
 	int value2_f;
 	digitalWrite(EN_PIN2, LOW);
-	for (int i = 0; i < 600; i++)
+	for (int i = 0; i < 500; i++)
 	{
 		value2[i] = -1;
 	}
-	for (int j = 0; j < 600; j++)
+	for (int j = 0; j < 500; j++)
 	{
 		value2_r[j] = -1;
 	}
@@ -795,8 +799,8 @@ void slow_Calibration_hall2()
 	int cont_t1 = 0;
 	int cont_t2 = 0;
 
-	digitalWrite(DIR_PIN2, LOW);
-	move(100, 2, 8000);
+	//digitalWrite(DIR_PIN2, LOW);
+	//move(100, 2, 8000);
 	digitalWrite(DIR_PIN2, HIGH);
 	for (int i = 0; i < 40; i++)
 	{
@@ -812,7 +816,7 @@ void slow_Calibration_hall2()
 			read_hall2 = meanFilter2.AddValue(read_hall2);
 		}
 	}
-	delay(1000);
+	//delay(1000);
 
 	digitalWrite(DIR_PIN2, HIGH);
 	for (int i = 0; i < 40; i++)
@@ -820,7 +824,7 @@ void slow_Calibration_hall2()
 		value2_f = meanFilter2.AddValue(analogRead(hall2));
 	}
 	read_hall2 = value2_f / 4;
-	for (int t = 0; t < 600; t++)
+	for (int t = 0; t < 500; t++)
 	{
 		for (int i = 0; i < 40; i++)
 		{
@@ -829,7 +833,7 @@ void slow_Calibration_hall2()
 		read_hall2 = value2_f / 4;
 		move(1, 2, 8000);
 
-		ind_2 = 599 - t;
+		ind_2 = 499 - t;
 		value2_r[ind_2] = read_hall2;
 		if (value2_r[ind_2] > max_hall2)
 		{
@@ -860,9 +864,9 @@ void slow_Calibration_hall2()
 			val_sens = meanFilter2.AddValue(read_hall2);
 		}
 	}
-	delay(1000);
+	//delay(1000);
 
-	while (k < 600)
+	while (k < 500)
 	{
 		move(1, 2, 8000);
 		for (int y = 0; y < 40; y++)
@@ -888,7 +892,7 @@ void slow_Calibration_hall2()
 	}
 
 	limit = maximum2 * 0.9;
-	k = 599;
+	k = 499;
 	while (k >= 0)
 	{
 		if (value2[k] > limit && Flag_ini == 0)
@@ -917,7 +921,7 @@ void slow_Calibration_hall2()
 	count_ini = 0;
 	count_fin = 0;
 
-	k = 599;
+	k = 499;
 	while (k >= 0)
 	{
 		if (value2_r[k] > limit && Flag_ini == 0)
@@ -968,9 +972,9 @@ void slow_Calibration_hall2()
 			read_hall2 = meanFilter2.AddValue(read_hall2);
 		}
 	}
-	delay(1000);
-	pas = half1 + 15;
-	move(pas, 2, 5000);
+	//delay(1000);
+	pas = half1 + 12;
+	move(pas, 2, 8000);
 }
 
 /**
@@ -1103,11 +1107,11 @@ void slow_Calibration_hall2_negative()
 {
 	int value2_f;
 	digitalWrite(EN_PIN2, LOW);
-	for (int i = 0; i < 600; i++)
+	for (int i = 0; i < 500; i++)
 	{
 		value2[i] = -1;
 	}
-	for (int j = 0; j < 600; j++)
+	for (int j = 0; j < 500; j++)
 	{
 		value2_r[j] = -1;
 	}
@@ -1133,8 +1137,8 @@ void slow_Calibration_hall2_negative()
 	int cont_t1 = 0;
 	int cont_t2 = 0;
 
-	digitalWrite(DIR_PIN2, LOW);
-	move(100, 2, 8000);
+	//digitalWrite(DIR_PIN2, LOW);
+	//move(100, 2, 8000);
 	digitalWrite(DIR_PIN2, HIGH);
 	for (int i = 0; i < 40; i++)
 	{
@@ -1150,7 +1154,7 @@ void slow_Calibration_hall2_negative()
 			read_hall2 = meanFilter2.AddValue(read_hall2);
 		}
 	}
-	delay(1000);
+	//delay(1000);
 
 	digitalWrite(DIR_PIN2, HIGH);
 	for (int i = 0; i < 40; i++)
@@ -1158,7 +1162,7 @@ void slow_Calibration_hall2_negative()
 		value2_f = meanFilter2.AddValue(analogRead(hall2));
 	}
 	read_hall2 = value2_f / 4;
-	for (int t = 0; t < 600; t++)
+	for (int t = 0; t < 500; t++)
 	{
 		for (int i = 0; i < 40; i++)
 		{
@@ -1167,7 +1171,7 @@ void slow_Calibration_hall2_negative()
 		read_hall2 = value2_f / 4;
 		move(1, 2, 8000);
 
-		ind_2 = 599 - t;
+		ind_2 = 499 - t;
 		value2_r[ind_2] = read_hall2;
 		if (value2_r[ind_2] < min_hall2)
 		{
@@ -1198,9 +1202,9 @@ void slow_Calibration_hall2_negative()
 			val_sens = meanFilter2.AddValue(read_hall2);
 		}
 	}
-	delay(1000);
+	//delay(1000);
 
-	while (k < 600)
+	while (k < 500)
 	{
 		move(1, 2, 8000);
 		for (int y = 0; y < 40; y++)
@@ -1227,7 +1231,7 @@ void slow_Calibration_hall2_negative()
 	}
 
 	limit = minimum2 + ((level_zero2 - minimum2) * 0.1);
-	k = 599;
+	k = 499;
 	while (k >= 0)
 	{
 		if (value2[k] < limit && Flag_ini == 0)
@@ -1256,7 +1260,7 @@ void slow_Calibration_hall2_negative()
 	count_ini = 0;
 	count_fin = 0;
 
-	k = 599;
+	k = 499;
 	while (k >= 0)
 	{
 		if (value2_r[k] < limit && Flag_ini == 0)
@@ -1307,8 +1311,8 @@ void slow_Calibration_hall2_negative()
 			read_hall2 = meanFilter2.AddValue(read_hall2);
 		}
 	}
-	delay(1000);
-	pas = half1 + 15;
+	//delay(1000);
+	pas = half1 + 12;
 	move(pas, 2, 8000);
 }
 
@@ -1907,37 +1911,39 @@ int zero_Hall1(void)
 	int flag_c = 0;
 	digitalWrite(DIR_PIN, LOW);
 	digitalWrite(DIR_PIN2, LOW);
-	normal_turn();
-	delay(500);
-	while (p < 300)
+	if (analogRead(PIN_ProducType) > 4000)
 	{
-		if (digitalRead(DIAG_PIN) == 1)
+		normal_turn();
+		delay(500);
+		while (p < 300)
+		{
+			if (digitalRead(DIAG_PIN) == 1)
+			{
+				flag = 1;
+				flag_c = 1;
+				//Back a little  first arm
+				digitalWrite(DIR_PIN, HIGH);
+				move(300, 1, 3000);
+
+				//Move second arm 90 degrees.
+				digitalWrite(EN_PIN, LOW);
+				digitalWrite(EN_PIN2, LOW);
+				digitalWrite(DIR_PIN2, LOW);
+				move(1600, 2, 2000);
+				p = 300;
+			}
+			p++;
+			delay(10);
+		}
+		if (flag_c == 0)
 		{
 			flag = 1;
-			flag_c = 1;
-			//Back a little  first arm
-			digitalWrite(DIR_PIN, HIGH);
-			move(300, 1, 3000);
-
-			//Move second arm 90 degrees.
 			digitalWrite(EN_PIN, LOW);
 			digitalWrite(EN_PIN2, LOW);
-			digitalWrite(DIR_PIN2, LOW);
-			move(1600, 2, 2000);
-			p = 300;
+			digitalWrite(DIR_PIN, HIGH);
+			move(800, 1, 2000);
 		}
-		p++;
-		delay(10);
 	}
-	if (flag_c == 0)
-	{
-		flag = 1;
-		digitalWrite(EN_PIN, LOW);
-		digitalWrite(EN_PIN2, LOW);
-		digitalWrite(DIR_PIN, HIGH);
-		move(800, 1, 2000);
-	}
-
 	flag = 1;
 	for (int x = 0; x < 5; x++)
 	{
@@ -2186,7 +2192,8 @@ int zero_Hall1(void)
 int zero_Hall2(void)
 {
 	flag = 1;
-	digitalWrite(EN_PIN, HIGH);
+	digitalWrite(EN_PIN, LOW);
+	digitalWrite(EN_PIN2, LOW);
 	int value_hall2;
 	int value_filt;
 	int min = 5000;
@@ -2198,33 +2205,39 @@ int zero_Hall2(void)
 	int p = 0;
 	int dif_ref;
 	int flag_c = 0;
-	flag = 3;
-	normal_turn();
-	delay(500);
-	while (p < 300)
+	
+
+	if (analogRead(PIN_ProducType) > 4000)
 	{
-		if (digitalRead(DIAG_PIN2) == 1)
+		digitalWrite(EN_PIN, HIGH);
+		flag = 3;
+		normal_turn();
+		delay(500);
+		while (p < 300)
+		{
+			if (digitalRead(DIAG_PIN2) == 1)
+			{
+				flag = 1;
+				flag_c = 1;
+				//Move second arm 90 degrees.
+				digitalWrite(EN_PIN, LOW);
+				digitalWrite(EN_PIN2, LOW);
+				digitalWrite(DIR_PIN2, HIGH);
+				move(1600, 2, 2000);
+				p = 300;
+			}
+			p++;
+			delay(10);
+		}
+		if (flag_c == 0)
 		{
 			flag = 1;
-			flag_c = 1;
 			//Move second arm 90 degrees.
 			digitalWrite(EN_PIN, LOW);
 			digitalWrite(EN_PIN2, LOW);
 			digitalWrite(DIR_PIN2, HIGH);
-			move(1600, 2, 2000);
-			p = 300;
+			move(800, 2, 2000);
 		}
-		p++;
-		delay(10);
-	}
-	if (flag_c == 0)
-	{
-		flag = 1;
-		//Move second arm 90 degrees.
-		digitalWrite(EN_PIN, LOW);
-		digitalWrite(EN_PIN2, LOW);
-		digitalWrite(DIR_PIN2, HIGH);
-		move(800, 2, 2000);
 	}
 	flag = 1;
 	for (int x = 0; x < 5; x++)
