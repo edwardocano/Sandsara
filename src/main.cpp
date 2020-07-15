@@ -50,8 +50,8 @@ int pListFileGlobal;
 bool changePositionList;
 bool changeProgram;
 bool stopProgramChangeGlobal = true;
-int dat_pin;
 bool stop_boton;
+bool inter_calib = false;
 //====variables de estado====
 bool pauseModeGlobal = false;
 bool suspensionModeGlobal = false;
@@ -164,32 +164,6 @@ void setup()
 	{
 		haloTest.Test();	
 	}
-    ////////////////////////////////////////////
-    int cont_reset;
-    cont_reset = EEPROM.read(500);
-    Serial.println("Numero de reinicios");
-    Serial.println(cont_reset);
-    delay(6000);
-    
-    if(EEPROM.read(500) == 255)
-    {
-        ////////////
-            EEPROM.write(500,0);
-            EEPROM.commit();
-            delay(1000);
-    /////////////////////
-    }
-    if(EEPROM.read(500) < 255)
-    {
-        cont_reset = EEPROM.read(500);
-        cont_reset = cont_reset + 1;
-
-        EEPROM.write(500,cont_reset);
-        EEPROM.commit();
-        delay(1000);
-    }
-    ////////////////////////////////////////////
-    
     //====Recuperar speedMotor====
     speedMotorGlobal = romGetSpeedMotor();
     if (speedMotorGlobal > MAX_SPEED_MOTOR || speedMotorGlobal < MIN_SPEED_MOTOR){
@@ -586,26 +560,6 @@ int runFile(String fileName){
     while (true)
     {
         //====comprobar si se desea cambiar de archivo====
-		///////////////////////
-		////////PRUEBA/////////
-		//if(analogRead(PIN_ProducType) > 4000)
-		dat_pin = analogRead(PIN_ProducType);
-	    if(dat_pin > 700 && dat_pin < 3500)
-		{
-			//Serial.println("Se mandara a cero");
-			Serial.println("Se activo pin de home");
-			Serial.println("home in runFile");
-            goHomeSpiral(false);
-			
-			int cont_reset;
-            cont_reset = EEPROM.read(500);
-            //Serial.println("Numero de reinicios");
-            //Serial.println(cont_reset);
-			delay(600000);
-			return 0;
-		}
-		//////////////////////
-		//////////////////////
         if (changePositionList){
             changePositionList = false;
             changeProgram = false;
@@ -708,10 +662,13 @@ int runFile(String fileName){
         movePolarTo(DISTANCIA_MAX, 0, 0, true);
     }
     else if (posisionCase == 0){
-        //Serial.println("Se mandara a cero");                       //recordar descomentar=-=======================================
-        //movePolarTo(0, 0, 0, true);
-        //haloCalib.verificacion_cal();
-    }
+		if (inter_calib == true)
+		{
+			Serial.println("Se mandara a cero");
+			movePolarTo(0, 0, 0, true);
+			haloCalib.verificacion_cal();
+		}
+	}
     #ifdef PROCESSING_SIMULATOR
         Serial.println("finished");
     #endif
@@ -792,17 +749,6 @@ int moveInterpolateTo(double x, double y, double distance)
         halo.moveTo(x_aux, y_aux);
         errorCode = haloBt.checkBlueTooth();
         executeCode(errorCode);
-		///////////////////////
-		////////PRUEBA/////////
-		//if(analogRead(PIN_ProducType) > 4000)
-		dat_pin = analogRead(PIN_ProducType);
-	    if((dat_pin > 700 && dat_pin < 3500) && stopProgramChangeGlobal)
-		{
-			Serial.println("home in moveinterpolate");
-			return 0;
-		}
-		//////////////////////
-		//////////////////////
     }
     halo.moveTo(x, y);
     return 0;
@@ -850,17 +796,6 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
             return 0;
         }
         //====
-		///////////////////////
-		////////PRUEBA/////////
-		//if(analogRead(PIN_ProducType) > 4000)
-		dat_pin = analogRead(PIN_ProducType);
-	    if((dat_pin > 700 && dat_pin < 3500) && stopProgramChangeGlobal)
-		{
-			Serial.println("home in movepolarto");
-			return 0;
-		}
-		//////////////////////
-		//////////////////////
         thetaAuxiliar = thetaCurrent + deltaTheta * double(i);
         zAuxliar = zCurrent + deltaZ * double(i);
         xAux = zAuxliar * cos(thetaAuxiliar);
