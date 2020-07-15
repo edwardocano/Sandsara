@@ -440,116 +440,21 @@ int CalibMotor::start()
 					Pole_sens1 = EEPROM.read(401);
 					Pole_sens2 = EEPROM.read(402);
 				}
-
 				if (Pole_sens1 == 1)
 				{
-					//if(Flag_adjust_ini == 1)
-					//{
 						slow_Calibration_hall1();
-					//}
-					/*
-					if(Flag_adjust_ini == 0)
-					{
-						L = EEPROM.read(415);
-						H = EEPROM.read(416);
-						pas_hall1 = (L << 8) | H;
-						digitalWrite(EN_PIN, LOW);
-						digitalWrite(DIR_PIN, LOW);
-						move(pas_hall1, 1, 5000);
-
-					}
-					*/
-					
 				}
 				if (Pole_sens1 == 0)
 				{
-					//if(Flag_adjust_ini == 1)
-					//{
 						slow_Calibration_hall1_negative();
-					//}
-					/*
-					if(Flag_adjust_ini == 0)
-					{
-						L = EEPROM.read(415);
-						H = EEPROM.read(416);
-						pas_hall1 = (L << 8) | H;
-						digitalWrite(EN_PIN, LOW);
-						digitalWrite(DIR_PIN, LOW);
-						move(pas_hall1, 1, 5000);
-					}
-					*/
 				}
 				if (Pole_sens2 == 1)
 				{
-					//digitalWrite(EN_PIN2, LOW);
-
-					//if(Flag_adjust_ini == 1)
-					//{
 						slow_Calibration_hall2();
-					//}
-					/*
-					if (Flag_adjust_ini == 0)
-					{
-						digitalWrite(DIR_PIN2, HIGH);
-						for (int i = 0; i < 40; i++)
-						{
-							value2_f = meanFilter2.AddValue(analogRead(hall2));
-						}
-						read_hall2 = value2_f / 4;
-						while (read_hall2 < max_hall2)
-						{
-							move(1, 2, 8000);
-							for (int y = 0; y < 40; y++)
-							{
-								read_hall2 = (analogRead(hall2)) / 4;
-								read_hall2 = meanFilter2.AddValue(read_hall2);
-							}
-						}
-						delay(1000);
-						L = EEPROM.read(417);
-						H = EEPROM.read(418);
-						pas_hall2 = (L << 8) | H;
-						
-						digitalWrite(DIR_PIN2, HIGH);
-						move(pas_hall2, 2, 5000);
-					}
-					*/
 				}
 				if (Pole_sens2 == 0)
 				{
-					//if(Flag_adjust_ini == 1)
-					//{
 						slow_Calibration_hall2_negative();
-					//}
-					/*
-					if(Flag_adjust_ini == 0)
-					{
-						digitalWrite(EN_PIN2, LOW);
-
-						digitalWrite(DIR_PIN2, HIGH);
-						for (int i = 0; i < 40; i++)
-						{
-							value2_f = meanFilter2.AddValue(analogRead(hall2));
-						}
-						read_hall2 = value2_f / 4;
-						while (read_hall2 < max_hall2)
-						{
-							move(1, 2, 8000);
-							for (int y = 0; y < 40; y++)
-							{
-								read_hall2 = (analogRead(hall2)) / 4;
-								read_hall2 = meanFilter2.AddValue(read_hall2);
-							}
-						}
-						delay(1000);
-						L = EEPROM.read(417);
-						H = EEPROM.read(418);
-						pas_hall2 = (L << 8) | H;
-						
-						digitalWrite(DIR_PIN2, HIGH);
-						move(pas_hall2, 2, 5000);
-					}
-					*/
 				}
 				driver.rms_current(500);
 				driver2.rms_current(500);
@@ -695,116 +600,19 @@ int CalibMotor::start()
 
 				if (Pole_sens1 == 1)
 				{
-					//if(Flag_adjust_ini == 1)
-					//{
 						slow_Calibration_hall1();
-					//}
-					/*
-					if(Flag_adjust_ini == 0)
-					{
-						L = EEPROM.read(415);
-						H = EEPROM.read(416);
-						pas_hall1 = (L << 8) | H;
-						digitalWrite(EN_PIN, LOW);
-						digitalWrite(DIR_PIN, LOW);
-						move(pas_hall1, 1, 8000);
-
-					}
-					*/
-					
 				}
 				if (Pole_sens1 == 0)
-				{
-					//if(Flag_adjust_ini == 1)
-					//{
+				{	
 						slow_Calibration_hall1_negative();
-					//}
-					/*
-					if(Flag_adjust_ini == 0)
-					{
-						L = EEPROM.read(415);
-						H = EEPROM.read(416);
-						pas_hall1 = (L << 8) | H;
-						digitalWrite(EN_PIN, LOW);
-						digitalWrite(DIR_PIN, LOW);
-						move(pas_hall1, 1, 8000);
-					}
-					*/
 				}
 				if (Pole_sens2 == 1)
 				{
-					//digitalWrite(EN_PIN2, LOW);
-					
-					//if(Flag_adjust_ini == 1)
-					//{
 						slow_Calibration_hall2();
-					//}
-					/*
-					if (Flag_adjust_ini == 0)
-					{
-						digitalWrite(DIR_PIN2, LOW);
-						move(100, 2, 8000);
-						digitalWrite(DIR_PIN2, HIGH);
-						for (int i = 0; i < 40; i++)
-						{
-							value2_f = meanFilter2.AddValue(analogRead(hall2));
-						}
-						read_hall2 = value2_f / 4;
-						while (read_hall2 < max_hall2)
-						{
-							move(1, 2, 8000);
-							for (int y = 0; y < 40; y++)
-							{
-								read_hall2 = (analogRead(hall2)) / 4;
-								read_hall2 = meanFilter2.AddValue(read_hall2);
-							}
-						}
-						delay(1000);
-						L = EEPROM.read(417);
-						H = EEPROM.read(418);
-						pas_hall2 = (L << 8) | H;
-						
-						digitalWrite(DIR_PIN2, HIGH);
-						move(pas_hall2, 2, 8000);
-					}
-					*/
 				}
 				if (Pole_sens2 == 0)
 				{
-					//if(Flag_adjust_ini == 1)
-					//{
 						slow_Calibration_hall2_negative();
-					//}
-					/*
-					if(Flag_adjust_ini == 0)
-					{
-						digitalWrite(EN_PIN2, LOW);
-                        digitalWrite(DIR_PIN2, LOW);
-						move(100, 2, 8000);
-						digitalWrite(DIR_PIN2, HIGH);
-						for (int i = 0; i < 40; i++)
-						{
-							value2_f = meanFilter2.AddValue(analogRead(hall2));
-						}
-						read_hall2 = value2_f / 4;
-						while (read_hall2 < max_hall2)
-						{
-							move(1, 2, 8000);
-							for (int y = 0; y < 40; y++)
-							{
-								read_hall2 = (analogRead(hall2)) / 4;
-								read_hall2 = meanFilter2.AddValue(read_hall2);
-							}
-						}
-						delay(1000);
-						L = EEPROM.read(417);
-						H = EEPROM.read(418);
-						pas_hall2 = (L << 8) | H;
-						
-						digitalWrite(DIR_PIN2, HIGH);
-						move(pas_hall2, 2, 8000);
-					}
-					*/
 				}
 				driver.rms_current(500);
 				driver2.rms_current(500);
@@ -838,6 +646,14 @@ void normal_turn()
  * @param steps_ini Almacena el numero de pasos para llegar al inicio del intervalo de busqueda.
  * @param steps_fin Almacena el numero de pasos para llegar al fin del intervalo de busqueda.
  * @param pas Esta variable almacena los pasos necesarios para posicionar el brazo 1 al centro del sensor hall.
+ * DESCRIPCION GENERAL 
+ * Inicia moviendo el brazo uno 80 pasos en sentido antihorario para salir por completo del rango del sensor
+ * Comienza a tomar mediciones del sensor en cada paso que avanza en sentido horario hasta llenar el vector value[]
+ * Durante el llenado del vector tambien se determina el valor maximo entre todos los elementos del  vector
+ * La grafica de los datos tiene forma gaussiana por lo cual se determina un limite del rango en cual se buscara el punto medio de la funcion,
+ *   dicho rango se establecio como los valores mayores al 90% del valor maximo encontrado.
+ * Se determinan los pasos correspondientes a el limite derecho y el limite izquierdo de la funcion
+ * Se calculan los pasos necesarios para llegar al punto medio del sensor
  */
 
 void slow_Calibration_hall1()
@@ -949,6 +765,17 @@ void slow_Calibration_hall1()
  * @param steps_ini Almacena el numero de pasos para llegar al inicio del intervalo de busqueda.
  * @param steps_fin Almacena el numero de pasos para llegar al fin del intervalo de busqueda.
  * @param pas Esta variable almacena los pasos necesarios para posicionar el brazo 2 al centro del sensor hall.
+ * DESCRIPCION GENERAL
+ * Inicia moviendose 100 pasos en sentido antihorario
+ * Regresa en sentido horario hasta que es detectado por el sensor
+ * Continua moviendose en sentido horario hasta completar 600 pasos,  en cada paso toma la medicion del sensor y este dato se almacena en el vector value2_r[]
+ * Regresa el brazo en sentido antihorario hasta que es detectado por el sensor
+ * Continua moviendose en sentido antihorario hasta completar 600 pasos, en cada paso toma la medicion del sensor y este dato se almacena en el vector value2[]
+ * La grafica de ambos vectores es de forma gaussiana por lo cual se determina un limite del rango de busqueda en ambas funciones,
+ * dicho rango se establecio como los valores mayores al 90% del valor maximo encontrado.
+ * Se determinan los pasos correspondientes a el limite derecho y el limite izquierdo de ambas funciones y se usa el limite derecho de la funcion dos
+ *  y el limite izquierdo de la funcion uno para encontrar el punto medio. 
+ * Se calculan los pasos necesarios para llegar al punto medio del sensor
  */
 
 void slow_Calibration_hall2()
@@ -1180,6 +1007,14 @@ void slow_Calibration_hall2()
  * @param steps_ini Almacena el numero de pasos para llegar al inicio del intervalo de busqueda.
  * @param steps_fin Almacena el numero de pasos para llegar al fin del intervalo de busqueda.
  * @param pas Esta variable almacena los pasos necesarios para posicionar el brazo 1 al centro del sensor hall.
+ * DESCRIPCION GENERAL 
+ * Inicia moviendo el brazo uno 80 pasos en sentido antihorario para salir por completo del rango del sensor
+ * Comienza a tomar mediciones del sensor en cada paso que avanza en sentido horario hasta llenar el vector value[]
+ * Durante el llenado del vector tambien se determina el valor maximo entre todos los elementos del  vector
+ * La grafica de los datos tiene forma gaussiana por lo cual se determina un limite del rango en cual se buscara el punto medio de la funcion,
+ *   dicho rango se establecio como los valores mayores al 90% del valor maximo encontrado.
+ * Se determinan los pasos correspondientes a el limite derecho y el limite izquierdo de la funcion
+ * Se calculan los pasos necesarios para llegar al punto medio del sensor
  */
 
 void slow_Calibration_hall1_negative()
@@ -1287,6 +1122,17 @@ void slow_Calibration_hall1_negative()
  * @param steps_ini Almacena el numero de pasos para llegar al inicio del intervalo de busqueda.
  * @param steps_fin Almacena el numero de pasos para llegar al fin del intervalo de busqueda.
  * @param pas Esta variable almacena los pasos necesarios para posicionar el brazo 2 al centro del sensor hall.
+ * DESCRIPCION GENERAL
+ * Inicia moviendose 100 pasos en sentido antihorario
+ * Regresa en sentido horario hasta que es detectado por el sensor
+ * Continua moviendose en sentido horario hasta completar 600 pasos,  en cada paso toma la medicion del sensor y este dato se almacena en el vector value2_r[]
+ * Regresa el brazo en sentido antihorario hasta que es detectado por el sensor
+ * Continua moviendose en sentido antihorario hasta completar 600 pasos, en cada paso toma la medicion del sensor y este dato se almacena en el vector value2[]
+ * La grafica de ambos vectores es de forma gaussiana por lo cual se determina un limite del rango de busqueda en ambas funciones,
+ * dicho rango se establecio como los valores mayores al 90% del valor maximo encontrado.
+ * Se determinan los pasos correspondientes a el limite derecho y el limite izquierdo de ambas funciones y se usa el limite derecho de la funcion dos
+ *  y el limite izquierdo de la funcion uno para encontrar el punto medio. 
+ * Se calculan los pasos necesarios para llegar al punto medio del sensor
  */
 
 void slow_Calibration_hall2_negative()
@@ -1547,6 +1393,16 @@ void move(int pasos, int motor_d, int Speed)
 /**
  * @brief Esta funcion se utiliza entre programas para verificar que la siguiente secuencia iniciara en el punto cero.
  * en este caso la funcion contempla solo al brazo 1 con la polaridad del iman positiva. 
+ * DESCRIPCION GENERAL
+ * En la primera condicion de esta funcion se determina si el brazo se encuentra fuera del rango del sensor
+ * En caso de entrar en esta condicion inicia una busqueda con rango maximo de 200 pasos en sentido horario
+ * Si no se encuentra nada en ese rango inicia una busqueda en sentido antihorario con un rango maximo de 400 pasos
+ * Si encuentra el sensor en la primera busqueda se activa una bandera para determinar que esta posicionado del lado izquierdo del sensor 
+ * posteriormente se mueve 100 pasos en sentido horario y regresa en sentido antihorario para posicionarse al inicio del sensor pero del lado derecho.
+ * Existe otro caso en el cual al iniciar la funcion el brazo ya se encuentra dentro del rango del sensor, en ese caso se mueve 100 pasos en sentido 
+ * horario para garantizar que sale del sensor y posteriormente regresa en sentido antihorario hasta que es detectado por el sensor posicionandose asi
+ * del lado derecho del sensor.
+ * Finalmente cuando ya esta posicionado al inicio del lado derecho del sensor realiza el proceso de slow calibration para centrarse correctamente.
  */
 
 void verif_cal_positiveb1(void)
@@ -1662,7 +1518,17 @@ void verif_cal_positiveb1(void)
 
 /**
  * @brief Esta funcion se utiliza entre programas para verificar que la siguiente secuencia iniciara en el punto cero.
- * en este caso la funcion contempla solo al brazo 2 con la polaridad del iman positiva. 
+ * en este caso la funcion contempla solo al brazo 2 con la polaridad del iman positiva.
+ * DESCRIPCION GENERAL
+ * En la primera condicion de esta funcion se determina si el brazo se encuentra fuera del rango del sensor
+ * En caso de entrar en esta condicion inicia una busqueda con rango maximo de 600 pasos en sentido antihorario
+ * Si no se encuentra nada en ese rango inicia una busqueda en sentido horario con un rango maximo de 1200 pasos
+ * Si encuentra el sensor en la primera busqueda se activa una bandera para determinar que esta posicionado del lado derecho del sensor 
+ * posteriormente se mueve 600 pasos en sentido antihorario y regresa en sentido horario para posicionarse al inicio del sensor pero del lado izquierdo.
+ * Existe otro caso en el cual al iniciar la funcion el brazo ya se encuentra dentro del rango del sensor, en ese caso se mueve 600 pasos en sentido 
+ * antihorario para garantizar que sale del sensor y posteriormente regresa en sentido horario hasta que es detectado por el sensor posicionandose asi
+ * del lado izquierdo del sensor.
+ * Finalmente cuando ya esta posicionado al inicio del lado izquierdo del sensor realiza el proceso de slow calibration para centrarse correctamente.
  */
 
 void verif_cal_positiveb2(void)
@@ -1677,8 +1543,8 @@ void verif_cal_positiveb2(void)
 	int Flag2_izq = 0;
 	int value1_f;
 	//go out from hall1
-	digitalWrite(DIR_PIN, HIGH);
-	digitalWrite(DIR_PIN2, HIGH);
+	digitalWrite(DIR_PIN, LOW);
+	digitalWrite(DIR_PIN2, LOW);
 
 	for (int i = 0; i < 40; i++)
 	{
@@ -1687,7 +1553,7 @@ void verif_cal_positiveb2(void)
 	read_hall2 = value1_f / 4;
 	if (read_hall2 < max_hall2)
 	{
-		while (busq2 < 500)
+		while (busq2 < 600)
 		{
 			//move(1,1,5000);
 			move(1, 2, 5000);
@@ -1701,7 +1567,7 @@ void verif_cal_positiveb2(void)
 
 			if (read_hall2 > max_hall2)
 			{
-				busq2 = 500;
+				busq2 = 600;
 				Flag2_b = 1;
 				Flag2_izq = 1;
 			}
@@ -1710,8 +1576,8 @@ void verif_cal_positiveb2(void)
 		{
 			busq2 = 0;
 			//digitalWrite(DIR_PIN , LOW);
-			digitalWrite(DIR_PIN2, LOW);
-			while (busq2 < 1000)
+			digitalWrite(DIR_PIN2, HIGH);
+			while (busq2 < 1200)
 			{
 				//move(1,1,5000);
 				move(1, 2, 5000);
@@ -1723,15 +1589,15 @@ void verif_cal_positiveb2(void)
 				read_hall2 = value2_f / 4;
 				if (read_hall2 > max_hall2)
 				{
-					busq2 = 1000;
+					busq2 = 1200;
 					Flag2_der = 1;
 				}
 			}
 		}
 		if (Flag2_izq == 1)
 		{
-			move(500, 2, 5000);
-			digitalWrite(DIR_PIN2, LOW);
+			move(600, 2, 5000);
+			digitalWrite(DIR_PIN2, HIGH);
 			for (int i = 0; i < 40; i++)
 			{
 				value2_f = meanFilter2.AddValue(analogRead(hall2));
@@ -1752,9 +1618,9 @@ void verif_cal_positiveb2(void)
 	{
 		if (Flag2_der == 0 && Flag2_izq == 0)
 		{
-			digitalWrite(DIR_PIN2, HIGH);
-			move(500, 1, 5000);
 			digitalWrite(DIR_PIN2, LOW);
+			move(600, 1, 5000);
+			digitalWrite(DIR_PIN2, HIGH);
 			for (int i = 0; i < 40; i++)
 			{
 				value2_f = meanFilter2.AddValue(analogRead(hall2));
@@ -1776,9 +1642,20 @@ void verif_cal_positiveb2(void)
 	slow_Calibration_hall2();
 	delay(5000);
 }
+
 /**
  * @brief Esta funcion se utiliza entre programas para verificar que la siguiente secuencia iniciara en el punto cero.
  * en este caso la funcion contempla solo al brazo 1 con la polaridad del iman negativa. 
+ * DESCRIPCION GENERAL
+ * En la primera condicion de esta funcion se determina si el brazo se encuentra fuera del rango del sensor
+ * En caso de entrar en esta condicion inicia una busqueda con rango maximo de 200 pasos en sentido horario
+ * Si no se encuentra nada en ese rango inicia una busqueda en sentido antihorario con un rango maximo de 400 pasos
+ * Si encuentra el sensor en la primera busqueda se activa una bandera para determinar que esta posicionado del lado izquierdo del sensor 
+ * posteriormente se mueve 100 pasos en sentido horario y regresa en sentido antihorario para posicionarse al inicio del sensor pero del lado derecho.
+ * Existe otro caso en el cual al iniciar la funcion el brazo ya se encuentra dentro del rango del sensor, en ese caso se mueve 100 pasos en sentido 
+ * horario para garantizar que sale del sensor y posteriormente regresa en sentido antihorario hasta que es detectado por el sensor posicionandose asi
+ * del lado derecho del sensor.
+ * Finalmente cuando ya esta posicionado al inicio del lado izquierdo del sensor realiza el proceso de slow calibration para centrarse correctamente.
  */
 
 void verif_cal_negativeb1(void)
@@ -1894,7 +1771,17 @@ void verif_cal_negativeb1(void)
 
 /**
  * @brief Esta funcion se utiliza entre programas para verificar que la siguiente secuencia iniciara en el punto cero.
- * en este caso la funcion contempla solo al brazo 2 con la polaridad del iman negativa. 
+ * en este caso la funcion contempla solo al brazo 2 con la polaridad del iman negativa.
+ * DESCRIPCION GENERAL
+ * En la primera condicion de esta funcion se determina si el brazo se encuentra fuera del rango del sensor
+ * En caso de entrar en esta condicion inicia una busqueda con rango maximo de 600 pasos en sentido antihorario
+ * Si no se encuentra nada en ese rango inicia una busqueda en sentido horario con un rango maximo de 1200 pasos
+ * Si encuentra el sensor en la primera busqueda se activa una bandera para determinar que esta posicionado del lado derecho del sensor 
+ * posteriormente se mueve 600 pasos en sentido antihorario y regresa en sentido horario para posicionarse al inicio del sensor pero del lado izquierdo.
+ * Existe otro caso en el cual al iniciar la funcion el brazo ya se encuentra dentro del rango del sensor, en ese caso se mueve 600 pasos en sentido 
+ * antihorario para garantizar que sale del sensor y posteriormente regresa en sentido horario hasta que es detectado por el sensor posicionandose asi
+ * del lado izquierdo del sensor.
+ * Finalmente cuando ya esta posicionado al inicio del lado izquierdo del sensor realiza el proceso de slow calibration para centrarse correctamente. 
  */
 
 void verif_cal_negativeb2(void)
@@ -1909,8 +1796,8 @@ void verif_cal_negativeb2(void)
 	int Flag2_izq = 0;
 	int value1_f;
 	//go out from hall1
-	digitalWrite(DIR_PIN, HIGH);
-	digitalWrite(DIR_PIN2, HIGH);
+	digitalWrite(DIR_PIN, LOW);
+	digitalWrite(DIR_PIN2, LOW);
 
 	for (int i = 0; i < 40; i++)
 	{
@@ -1919,7 +1806,7 @@ void verif_cal_negativeb2(void)
 	read_hall2 = value1_f / 4;
 	if (read_hall2 > min_hall2)
 	{
-		while (busq2 < 500)
+		while (busq2 < 600)
 		{
 			//move(1,1,5000);
 			move(1, 2, 5000);
@@ -1933,7 +1820,7 @@ void verif_cal_negativeb2(void)
 
 			if (read_hall2 < min_hall2)
 			{
-				busq2 = 500;
+				busq2 = 600;
 				Flag2_b = 1;
 				Flag2_izq = 1;
 			}
@@ -1942,8 +1829,8 @@ void verif_cal_negativeb2(void)
 		{
 			busq2 = 0;
 			//digitalWrite(DIR_PIN , LOW);
-			digitalWrite(DIR_PIN2, LOW);
-			while (busq2 < 1000)
+			digitalWrite(DIR_PIN2, HIGH);
+			while (busq2 < 1200)
 			{
 				//move(1,1,5000);
 				move(1, 2, 5000);
@@ -1955,15 +1842,15 @@ void verif_cal_negativeb2(void)
 				read_hall2 = value2_f / 4;
 				if (read_hall2 < min_hall2)
 				{
-					busq2 = 1000;
+					busq2 = 1200;
 					Flag2_der = 1;
 				}
 			}
 		}
 		if (Flag2_izq == 1)
 		{
-			move(500, 2, 5000);
-			digitalWrite(DIR_PIN2, LOW);
+			move(600, 2, 5000);
+			digitalWrite(DIR_PIN2, HIGH);
 			for (int i = 0; i < 40; i++)
 			{
 				value2_f = meanFilter2.AddValue(analogRead(hall2));
@@ -1984,9 +1871,9 @@ void verif_cal_negativeb2(void)
 	{
 		if (Flag2_der == 0 && Flag2_izq == 0)
 		{
-			digitalWrite(DIR_PIN2, HIGH);
-			move(500, 2, 5000);
 			digitalWrite(DIR_PIN2, LOW);
+			move(600, 2, 5000);
+			digitalWrite(DIR_PIN2, HIGH);
 			for (int i = 0; i < 40; i++)
 			{
 				value2_f = meanFilter2.AddValue(analogRead(hall2));
@@ -2042,6 +1929,18 @@ void CalibMotor::verificacion_cal()
  * @brief Esta funcion determina el nivel de referencia a partir del cual se considera la deteccion de campo magnetico.
  * @param level_zero1 esta variable global almacena el nivel de referencia para el sensor Hall 1.
  * @return Retorna un 1 si el calculo del nivel de referencia se obtuvo correctamente, en caso contrario retorna un 0 para repetir de proceso de busqueda del nivel de referencia.
+ * DESCRIPCION GENERAL
+ * Esta funcion inicia moviendo el brazo en sentido antihorario usando la funcion normal_turn y sensando el DIAG_PIN en caso de que el brazo colisione,
+ * si colisiona el brazo 1 regresa 300 pasos y el brazo 2 baja a 90 grados para evitar la colision.
+ * Si el brazo logra finalizar el primer movimiento sin colisionar regresa 800 pasos e inicia el algoritmo para determinar el nivel cero del sensor.
+ * Se toman 5 muestras en angulos distintos, la primera muestra se toma desde donde quedo posicionado el brazo, posteriormente se mueve 10 grados en sentido horario para tomar
+ * la segunda muestra, se mueve 10 grados en sentido horario para la tercera medicion, regresa 30 grados en sentido antihorario para la cuarta medicion y avanza 10 grados mas
+ * para tomar la quita medicion.
+ * En cada una de las 5 muestras se toman 5 mediciones filtradas de las cuales se obtienen el valor maximo, el valor minimo, el valor promedio y un valor al que se le determino 
+ * como valor similitud ya que es comparado con cada promedio de las 5 muestras tomadas a diferentes algulos y se almacena el contador de cuantos valores son similares al de la 
+ * muestra analizada.
+ * Finalmente se determina que si 3 muestras o mas son similares se ha hallado el valor cero del sensor el cual se almacena en una variable global y se retorna un 1 para 
+ * indicar que no es necesario repetir el procedimiento.
  */
 
 int zero_Hall1(void)
@@ -2326,6 +2225,18 @@ int zero_Hall1(void)
  * @brief Esta funcion determina el nivel de referencia a partir del cual se considera la deteccion de campo magnetico.
  * @param level_zero2 esta variable global almacena el nivel de referencia para el sensor Hall 2.
  * @return Retorna un 1 si el calculo del nivel de referencia se obtuvo correctamente, en caso contrario retorna un 0 para repetir de proceso de busqueda del nivel de referencia.
+ * DESCRIPCION GENERAL
+ * Esta funcion inicia moviendo el brazo en sentido antihorario usando la funcion normal_turn y sensando el DIAG_PIN en caso de que el brazo colisione,
+ * si colisiona el brazo 1 regresa 300 pasos y el brazo 2 baja a 90 grados para evitar la colision.
+ * Si el brazo logra finalizar el primer movimiento sin colisionar regresa 800 pasos e inicia el algoritmo para determinar el nivel cero del sensor.
+ * Se toman 5 muestras en angulos distintos, la primera muestra se toma desde donde quedo posicionado el brazo, posteriormente se mueve 10 grados en sentido horario para tomar
+ * la segunda muestra, se mueve 10 grados en sentido horario para la tercera medicion, regresa 30 grados en sentido antihorario para la cuarta medicion y avanza 10 grados mas
+ * para tomar la quita medicion.
+ * En cada una de las 5 muestras se toman 5 mediciones filtradas de las cuales se obtienen el valor maximo, el valor minimo, el valor promedio y un valor al que se le determino 
+ * como valor similitud ya que es comparado con cada promedio de las 5 muestras tomadas a diferentes algulos y se almacena el contador de cuantos valores son similares al de la 
+ * muestra analizada.
+ * Finalmente se determina que si 3 muestras o mas son similares se ha hallado el valor cero del sensor el cual se almacena en una variable global y se retorna un 1 para 
+ * indicar que no es necesario repetir el procedimiento.
  */
 
 int zero_Hall2(void)
@@ -2601,6 +2512,13 @@ int zero_Hall2(void)
  * @brief Esta funcion determina el polo del campo magnetico correspondiente al iman que interacciona con el brazo 1.
  * @param vect_Pole1 Se almacenan un conjunto de datos correspondientes a un barrido del brazo1 por debajo del sensor de efecto Hall.
  * @return Retorna un 1 si se determina que el polo positivo y un 0 si el polo es negativo.
+ * DESCRIPCION GFENERAL
+ * Antes de entrar a esta funcion el brazo ya se encuentra posicionado correctamente al inicio del sensor
+ * Para determinar el polo se avanzan 100 pasos para que al retornar el movimiento el brazo termine en la mis ma posicion en la que inicio.
+ * Al retornar el sentido horario almacena el valor maximo y el valor minimo que haya obtenidode las mediciones tomadas en cada paso, este valor 
+ * se obtiene como un valor absoluto respecto del nivel cero, el cual para este punto del programa ya se conoce.
+ * finalmente se compara el valor maximo absoluto obtenido y el valor minimo absoluto obtenido, si el maximo absoluto es mayor que el minimo
+ * absoluto se determina que le polo es positivo, en cambio si sucede de forma contraria se determina que el polo es negativo.
  */
 
 int Pole1(void)
@@ -2665,6 +2583,13 @@ int Pole1(void)
  * @brief Esta funcion determina el polo del campo magnetico correspondiente al iman que interacciona con el brazo 2.
  * @param vect_Pole2 Se almacenan un conjunto de datos correspondientes a un barrido del brazo2 por debajo del sensor de efecto Hall.
  * @return Retorna un 1 si se determina que el polo positivo y un 0 si el polo es negativo.
+ * DESCRIPCION GFENERAL
+ * Antes de entrar a esta funcion el brazo ya se encuentra posicionado correctamente al inicio del sensor
+ * Para determinar el polo se avanzan 800 pasos para que al retornar el movimiento el brazo termine en la mis ma posicion en la que inicio.
+ * Al retornar el sentido horario almacena el valor maximo y el valor minimo que haya obtenidode las mediciones tomadas en cada paso, este valor 
+ * se obtiene como un valor absoluto respecto del nivel cero, el cual para este punto del programa ya se conoce.
+ * finalmente se compara el valor maximo absoluto obtenido y el valor minimo absoluto obtenido, si el maximo absoluto es mayor que el minimo
+ * absoluto se determina que le polo es positivo, en cambio si sucede de forma contraria se determina que el polo es negativo.
  */
 
 int Pole2(void)
