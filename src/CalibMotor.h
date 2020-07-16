@@ -16,7 +16,7 @@ class CalibMotor{
     private:
 
     public:
-        int init();
+        void init();
         int start();
 };
 

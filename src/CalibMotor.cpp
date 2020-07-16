@@ -89,7 +89,7 @@ void IRAM_ATTR onTimer()
 	}
 }
 
-int CalibMotor::init()
+void CalibMotor::init()
 {
 
 	SERIAL_PORT.begin(115200);
@@ -185,11 +185,7 @@ int CalibMotor::start()
 	////////////////////////////WITH STALLGUARD///////////////////////////
 	int value_f;
 	int mean;
-	int dif_ref;
 	int cont_turn = 0;
-	int pas_hall1;
-	int pas_hall2;
-	int value2_f;
 	int cont_turn1 = 0;
 	flag = 0;
 
@@ -675,9 +671,7 @@ void slow_Calibration_hall1()
 	}
 	int k = 0;
 	int val_sens;
-	int val_sens_filt;
 	int Flag_ini = 0;
-	int Flag_max = 0;
 	int Flag_fin = 0;
 	int steps_ini;
 	int steps_fin;
@@ -686,7 +680,6 @@ void slow_Calibration_hall1()
 	int limit;
 	int count_ini = 0;
 	int count_fin = 0;
-	int dif_ref;
 	int maximum2_r = 0;
 	int index_min1;
 	int index_min2;
@@ -845,7 +838,6 @@ void slow_Calibration_hall1()
 	half = (cont_t1 + cont_t2) / 2;
 
 	int half1;
-	int half2;
 
 	half1 = (half) / 2;
 
@@ -905,9 +897,7 @@ void slow_Calibration_hall2()
 	}
 	int k = 0;
 	int val_sens;
-	int val_sens_filt;
 	int Flag_ini = 0;
-	int Flag_max = 0;
 	int Flag_fin = 0;
 	int steps_ini;
 	int steps_fin;
@@ -916,7 +906,6 @@ void slow_Calibration_hall2()
 	int limit;
 	int count_ini = 0;
 	int count_fin = 0;
-	int dif_ref;
 	int maximum2_r = 0;
 	int index_min1;
 	int index_min2;
@@ -1077,7 +1066,6 @@ void slow_Calibration_hall2()
 	half = (cont_t1 + cont_t2) / 2;
 
 	int half1;
-	int half2;
 
 	half1 = (half) / 2;
 
@@ -1134,9 +1122,7 @@ void slow_Calibration_hall1_negative()
 	}
 	int k = 0;
 	int val_sens;
-	int val_sens_filt;
 	int Flag_ini = 0;
-	int Flag_max = 0;
 	int Flag_fin = 0;
 	int steps_ini;
 	int steps_fin;
@@ -1145,7 +1131,6 @@ void slow_Calibration_hall1_negative()
 	int limit;
 	int count_ini = 0;
 	int count_fin = 0;
-	int dif_ref;
 	int minimum2_r = 5000;
 	int index_min1;
 	int index_min2;
@@ -1305,7 +1290,6 @@ void slow_Calibration_hall1_negative()
 	half = (cont_t1 + cont_t2) / 2;
 
 	int half1;
-	int half2;
 
 	half1 = (half) / 2;
 
@@ -1365,9 +1349,7 @@ void slow_Calibration_hall2_negative()
 	}
 	int k = 0;
 	int val_sens;
-	int val_sens_filt;
 	int Flag_ini = 0;
-	int Flag_max = 0;
 	int Flag_fin = 0;
 	int steps_ini;
 	int steps_fin;
@@ -1376,7 +1358,6 @@ void slow_Calibration_hall2_negative()
 	int limit;
 	int count_ini = 0;
 	int count_fin = 0;
-	int dif_ref;
 	int minimum2_r = 5000;
 	int index_min1;
 	int index_min2;
@@ -1538,7 +1519,6 @@ void slow_Calibration_hall2_negative()
 	half = (cont_t1 + cont_t2) / 2;
 
 	int half1;
-	int half2;
 
 	half1 = (half) / 2;
 
@@ -2154,7 +2134,6 @@ int zero_Hall1(void)
 	int add_averages = 0;
 	int values_similares = 0;
 	int p = 0;
-	int dif_ref;
 	flag = 2;
 	int flag_c = 0;
 	digitalWrite(DIR_PIN, LOW);
@@ -2451,7 +2430,6 @@ int zero_Hall2(void)
 	int add_averages2 = 0;
 	int values_similares2 = 0;
 	int p = 0;
-	int dif_ref;
 	int flag_c = 0;
 	
 
