@@ -732,7 +732,7 @@ int moveInterpolateTo(double x, double y, double distance)
     delta_x = cos(alpha);
     delta_y = sin(alpha);
     int intervals = distance;
-	int dat_pin;
+	
     for (int i = 1; i <= intervals; i++)
     {
         //====comprobar si se desea cambiar de archivo====
