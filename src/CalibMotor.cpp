@@ -16,10 +16,10 @@ byte H;
 int p = 0;
 int motor_degrees = 0;
 int Speed = 5000;
-int value[100];
-int value_r[100];
-int value2[500];
-int value2_r[500];
+int value[80];
+int value_r[80];
+int value2[300];
+int value2_r[300];
 int vect_prom[5];
 int vect_simi[5];
 int vect_max[5];
@@ -89,7 +89,7 @@ void IRAM_ATTR onTimer()
 	}
 }
 
-int CalibMotor::init()
+void CalibMotor::init()
 {
 
 	SERIAL_PORT.begin(115200);
@@ -185,11 +185,7 @@ int CalibMotor::start()
 	////////////////////////////WITH STALLGUARD///////////////////////////
 	int value_f;
 	int mean;
-	int dif_ref;
 	int cont_turn = 0;
-	int pas_hall1;
-	int pas_hall2;
-	int value2_f;
 	int cont_turn1 = 0;
 	flag = 0;
 
@@ -665,19 +661,17 @@ void slow_Calibration_hall1()
 {
 	int value_f;
 	digitalWrite(EN_PIN, LOW);
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 80; i++)
 	{
 		value[i] = -1;
 	}
-	for (int j = 0; j < 100; j++)
+	for (int j = 0; j < 80; j++)
 	{
 		value_r[j] = -1;
 	}
 	int k = 0;
 	int val_sens;
-	int val_sens_filt;
 	int Flag_ini = 0;
-	int Flag_max = 0;
 	int Flag_fin = 0;
 	int steps_ini;
 	int steps_fin;
@@ -686,7 +680,6 @@ void slow_Calibration_hall1()
 	int limit;
 	int count_ini = 0;
 	int count_fin = 0;
-	int dif_ref;
 	int maximum2_r = 0;
 	int index_min1;
 	int index_min2;
@@ -718,7 +711,7 @@ void slow_Calibration_hall1()
 		value_f = meanFilter2.AddValue(analogRead(hall1));
 	}
 	read_hall1 = value_f / 4;
-	for (int t = 0; t < 100; t++)
+	for (int t = 0; t < 80; t++)
 	{
 		for (int i = 0; i < 40; i++)
 		{
@@ -727,7 +720,7 @@ void slow_Calibration_hall1()
 		read_hall1 = value_f / 4;
 		move(1, 1, 8000);
 
-		ind_2 = 99 - t;
+		ind_2 = 79 - t;
 		value_r[ind_2] = read_hall1;
 		if (value_r[ind_2] > max_hall1)
 		{
@@ -760,7 +753,7 @@ void slow_Calibration_hall1()
 	}
 	//delay(1000);
 
-	while (k < 100)
+	while (k < 80)
 	{
 		move(1, 1, 8000);
 		for (int y = 0; y < 40; y++)
@@ -786,7 +779,7 @@ void slow_Calibration_hall1()
 	}
 	//=======================================================
 	limit = maximum * 0.9;
-	k = 99;
+	k = 79;
 	while (k >= 0)
 	{
 		if (value[k] > limit && Flag_ini == 0)
@@ -815,7 +808,7 @@ void slow_Calibration_hall1()
 	count_ini = 0;
 	count_fin = 0;
 
-	k = 99;
+	k = 79;
 	while (k >= 0)
 	{
 		if (value_r[k] > limit && Flag_ini == 0)
@@ -845,7 +838,6 @@ void slow_Calibration_hall1()
 	half = (cont_t1 + cont_t2) / 2;
 
 	int half1;
-	int half2;
 
 	half1 = (half) / 2;
 
@@ -895,19 +887,17 @@ void slow_Calibration_hall2()
 {
 	int value2_f;
 	digitalWrite(EN_PIN2, LOW);
-	for (int i = 0; i < 500; i++)
+	for (int i = 0; i < 300; i++)
 	{
 		value2[i] = -1;
 	}
-	for (int j = 0; j < 500; j++)
+	for (int j = 0; j < 300; j++)
 	{
 		value2_r[j] = -1;
 	}
 	int k = 0;
 	int val_sens;
-	int val_sens_filt;
 	int Flag_ini = 0;
-	int Flag_max = 0;
 	int Flag_fin = 0;
 	int steps_ini;
 	int steps_fin;
@@ -916,7 +906,6 @@ void slow_Calibration_hall2()
 	int limit;
 	int count_ini = 0;
 	int count_fin = 0;
-	int dif_ref;
 	int maximum2_r = 0;
 	int index_min1;
 	int index_min2;
@@ -950,7 +939,7 @@ void slow_Calibration_hall2()
 		value2_f = meanFilter2.AddValue(analogRead(hall2));
 	}
 	read_hall2 = value2_f / 4;
-	for (int t = 0; t < 500; t++)
+	for (int t = 0; t < 300; t++)
 	{
 		for (int i = 0; i < 40; i++)
 		{
@@ -959,7 +948,7 @@ void slow_Calibration_hall2()
 		read_hall2 = value2_f / 4;
 		move(1, 2, 8000);
 
-		ind_2 = 499 - t;
+		ind_2 = 299 - t;
 		value2_r[ind_2] = read_hall2;
 		if (value2_r[ind_2] > max_hall2)
 		{
@@ -992,7 +981,7 @@ void slow_Calibration_hall2()
 	}
 	//delay(1000);
 
-	while (k < 500)
+	while (k < 300)
 	{
 		move(1, 2, 8000);
 		for (int y = 0; y < 40; y++)
@@ -1018,7 +1007,7 @@ void slow_Calibration_hall2()
 	}
 
 	limit = maximum2 * 0.9;
-	k = 499;
+	k = 299;
 	while (k >= 0)
 	{
 		if (value2[k] > limit && Flag_ini == 0)
@@ -1047,7 +1036,7 @@ void slow_Calibration_hall2()
 	count_ini = 0;
 	count_fin = 0;
 
-	k = 499;
+	k = 299;
 	while (k >= 0)
 	{
 		if (value2_r[k] > limit && Flag_ini == 0)
@@ -1077,7 +1066,6 @@ void slow_Calibration_hall2()
 	half = (cont_t1 + cont_t2) / 2;
 
 	int half1;
-	int half2;
 
 	half1 = (half) / 2;
 
@@ -1124,19 +1112,17 @@ void slow_Calibration_hall1_negative()
 {
 	int value1_f;
 	digitalWrite(EN_PIN, LOW);
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 80; i++)
 	{
 		value[i] = -1;
 	}
-	for (int j = 0; j < 100; j++)
+	for (int j = 0; j < 80; j++)
 	{
 		value_r[j] = -1;
 	}
 	int k = 0;
 	int val_sens;
-	int val_sens_filt;
 	int Flag_ini = 0;
-	int Flag_max = 0;
 	int Flag_fin = 0;
 	int steps_ini;
 	int steps_fin;
@@ -1145,7 +1131,6 @@ void slow_Calibration_hall1_negative()
 	int limit;
 	int count_ini = 0;
 	int count_fin = 0;
-	int dif_ref;
 	int minimum2_r = 5000;
 	int index_min1;
 	int index_min2;
@@ -1177,7 +1162,7 @@ void slow_Calibration_hall1_negative()
 		value1_f = meanFilter2.AddValue(analogRead(hall1));
 	}
 	read_hall1 = value1_f / 4;
-	for (int t = 0; t < 100; t++)
+	for (int t = 0; t < 80; t++)
 	{
 		for (int i = 0; i < 40; i++)
 		{
@@ -1186,7 +1171,7 @@ void slow_Calibration_hall1_negative()
 		read_hall1 = value1_f / 4;
 		move(1, 1, 8000);
 
-		ind_2 = 99 - t;
+		ind_2 = 79 - t;
 		value_r[ind_2] = read_hall1;
 		if (value_r[ind_2] < min_hall1)
 		{
@@ -1219,7 +1204,7 @@ void slow_Calibration_hall1_negative()
 	}
 	//delay(1000);
 
-	while (k < 100)
+	while (k < 80)
 	{
 		move(1, 1, 8000);
 		for (int y = 0; y < 40; y++)
@@ -1246,7 +1231,7 @@ void slow_Calibration_hall1_negative()
 
 	//=======================================================
 	limit = minimum + ((level_zero1 - minimum) * 0.1);
-	k = 99;
+	k = 79;
 	while (k >= 0)
 	{
 		if (value[k] < limit && Flag_ini == 0)
@@ -1275,7 +1260,7 @@ void slow_Calibration_hall1_negative()
 	count_ini = 0;
 	count_fin = 0;
 
-	k = 99;
+	k = 79;
 	while (k >= 0)
 	{
 		if (value_r[k] < limit && Flag_ini == 0)
@@ -1305,7 +1290,6 @@ void slow_Calibration_hall1_negative()
 	half = (cont_t1 + cont_t2) / 2;
 
 	int half1;
-	int half2;
 
 	half1 = (half) / 2;
 
@@ -1355,19 +1339,17 @@ void slow_Calibration_hall2_negative()
 {
 	int value2_f;
 	digitalWrite(EN_PIN2, LOW);
-	for (int i = 0; i < 500; i++)
+	for (int i = 0; i < 300; i++)
 	{
 		value2[i] = -1;
 	}
-	for (int j = 0; j < 500; j++)
+	for (int j = 0; j < 300; j++)
 	{
 		value2_r[j] = -1;
 	}
 	int k = 0;
 	int val_sens;
-	int val_sens_filt;
 	int Flag_ini = 0;
-	int Flag_max = 0;
 	int Flag_fin = 0;
 	int steps_ini;
 	int steps_fin;
@@ -1376,7 +1358,6 @@ void slow_Calibration_hall2_negative()
 	int limit;
 	int count_ini = 0;
 	int count_fin = 0;
-	int dif_ref;
 	int minimum2_r = 5000;
 	int index_min1;
 	int index_min2;
@@ -1410,7 +1391,7 @@ void slow_Calibration_hall2_negative()
 		value2_f = meanFilter2.AddValue(analogRead(hall2));
 	}
 	read_hall2 = value2_f / 4;
-	for (int t = 0; t < 500; t++)
+	for (int t = 0; t < 300; t++)
 	{
 		for (int i = 0; i < 40; i++)
 		{
@@ -1419,7 +1400,7 @@ void slow_Calibration_hall2_negative()
 		read_hall2 = value2_f / 4;
 		move(1, 2, 8000);
 
-		ind_2 = 499 - t;
+		ind_2 = 299 - t;
 		value2_r[ind_2] = read_hall2;
 		if (value2_r[ind_2] < min_hall2)
 		{
@@ -1452,7 +1433,7 @@ void slow_Calibration_hall2_negative()
 	}
 	//delay(1000);
 
-	while (k < 500)
+	while (k < 300)
 	{
 		move(1, 2, 8000);
 		for (int y = 0; y < 40; y++)
@@ -1479,7 +1460,7 @@ void slow_Calibration_hall2_negative()
 	}
 
 	limit = minimum2 + ((level_zero2 - minimum2) * 0.1);
-	k = 499;
+	k = 299;
 	while (k >= 0)
 	{
 		if (value2[k] < limit && Flag_ini == 0)
@@ -1508,7 +1489,7 @@ void slow_Calibration_hall2_negative()
 	count_ini = 0;
 	count_fin = 0;
 
-	k = 499;
+	k = 299;
 	while (k >= 0)
 	{
 		if (value2_r[k] < limit && Flag_ini == 0)
@@ -1538,7 +1519,6 @@ void slow_Calibration_hall2_negative()
 	half = (cont_t1 + cont_t2) / 2;
 
 	int half1;
-	int half2;
 
 	half1 = (half) / 2;
 
@@ -2154,7 +2134,6 @@ int zero_Hall1(void)
 	int add_averages = 0;
 	int values_similares = 0;
 	int p = 0;
-	int dif_ref;
 	flag = 2;
 	int flag_c = 0;
 	digitalWrite(DIR_PIN, LOW);
@@ -2451,7 +2430,6 @@ int zero_Hall2(void)
 	int add_averages2 = 0;
 	int values_similares2 = 0;
 	int p = 0;
-	int dif_ref;
 	int flag_c = 0;
 	
 
