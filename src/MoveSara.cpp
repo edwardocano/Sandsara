@@ -235,8 +235,8 @@ double MoveSara::getCurrentAngle()
  */
 int MoveSara::position(){
     double robotModule = getCurrentModule();
-    Serial.print("robotModule: ");
-    Serial.println(robotModule);
+    /*Serial.print("robotModule: ");
+    Serial.println(robotModule);*/
     int pos;
     if (robotModule >= l1 + l2 - 2){
         pos = 2;

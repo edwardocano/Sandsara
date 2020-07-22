@@ -8,6 +8,7 @@ extern bool sdRemove(String );
 extern bool sdExists(String );
 extern bool pauseModeGlobal;
 extern int romSetCustomPallete(uint8_t* ,uint8_t* , uint8_t* ,uint8_t* , int);
+extern int romSetIncrementIndexPallete(bool );
 //====
 //====
 uint8_t dataBt[BUFFER_BLUETOOTH];
@@ -148,6 +149,9 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * code66, actualizar firmware
  * code80, Reiniciar Sandsara
  */
+
+
+
 int BlueSara::checkBlueTooth()
 {
     int codeError = 0;
@@ -351,7 +355,7 @@ int BlueSara::checkBlueTooth()
                 return codeError;
             }
             ledMode = line.toInt();
-            if (ledMode < 0 || ledMode >10){
+            if (ledMode < MIN_PALLETE || ledMode > MAX_PALLETE){
                 writeBtln("error= -31");
                 return -31;
             }
@@ -592,8 +596,36 @@ int BlueSara::checkBlueTooth()
                 return -185;
             }
             //====
+            /*for (int i = 0; i < colors; i++){
+                Serial.print(positions[i]);
+                Serial.print("\t\t");
+                Serial.print(red[i]);
+                Serial.print("\t\t");
+                Serial.print(green[i]);
+                Serial.print("\t\t");
+                Serial.println(blue[i]);
+            }*/
             romSetCustomPallete(positions, red, green, blue, colors);
+            writeBtln("ok");
             return 180;
+        }
+        else if (line.indexOf("code19") >= 0){
+            writeBtln("request-incrementIndexStatus");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            if (line.toInt() > 0){
+                romSetIncrementIndexPallete(true);
+            }
+            else{
+                romSetIncrementIndexPallete(false);
+            }
+            writeBtln("ok");
+            return 190;
         }
         else if (line.indexOf("code66") >= 0)
         {

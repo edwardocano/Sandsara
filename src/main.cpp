@@ -108,15 +108,37 @@ void goHomeSpiral(bool = true);
 void bluetoothThread(void* );
 int romSetIncrementIndexPallete(bool );
 bool romGetIncrementIndexPallete();
+double linspace(double init,double stop, int amount,int index);
+int rgb2Interpolation(CRGBPalette256 &,uint8_t* matriz);
 //====
 //====Variable leds====
 #define LED_PIN     32
 #define NUM_LEDS    24
-#define BRIGHTNESS  64
+#define BRIGHTNESS  255
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
 CRGB leds[NUM_LEDS];
 //====
+
+uint8_t pruebapaleta[64] = {0,68,3,86,
+17,72,26,108,
+34,70,48,126,
+51,65,68,135,
+68,57,86,140,
+85,49,104,142,
+102,42,120,142,
+120,36,135,142,
+136,31,152,139,
+153,34,167,133,
+170,52,182,121,
+187,82,197,105,
+204,119,209,83,
+221,162,218,55,
+238,207,225,28,
+255,250,231,34};
+/*uint8_t pruebapaleta[64] = {0,0,0,0,
+127,127,127,127,
+255,255,255,255};*/
 
 CRGBPalette256 currentPalette;
 TBlendType    currentBlending;
@@ -162,6 +184,23 @@ DEFINE_GRADIENT_PALETTE( breathOrange ) {
 //====Paleta dinamica====
 byte bytes[12];
 //====
+const uint8_t gamma8[] = {
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,
+    1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,
+    2,  3,  3,  3,  3,  3,  3,  3,  4,  4,  4,  4,  4,  5,  5,  5,
+    5,  6,  6,  6,  6,  7,  7,  7,  7,  8,  8,  8,  9,  9,  9, 10,
+   10, 10, 11, 11, 11, 12, 12, 13, 13, 13, 14, 14, 15, 15, 16, 16,
+   17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 24, 24, 25,
+   25, 26, 27, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 35, 35, 36,
+   37, 38, 39, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 50,
+   51, 52, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 66, 67, 68,
+   69, 70, 72, 73, 74, 75, 77, 78, 79, 81, 82, 83, 85, 86, 87, 89,
+   90, 92, 93, 95, 96, 98, 99,101,102,104,105,107,109,110,112,114,
+  115,117,119,120,122,124,126,127,129,131,133,135,137,138,140,142,
+  144,146,148,150,152,154,156,158,160,162,164,167,169,171,173,175,
+  177,180,182,184,186,189,191,193,196,198,200,203,205,208,210,213,
+  215,218,220,223,225,228,231,233,236,239,241,244,247,249,252,255 };
 
 void setup()
 {
@@ -186,7 +225,43 @@ void setup()
     bytes[9] = 0;
     bytes[10] = 0;
     bytes[11] = 255;
-    customPallete.loadDynamicGradientPalette(bytes);
+    
+    //customPallete.loadDynamicGradientPalette(pruebapaleta);
+    rgb2Interpolation(customPallete,pruebapaleta);
+    for (int i = 0; i < 256; i++){
+        customPallete[i].red = gamma8[customPallete[i].red];
+        customPallete[i].green = gamma8[customPallete[i].green];
+        customPallete[i].blue = gamma8[customPallete[i].blue];
+    }
+
+    /*for (int i = 0; i < 256; i++){
+        customPallete[i].red = 2;
+        customPallete[i].green = 2;
+        customPallete[i].blue = 2;
+    }*/
+    /*for (int i = 0; i < 256; i++){
+        customPallete[i].red = pow(linspace(pow(255,2.2),pow(0,2.2),256, i), 1/2.2);
+        customPallete[i].green = pow(linspace(pow(0,2.2),pow(255,2.2),256, i), 1/2.2);
+        customPallete[i].blue = pow(linspace(pow(0,2.2),pow(0,2.2),256, i), 1/2.2);
+    }*/
+    /*for (int i = 0; i < 256; i++){
+        Serial.print("Red: ");
+        Serial.print(customPallete[i].red);
+        Serial.print("\t\tGreen: ");
+        Serial.print(customPallete[i].green);
+        Serial.print("\t\tBlue: ");
+        Serial.println(customPallete[i].blue);
+    }
+    
+    for (int i = 0; i < 256; i++){
+        Serial.print("Red: ");
+        Serial.print(customPallete[i].red);
+        Serial.print("\t\tGreen: ");
+        Serial.print(customPallete[i].green);
+        Serial.print("\t\tBlue: ");
+        Serial.println(customPallete[i].blue);
+    }*/
+    //delay(100000);
     //====
     //====Inicializacion de SD====
     EEPROM.begin(EEPROM_SIZE);
@@ -707,8 +782,8 @@ int runFile(String fileName){
         }
         if (working_status != 0)
         {
-            Serial.print("workingStatus= ");
-            Serial.println(working_status);
+            /*Serial.print("workingStatus= ");
+            Serial.println(working_status);*/
             break;
         }
         //====revisar bluetooth====
@@ -847,7 +922,6 @@ int moveInterpolateTo(double x, double y, double distance)
         }
         //====
         //====Comprobar si se pausa
-        //ledsFunc();
         x_aux += delta_x;
         y_aux += delta_y;
         halo.moveTo(x_aux, y_aux);
@@ -903,7 +977,6 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
         xAux = zAuxliar * cos(thetaAuxiliar);
         yAux = zAuxliar * sin(thetaAuxiliar);
         distance = halo.module(xAux, yAux, halo.x_current, halo.y_current);
-        //ledsFunc();
         if (distance > 1.1)
         {
             errorCode = moveInterpolateTo(xAux, yAux, distance);
@@ -1023,6 +1096,9 @@ void executeCode(int errorCode){
     else if (errorCode == 170){
         changeProgram = true;
         changePositionList = false;
+    }
+    else if (errorCode == 190){
+        incrementIndexGlobal = romGetIncrementIndexPallete();
     }
     else if (errorCode == 970){
         romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
@@ -1327,9 +1403,9 @@ int romSetCustomPallete(uint8_t* positions ,uint8_t* red , uint8_t* green, uint8
     EEPROM.write(ADDRESSCUSTOMPALLETE_COLORS, numberOfColors);
     for (int i = 0; i < numberOfColors; i++){
         EEPROM.write(ADDRESSCUSTOMPALLETE_POSITIONS + i, *(positions + i));
-        EEPROM.write(ADDRESSCUSTOMPALLETE_RED + i, *(red + 1));
-        EEPROM.write(ADDRESSCUSTOMPALLETE_GREEN + i, *(green + 1));
-        EEPROM.write(ADDRESSCUSTOMPALLETE_BLUE + i, *(blue + 1));
+        EEPROM.write(ADDRESSCUSTOMPALLETE_RED + i, *(red + i));
+        EEPROM.write(ADDRESSCUSTOMPALLETE_GREEN + i, *(green + i));
+        EEPROM.write(ADDRESSCUSTOMPALLETE_BLUE + i, *(blue + i));
     }
     EEPROM.commit();
     return 0;
@@ -1347,6 +1423,7 @@ int romSetCustomPallete(uint8_t* positions ,uint8_t* red , uint8_t* green, uint8
  */
 int romGetCustomPallete(CRGBPalette256 &pallete){
     uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
+    CRGBPalette256 palleteAuxiliar;
     if (numberOfColors > 16 || numberOfColors < 1){
         uint8_t bytes[8];
         bytes[0] = 0;
@@ -1357,7 +1434,8 @@ int romGetCustomPallete(CRGBPalette256 &pallete){
         bytes[5] = 0;
         bytes[6] = 255;
         bytes[7] = 0;
-        customPallete.loadDynamicGradientPalette(bytes);
+        palleteAuxiliar.loadDynamicGradientPalette(bytes);
+        pallete = palleteAuxiliar;
         return -1;
     }
     uint8_t newPallete[4*numberOfColors];
@@ -1367,7 +1445,15 @@ int romGetCustomPallete(CRGBPalette256 &pallete){
         newPallete[i*4 + 2] = EEPROM.read(ADDRESSCUSTOMPALLETE_GREEN + i);
         newPallete[i*4 + 3] = EEPROM.read(ADDRESSCUSTOMPALLETE_BLUE + i);
     }
-    pallete.loadDynamicGradientPalette(newPallete);
+    //pallete.loadDynamicGradientPalette(newPallete);
+    Serial.println("Se llamara rgb2 en romgetcustom");
+    rgb2Interpolation(palleteAuxiliar,newPallete);
+    for (int i = 0; i < 256; i++){
+        palleteAuxiliar[i].red = gamma8[palleteAuxiliar[i].red];
+        palleteAuxiliar[i].green = gamma8[palleteAuxiliar[i].green];
+        palleteAuxiliar[i].blue = gamma8[palleteAuxiliar[i].blue];
+    }
+    pallete = palleteAuxiliar;
     return 0;
 }
 //=======================================Leds========================================
@@ -1386,8 +1472,8 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
         Serial.print("\t");
         Serial.print(leds[i].green);
         Serial.print("\t");
-        Serial.println(leds[i].blue);*/
-        //delay(1000);
+        Serial.println(leds[i].blue);
+        delay(1000);*/
         if (incrementIndexGlobal){
             colorIndex =startIndex + float(i+1)*(255.0/float(NUM_LEDS));
             /*Serial.print("index= ");
@@ -1501,30 +1587,17 @@ const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
  * 
  */
 void ledsFunc( void * pvParameters ){
-#ifdef DEBUGGIN_LED2
-    pinMode(2,OUTPUT);
-    bool estado = true;
-#endif
     //====Configurar fastled====
     FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness( BRIGHTNESS );
     //====
     for(;;){
-        /*while(true)
-        {
-            for(int t = 0; t < 36; t++)
-            {
-                leds[t] = CRGB::White;
-            }
-            FastLED.show();
-            vTaskDelay(2000);
-
-        }*/
         currentPalette = customPallete;
         FillLEDsFromPaletteColors(startIndex);
         FastLED.show();
         startIndex += 1;
-        vTaskDelay(delayLeds);
+        //vTaskDelay(delayLeds);
+        FastLED.delay(delayLeds);
         continue;
         if (ledsOffGlobal){
             FastLED.clear();
@@ -1536,15 +1609,8 @@ void ledsFunc( void * pvParameters ){
         FillLEDsFromPaletteColors(startIndex);
         FastLED.show();
         startIndex += 1;
-        #ifdef DEBUGGIN_LED2
-            estado = !estado;
-            digitalWrite(2,estado);
-        #endif
-        /*while (true)
-        {
-            delay(1000);
-        }*/
-        vTaskDelay(delayLeds);
+        //vTaskDelay(delayLeds);
+        FastLED.delay(delayLeds);
     } 
 }
 
@@ -1683,4 +1749,50 @@ void removeIndex(int list[], int index, int elements){
     }
 }
 
+/**
+ * @brief realiza una interpolacion lineal entre el valor init y stop dividio en amount partes.
+ * @param init es el valor inicial de la interpolacion.
+ * @param stop es el valor final de la interpolacion.
+ * @param amount es la cantidad de divisiones que va a tener la linea.
+ * @param index es la posicion en las divisiones de la linea, el index 0 representa el valor init.
+ * @return el valor en la posicion index de la linea.
+ */
+double linspace(double init,double stop, int amount,int index){
+    return init + (stop - init)/(amount - 1) * (index);
+}
 
+/**
+ * 
+ */
+int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matriz){
+    if (*(matriz) != 0){
+        return -1;
+    }
+    int i = 0;
+    for (i = 0; i < 16; i++){
+        int index = 0;
+        for (int j = *(matriz + i*4); j < *(matriz + i*4 + 4); j++){
+            int amount = *(matriz + i*4 + 4) - *(matriz + i*4);
+            pallete[j].red = pow(linspace(pow(*(matriz + i*4 + 1),2.2),pow(*(matriz + i*4 + 1 + 4),2.2), amount, index), 1/2.2);
+            pallete[j].green = pow(linspace(pow(*(matriz + i*4 + 2),2.2),pow(*(matriz + i*4 + 2 + 4),2.2), amount, index), 1/2.2);
+            pallete[j].blue = pow(linspace(pow(*(matriz + i*4 + 3),2.2),pow(*(matriz + i*4 + 3 + 4),2.2), amount, index), 1/2.2);
+            index ++;
+        }
+        if (*(matriz + i*4 + 4) == 255){
+            break;
+        }
+    }
+    pallete[255].red = *(matriz + i*4 + 4 + 1);
+    pallete[255].green = *(matriz + i*4 + 4 + 2);
+    pallete[255].blue = *(matriz + i*4 + 4 + 3);
+
+    for (int i = 0; i < 256; i++){
+        Serial.print("Red: ");
+        Serial.print(pallete[i].red);
+        Serial.print("\t\tGreen: ");
+        Serial.print(pallete[i].green);
+        Serial.print("\t\tBlue: ");
+        Serial.println(pallete[i].blue);
+    }
+
+}
