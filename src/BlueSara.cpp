@@ -7,6 +7,8 @@ extern bool sdExists(String );
 extern bool sdRemove(String );
 extern bool sdExists(String );
 extern bool pauseModeGlobal;
+extern int romSetCustomPallete(uint8_t* ,uint8_t* , uint8_t* ,uint8_t* , int);
+extern int romSetIncrementIndexPallete(bool );
 //====
 //====
 uint8_t dataBt[BUFFER_BLUETOOTH];
@@ -17,6 +19,7 @@ int performUpdate(Stream &, size_t );
 int updateFromFS(SdFat &, String );
 int programming(String );
 void rebootEspWithReason(String );
+int stringToArray(String , uint8_t* , int );
 //====
 extern String romGetPlaylist();
 extern int romGetOrdenMode();
@@ -94,6 +97,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * 150, se solicita la lista de reproduccion completa.
  * 160, se solicita cambiar de posicion en la playlist, ver getPositionList().
  * 170, se solicita reproducir un archivo, ver getProgram().
+ * 180, se modifico la paleta custom en rom.
  * 970, se solicita un reset de fabrica.
  * -1, no se reconoce el comando enviado.
  * -2, se quiso enviar un numero de bytes incorrecto.
@@ -118,6 +122,11 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * -97, se intento un reset de fabrica pero no se confirmo.
  * -171, se desea correr un programa que no existe en la SD.
  * -172, se intento cambiar a un archivo con una extension no valida.
+ * -181, numero de colores en una paleta incorrecto.
+ * -182, numero de posiciones distinto a numero de colores en la paleta.
+ * -183, numero de colores red distinto a numero de colores en la paleta.
+ * -184, numero de colores green distinto a numero de colores en la paleta.
+ * -185, numero de colores blue distinto a numero de colores en la paleta.
  * @note interpreta los siguientes mensajes
  * code01, significa que va a transferer un archivo.
  * code02, significa que se esta solicitando el cambio de playlist.
@@ -134,9 +143,15 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * code13, significa que se desea conocer el nombre del programa actual.
  * code14, significa que se desea conocer el nombre del siguiente programa.
  * code15, significa que se desea conocer la lista de reproduccion actual.
+ * code16, significa que se desea cambiar de programa por posicion en la playlist.
+ * code17, significa que se desea cambiar de programa por nombre.
+ * code18, significa que se modifico la paleta de colores custom.
  * code66, actualizar firmware
  * code80, Reiniciar Sandsara
  */
+
+
+
 int BlueSara::checkBlueTooth()
 {
     int codeError = 0;
@@ -340,7 +355,7 @@ int BlueSara::checkBlueTooth()
                 return codeError;
             }
             ledMode = line.toInt();
-            if (ledMode < 0 || ledMode >10){
+            if (ledMode < MIN_PALLETE || ledMode > MAX_PALLETE){
                 writeBtln("error= -31");
                 return -31;
             }
@@ -504,6 +519,113 @@ int BlueSara::checkBlueTooth()
             
             writeBtln("ok");
             return 170;
+        }
+        else if (line.indexOf("code18") >= 0)
+        {
+            int colors;
+            writeBtln("request-numberOfColors");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            colors = line.toInt();
+            if (colors < 1 || colors > MAX_COLORSPERPALLETE){
+                writeBtln("error= -181");
+                return -181;
+            }
+            uint8_t positions[colors];
+            uint8_t red[colors];
+            uint8_t green[colors];
+            uint8_t blue[colors];
+            //====leer posiciones====
+            writeBtln("request-positions");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            if (stringToArray(line, positions, colors) < 0){
+                writeBtln("error= -182");
+                return -182;
+            }
+            //====
+            //====leer color red====
+            writeBtln("request-red");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            if (stringToArray(line, red, colors) < 0){
+                writeBtln("error= -183");
+                return -183;
+            }
+            //====
+            //====leer green====
+            writeBtln("request-green");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            if (stringToArray(line, green, colors) < 0){
+                writeBtln("error= -184");
+                return -184;
+            }
+            //====
+            //====leer blue====
+            writeBtln("request-blue");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            if (stringToArray(line, blue, colors) < 0){
+                writeBtln("error= -185");
+                return -185;
+            }
+            //====
+            /*for (int i = 0; i < colors; i++){
+                Serial.print(positions[i]);
+                Serial.print("\t\t");
+                Serial.print(red[i]);
+                Serial.print("\t\t");
+                Serial.print(green[i]);
+                Serial.print("\t\t");
+                Serial.println(blue[i]);
+            }*/
+            romSetCustomPallete(positions, red, green, blue, colors);
+            writeBtln("ok");
+            return 180;
+        }
+        else if (line.indexOf("code19") >= 0){
+            writeBtln("request-incrementIndexStatus");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            if (line.toInt() > 0){
+                romSetIncrementIndexPallete(true);
+            }
+            else{
+                romSetIncrementIndexPallete(false);
+            }
+            writeBtln("ok");
+            return 190;
         }
         else if (line.indexOf("code66") >= 0)
         {
@@ -1038,4 +1160,31 @@ String BlueSara::getProgram(){
  */
 int BlueSara::getPositionList(){
     return positionList;
+}
+
+/**
+ * @brief convierte un string en un array
+ * un string de la forma x1,x2,...,xn se convierte en un array [0]=x1, [1]=x1, ...,[n-1]=xn
+ * @param str es el string que se desea convertir.
+ * @param array es el array donde se van a guardar los valores del string
+ * @param n es el numero de elementos que tiene el string
+ * @return un codigo de error pudiendo ser
+ * 0, todo salio normal.
+ * -1, no hay n elementos en el string
+ */
+int stringToArray(String str, uint8_t* array, int n){
+    int i;
+    for (i = 0; i<n ; i++){
+        if (str.indexOf(",") < 0){
+            *(array + i) = str.toInt();
+            break;
+        }
+        *(array + i) = str.substring(0, str.indexOf(",")).toInt();
+        str = str.substring(str.indexOf(",") + 1);
+    }
+    i++;
+    if(i != n){
+        return -1;
+    }
+    return 0;
 }
