@@ -229,12 +229,12 @@ void setup()
     bytes[11] = 255;
     
     //customPallete.loadDynamicGradientPalette(pruebapaleta);
-    rgb2Interpolation(customPallete,pruebapaleta);
+    /*rgb2Interpolation(customPallete,pruebapaleta);
     for (int i = 0; i < 256; i++){
         customPallete[i].red = gamma8[customPallete[i].red];
         customPallete[i].green = gamma8[customPallete[i].green];
         customPallete[i].blue = gamma8[customPallete[i].blue];
-    }
+    }*/
 
     /*for (int i = 0; i < 256; i++){
         customPallete[i].red = 2;
@@ -320,7 +320,7 @@ void setup()
     Serial.println("init func");
     haloCalib.init();
     Serial.println("start func");
-    haloCalib.start();
+    //haloCalib.start();
     Serial.println("Salio de start");
     pinMode(EN_PIN, OUTPUT);
     pinMode(EN_PIN2, OUTPUT);
