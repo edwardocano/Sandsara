@@ -252,15 +252,7 @@ void setup()
         Serial.print("\t\tBlue: ");
         Serial.println(customPallete[i].blue);
     }
-    
-    for (int i = 0; i < 256; i++){
-        Serial.print("Red: ");
-        Serial.print(customPallete[i].red);
-        Serial.print("\t\tGreen: ");
-        Serial.print(customPallete[i].green);
-        Serial.print("\t\tBlue: ");
-        Serial.println(customPallete[i].blue);
-    }*/
+    */
     //delay(100000);
     //====
     //====Inicializacion de SD====
@@ -679,10 +671,6 @@ int runFile(String fileName){
         zi = halo.getCurrentModule();
         halo.setZCurrent(zi);
         halo.setThetaCurrent(thetai);
-        /*Serial.print("zi: ");
-        Serial.println(zi);
-        Serial.print("thetai: ");
-        Serial.println(thetai);*/
         if (thetai > thetaf){
             if (thetai - thetaf > PI){
                 thetaFinal = thetai + (2*PI - (thetai - thetaf));
@@ -839,9 +827,7 @@ int runFile(String fileName){
         return -10;
     }
     //====
-    posisionCase = halo.position(); 
-    //Serial.print("posisionCase: ");
-    //Serial.println(posisionCase);
+    posisionCase = halo.position();
     if (posisionCase == 2){
         movePolarTo(DISTANCIA_MAX, 0, 0, true);
     }
@@ -1446,7 +1432,6 @@ int romGetCustomPallete(CRGBPalette256 &pallete){
         newPallete[i*4 + 3] = EEPROM.read(ADDRESSCUSTOMPALLETE_BLUE + i);
     }
     //pallete.loadDynamicGradientPalette(newPallete);
-    Serial.println("Se llamara rgb2 en romgetcustom");
     rgb2Interpolation(palleteAuxiliar,newPallete);
     for (int i = 0; i < 256; i++){
         palleteAuxiliar[i].red = gamma8[palleteAuxiliar[i].red];
@@ -1476,8 +1461,6 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
         delay(1000);*/
         if (incrementIndexGlobal){
             colorIndex =startIndex + float(i+1)*(255.0/float(NUM_LEDS));
-            /*Serial.print("index= ");
-            Serial.println(colorIndex);*/
         }
     }
 }
@@ -1592,13 +1575,13 @@ void ledsFunc( void * pvParameters ){
     FastLED.setBrightness( BRIGHTNESS );
     //====
     for(;;){
-        currentPalette = customPallete;
+        /*currentPalette = customPallete;
         FillLEDsFromPaletteColors(startIndex);
         FastLED.show();
         startIndex += 1;
         //vTaskDelay(delayLeds);
         FastLED.delay(delayLeds);
-        continue;
+        continue;*/
         if (ledsOffGlobal){
             FastLED.clear();
             FastLED.show();
@@ -1785,14 +1768,4 @@ int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matriz){
     pallete[255].red = *(matriz + i*4 + 4 + 1);
     pallete[255].green = *(matriz + i*4 + 4 + 2);
     pallete[255].blue = *(matriz + i*4 + 4 + 3);
-
-    for (int i = 0; i < 256; i++){
-        Serial.print("Red: ");
-        Serial.print(pallete[i].red);
-        Serial.print("\t\tGreen: ");
-        Serial.print(pallete[i].green);
-        Serial.print("\t\tBlue: ");
-        Serial.println(pallete[i].blue);
-    }
-
 }
