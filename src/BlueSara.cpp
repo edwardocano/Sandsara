@@ -9,6 +9,8 @@ extern bool sdExists(String );
 extern bool pauseModeGlobal;
 extern int romSetCustomPallete(uint8_t* ,uint8_t* , uint8_t* ,uint8_t* , int);
 extern int romSetIncrementIndexPallete(bool );
+extern int romSetIntermediateCalibration(bool );
+extern bool romGetIntermediateCalibration();
 //====
 //====
 uint8_t dataBt[BUFFER_BLUETOOTH];
@@ -28,7 +30,6 @@ extern int romGetPallete();
 extern int romGetSpeedMotor();
 extern int romGetPeriodLed();
 extern String romGetBluetoothName();
-extern bool romGetCeroZone();
 //====
 //--------------Bluetooth--------------------------------------------------------
 //-------------------------------------------------------------------------------
@@ -149,9 +150,6 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * code66, actualizar firmware
  * code80, Reiniciar Sandsara
  */
-
-
-
 int BlueSara::checkBlueTooth()
 {
     int codeError = 0;
@@ -467,8 +465,14 @@ int BlueSara::checkBlueTooth()
             writeBtln(romGetPlaylist());
             writeBt("Orden de reproduccion= ");
             writeBtln(String(romGetOrdenMode()));
-            writeBt("Zona cero= ");
-            writeBtln(String(romGetCeroZone()));
+            writeBt("Intermediate calibration= ");
+            if (romGetIntermediateCalibration){
+                writeBtln(String("enabled"));
+            }
+            else{
+                writeBtln(String("disabled"));
+            }
+            
             return 120; //Se cambio nombre de bluetooth
         }
         else if (line.indexOf("code13") >= 0)
@@ -626,6 +630,24 @@ int BlueSara::checkBlueTooth()
             }
             writeBtln("ok");
             return 190;
+        }
+        else if (line.indexOf("code20") >= 0){
+            writeBtln("request-intermediateCalibration");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            if (line.toInt() > 0){
+                romSetIntermediateCalibration(true);
+            }
+            else{
+                romSetIntermediateCalibration(false);
+            }
+            writeBtln("ok");
+            return 200;
         }
         else if (line.indexOf("code66") >= 0)
         {

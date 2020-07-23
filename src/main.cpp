@@ -51,7 +51,7 @@ bool changePositionList;
 bool changeProgram;
 bool stopProgramChangeGlobal = true;
 bool stop_boton;
-bool inter_calib = false;
+bool intermediateCalibration = false;
 //====variables de estado====
 bool pauseModeGlobal = false;
 bool suspensionModeGlobal = false;
@@ -100,8 +100,6 @@ String romGetBluetoothName();
 void findUpdate();
 extern int programming(String );
 extern void rebootEspWithReason(String );
-bool romGetCeroZone();
-int romSetCeroZone(bool );
 int orderRandom(String ,int);
 void setFrom1(int [], int);
 void removeIndex(int [], int , int );
@@ -111,11 +109,13 @@ void bluetoothThread(void* );
 int romSetIncrementIndexPallete(bool );
 bool romGetIncrementIndexPallete();
 double linspace(double init,double stop, int amount,int index);
-int rgb2Interpolation(CRGBPalette256 &,uint8_t* matriz);
+int rgb2Interpolation(CRGBPalette256 &,uint8_t* );
+int romSetIntermediateCalibration(bool );
+bool romGetIntermediateCalibration();
 //====
 //====Variable leds====
 #define LED_PIN     32
-#define NUM_LEDS    24
+#define NUM_LEDS    36
 #define BRIGHTNESS  255
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
@@ -260,13 +260,16 @@ void setup()
     //====Inicializacion de SD====
     EEPROM.begin(EEPROM_SIZE);
     delay(500);
-	//=============Testing=============
+	//====Testing====
 	int dat_pin;
 	dat_pin = analogRead(PIN_ProducType);
 	if(dat_pin > 1000 && dat_pin < 4000)
 	{
 		haloTest.Test();	
 	}
+    //====restore the value intermediateCalibration====
+    intermediateCalibration = romGetIntermediateCalibration();
+    //====
     //====Recuperar speedMotor====
     speedMotorGlobal = romGetSpeedMotor();
     if (speedMotorGlobal > MAX_SPEED_MOTOR || speedMotorGlobal < MIN_SPEED_MOTOR){
@@ -298,9 +301,6 @@ void setup()
     halo.init();
     haloBt.init(bluetoothNameGlobal);
     //====
-    //====Recuperar ceroZone variable====
-    ceroZoneGlobal = romGetCeroZone();
-    //====
     //====new task for leds====
     xTaskCreatePinnedToCore(
                     ledsFunc,   /* Task function. */
@@ -320,8 +320,9 @@ void setup()
     Serial.println("init func");
     haloCalib.init();
     Serial.println("start func");
-    //haloCalib.start();
+    haloCalib.start();
     Serial.println("Salio de start");
+    
     pinMode(EN_PIN, OUTPUT);
     pinMode(EN_PIN2, OUTPUT);
     digitalWrite(EN_PIN, LOW);
@@ -808,10 +809,10 @@ int runFile(String fileName){
         movePolarTo(DISTANCIA_MAX, 0, 0, true);
     }
     else if (posisionCase == 0){
-		if (inter_calib == true)
+        Serial.println("Se mandara a cero");
+        movePolarTo(0, 0, 0, true);
+		if (intermediateCalibration == true)
 		{
-			Serial.println("Se mandara a cero");
-			movePolarTo(0, 0, 0, true);
 			haloCalib.verificacion_cal();
 		}
 	}
@@ -1065,6 +1066,9 @@ void executeCode(int errorCode){
     else if (errorCode == 190){
         incrementIndexGlobal = romGetIncrementIndexPallete();
     }
+    else if (errorCode == 200){
+        intermediateCalibration = romGetIntermediateCalibration();
+    }
     else if (errorCode == 970){
         romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
         romSetPlaylist(PLAYLIST_DEFAULT);
@@ -1072,7 +1076,10 @@ void executeCode(int errorCode){
         romSetPeriodLed(PERIOD_LED_DEFAULT);
         romSetOrdenMode(ORDENMODE_DEFAULT);
         romSetBluetoothName(BLUETOOTHNAME);
-        romSetCeroZone(false);
+        romSetIntermediateCalibration(false);
+        for (int i = ADDRESSPOLESENSE1; i < ADDRESSPOLESENSE1 + ADDRESSESTOVERIFY; i++){
+            EEPROM.write(i, -1);
+        }
         delay(1000);
         rebootEspWithReason("Se hiso reset de fabrica, Reiniciando...");
     }
@@ -1295,34 +1302,6 @@ String romGetBluetoothName(){
     return "Sandsara";
 }
 
-/**
- * @brief guarda la velocidad del robot en rom
- * @param speed es la velocidad en milimetros por segundo del robot.
- * @return 0
- */
-int romSetCeroZone(bool ceroZone){
-    if (ceroZone){
-        EEPROM.write(ADDRESSCEROZONE, CEROZONE_PERFORMED);
-    }
-    else{
-        EEPROM.write(ADDRESSCEROZONE, CEROZONE_NO_PERFORMED);
-    }
-    EEPROM.commit();
-    return 0;
-}
-
-/**
- * @brief recupera, de la ROM/FLASH, la velocidad del robot.
- * @return un numero entero que indaca la velocidad del robot, en milimetros por segundo. 
- */
-bool romGetCeroZone(){
-    int ceroZone;
-    ceroZone = EEPROM.read(ADDRESSCEROZONE);
-    if (ceroZone == CEROZONE_PERFORMED){
-        return true;
-    }
-    return false;
-}
 /**
  * @brief guarda la variable incrementIndexPallete.
  * @param incrementIndex es el valor que se va a guardar.
@@ -1724,27 +1703,62 @@ double linspace(double init,double stop, int amount,int index){
 }
 
 /**
- * 
+ * @brief performs an interpolation with the method of RGB^2
+ * @returns an error code.
+ * -1 means the first value of matrix is not 0 what is not allowed.
+ *  0 means everything is ok.
  */
-int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matriz){
-    if (*(matriz) != 0){
+int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matrix){
+    if (*(matrix) != 0){
         return -1;
     }
     int i = 0;
     for (i = 0; i < 16; i++){
         int index = 0;
-        for (int j = *(matriz + i*4); j < *(matriz + i*4 + 4); j++){
-            int amount = *(matriz + i*4 + 4) - *(matriz + i*4);
-            pallete[j].red = pow(linspace(pow(*(matriz + i*4 + 1),2.2),pow(*(matriz + i*4 + 1 + 4),2.2), amount, index), 1/2.2);
-            pallete[j].green = pow(linspace(pow(*(matriz + i*4 + 2),2.2),pow(*(matriz + i*4 + 2 + 4),2.2), amount, index), 1/2.2);
-            pallete[j].blue = pow(linspace(pow(*(matriz + i*4 + 3),2.2),pow(*(matriz + i*4 + 3 + 4),2.2), amount, index), 1/2.2);
+        for (int j = *(matrix + i*4); j < *(matrix + i*4 + 4); j++){
+            int amount = *(matrix + i*4 + 4) - *(matrix + i*4);
+            pallete[j].red = pow(linspace(pow(*(matrix + i*4 + 1),2.2),pow(*(matrix + i*4 + 1 + 4),2.2), amount, index), 1/2.2);
+            pallete[j].green = pow(linspace(pow(*(matrix + i*4 + 2),2.2),pow(*(matrix + i*4 + 2 + 4),2.2), amount, index), 1/2.2);
+            pallete[j].blue = pow(linspace(pow(*(matrix + i*4 + 3),2.2),pow(*(matrix + i*4 + 3 + 4),2.2), amount, index), 1/2.2);
             index ++;
         }
-        if (*(matriz + i*4 + 4) == 255){
+        if (*(matrix + i*4 + 4) == 255){
             break;
         }
     }
-    pallete[255].red = *(matriz + i*4 + 4 + 1);
-    pallete[255].green = *(matriz + i*4 + 4 + 2);
-    pallete[255].blue = *(matriz + i*4 + 4 + 3);
+    pallete[255].red = *(matrix + i*4 + 4 + 1);
+    pallete[255].green = *(matrix + i*4 + 4 + 2);
+    pallete[255].blue = *(matrix + i*4 + 4 + 3);
+    return 0;
+}
+
+/**
+ * @brief save the variable IntermediateCalibration in ROM.
+ * @param state is the value to be saved in ROM.
+ * @return a code of error.
+ * @note if state is true 0 will be saved in ROM and if it's false 255 will be saved instead.
+ */
+int romSetIntermediateCalibration(bool state){
+    if (state){
+        EEPROM.write(ADDRESSINTERMEDIATECALIBRATION,0);
+    }
+    else
+    {
+        EEPROM.write(ADDRESSINTERMEDIATECALIBRATION,255);
+    }
+}
+
+/**
+ * @brief get the variable IntermediateCalibration from ROM.
+ * @return true or false depending on what is stored in ROM.
+ * @note if the stored value in ROM is greater than 0 false will be returned if it's not, true will be returned instead.
+ */
+bool romGetIntermediateCalibration(){
+    if (EEPROM.read(ADDRESSINTERMEDIATECALIBRATION) > 0){
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }

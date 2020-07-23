@@ -422,16 +422,16 @@ int CalibMotor::start()
 				if (Flag_adjust_ini == 1)
 				{
 					Pole_sens1 = Pole1();
-					EEPROM.write(401, Pole_sens1);
+					EEPROM.write(ADDRESSPOLESENSE1, Pole_sens1);
 					EEPROM.commit();
 					Pole_sens2 = Pole2();
-					EEPROM.write(402, Pole_sens2);
+					EEPROM.write(ADDRESSPOLESENSE2, Pole_sens2);
 					EEPROM.commit();
 				}
 				if (Flag_adjust_ini == 0)
 				{
-					Pole_sens1 = EEPROM.read(401);
-					Pole_sens2 = EEPROM.read(402);
+					Pole_sens1 = EEPROM.read(ADDRESSPOLESENSE1);
+					Pole_sens2 = EEPROM.read(ADDRESSPOLESENSE2);
 				}
 				if (Pole_sens1 == 1)
 				{
@@ -579,22 +579,22 @@ int CalibMotor::start()
 				if (Flag_adjust_ini == 1)
 				{
 					Pole_sens1 = Pole1();
-					EEPROM.write(401, Pole_sens1);
+					EEPROM.write(ADDRESSPOLESENSE1, Pole_sens1);
 					EEPROM.commit();
 					Serial.println("Polo 1");
 					Serial.println(Pole_sens1);
 					Pole_sens2 = Pole2();
 					Serial.println("Polo 2");
 					Serial.println(Pole_sens2);
-					EEPROM.write(402, Pole_sens2);
+					EEPROM.write(ADDRESSPOLESENSE2, Pole_sens2);
 					EEPROM.commit();
 				}
 				if (Flag_adjust_ini == 0)
 				{
-					Pole_sens1 = EEPROM.read(401);
+					Pole_sens1 = EEPROM.read(ADDRESSPOLESENSE1);
 					Serial.println("Polo 1");
 					Serial.println(Pole_sens1);
-					Pole_sens2 = EEPROM.read(402);
+					Pole_sens2 = EEPROM.read(ADDRESSPOLESENSE2);
 					Serial.println("Polo 2");
 					Serial.println(Pole_sens2);
 				}
@@ -2844,7 +2844,7 @@ int Check_ini(void)
 	EEPROM.begin(EEPROM_SIZE);
 	int value_eeprom;
 	int cont_eeprom = 0;
-	for (int i = 401; i < 413; i++)
+	for (int i = ADDRESSPOLESENSE1; i < ADDRESSPOLESENSE1 + ADDRESSESTOVERIFY; i++)
 	{
 		value_eeprom = EEPROM.read(i);
 		if (value_eeprom == 255)
@@ -2852,7 +2852,7 @@ int Check_ini(void)
 			cont_eeprom++;
 		}
 	}
-	if (cont_eeprom == 12)
+	if (cont_eeprom == ADDRESSESTOVERIFY)
 	{
 		return 1;
 	}
