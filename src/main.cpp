@@ -315,7 +315,14 @@ void setup()
     //====Seleccionar tipo de producto====
     //pinMode(PIN_ProducType, INPUT);
     delay(1000);
-    productType = analogRead(PIN_ProducType);
+    //====Select type of product====
+    if (analogRead(PIN_ProducType) < 1000){
+        productType = false;
+    }
+    else{
+        productType = true;
+    }
+    //====
     //====Calibrar====
     Serial.println("init func");
     haloCalib.init();
