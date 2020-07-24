@@ -3,6 +3,8 @@
 #include "MultiStepper.h"
 #include "BlueSara.h"
 
+unsigned long timeMotor = 0;
+
 //extern void ledsFunc();
 double m[no_picos * 2], b[no_picos * 2];
 extern bool productType;
@@ -75,6 +77,7 @@ void MoveSara::movePolarTo(double zNext, double thetaNext)
  */
 void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance)
 { //distance is in milimeters
+    String datostiempo;
     long positions[2];
     if (abs(q1_steps) > abs(q2_steps + q1_steps)) //importante
         maxSpeed = abs(q1_steps) * 1L;
@@ -128,7 +131,10 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance)
         steppers.runSpeedToPosition();
     }
     steppers.moveTo(positions);
+    //datostiempo = "b" + String(millis() - timeMotor) + "\n";
+    //Serial.print(datostiempo);
     steppers.runSpeedToPosition();
+    timeMotor = millis();
 #endif
     q1_current += degrees_per_step * q1_steps;
     q2_current += degrees_per_step * q2_steps;

@@ -1532,6 +1532,8 @@ void ledsFunc( void * pvParameters ){
     FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness( BRIGHTNESS );
     //====
+    unsigned long t=0;
+    String datostiempo;
     for(;;){
         /*currentPalette = customPallete;
         FillLEDsFromPaletteColors(startIndex);
@@ -1548,10 +1550,13 @@ void ledsFunc( void * pvParameters ){
             }
         }
         FillLEDsFromPaletteColors(startIndex);
+        //datostiempo = "a" + String(millis() - t) + "\n";
+        //Serial.print(datostiempo);
         FastLED.show();
+        //t = millis();
         startIndex += 1;
-        //vTaskDelay(delayLeds);
-        FastLED.delay(delayLeds);
+        vTaskDelay(delayLeds);
+        //FastLED.delay(delayLeds);
     } 
 }
 
