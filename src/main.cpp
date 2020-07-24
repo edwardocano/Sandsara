@@ -820,6 +820,7 @@ int runFile(String fileName){
         movePolarTo(0, 0, 0, true);
 		if (intermediateCalibration == true)
 		{
+            Serial.println("se calibrara");
 			haloCalib.verificacion_cal();
 		}
 	}
@@ -1758,6 +1759,8 @@ int romSetIntermediateCalibration(bool state){
     {
         EEPROM.write(ADDRESSINTERMEDIATECALIBRATION,255);
     }
+    EEPROM.commit();
+    return 0;
 }
 
 /**

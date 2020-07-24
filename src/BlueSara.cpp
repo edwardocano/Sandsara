@@ -99,6 +99,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * 160, se solicita cambiar de posicion en la playlist, ver getPositionList().
  * 170, se solicita reproducir un archivo, ver getProgram().
  * 180, se modifico la paleta custom en rom.
+ * 200, intermediateCalibration variable was midified in ROM.
  * 970, se solicita un reset de fabrica.
  * -1, no se reconoce el comando enviado.
  * -2, se quiso enviar un numero de bytes incorrecto.
@@ -147,6 +148,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * code16, significa que se desea cambiar de programa por posicion en la playlist.
  * code17, significa que se desea cambiar de programa por nombre.
  * code18, significa que se modifico la paleta de colores custom.
+ * code20, means that you want to change the intermediateCalibration Variable.
  * code66, actualizar firmware
  * code80, Reiniciar Sandsara
  */
