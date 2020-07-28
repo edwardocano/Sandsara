@@ -26,8 +26,6 @@ extern bool sdExists(String );
 extern bool sdRemove(String );
 //====
 
-File myFile;
-File root;
 //====variables globales en rom====
 String playListGlobal;
 String bluetoothNameGlobal;
@@ -215,47 +213,6 @@ void setup()
     UPTADATING_PALLETE = breathYellow;
     CALIBRATING_PALLETE = breathBlue;
     SDEMPTY_PALLETE = breathOrange;
-    bytes[0] = 0;
-    bytes[1] = 255;
-    bytes[2] = 0;
-    bytes[3] = 0;
-    bytes[4] = 125;
-    bytes[5] = 0;
-    bytes[6] = 255;
-    bytes[7] = 0;
-    bytes[8] = 255;
-    bytes[9] = 0;
-    bytes[10] = 0;
-    bytes[11] = 255;
-    
-    //customPallete.loadDynamicGradientPalette(pruebapaleta);
-    /*rgb2Interpolation(customPallete,pruebapaleta);
-    for (int i = 0; i < 256; i++){
-        customPallete[i].red = gamma8[customPallete[i].red];
-        customPallete[i].green = gamma8[customPallete[i].green];
-        customPallete[i].blue = gamma8[customPallete[i].blue];
-    }*/
-
-    /*for (int i = 0; i < 256; i++){
-        customPallete[i].red = 2;
-        customPallete[i].green = 2;
-        customPallete[i].blue = 2;
-    }*/
-    /*for (int i = 0; i < 256; i++){
-        customPallete[i].red = pow(linspace(pow(255,2.2),pow(0,2.2),256, i), 1/2.2);
-        customPallete[i].green = pow(linspace(pow(0,2.2),pow(255,2.2),256, i), 1/2.2);
-        customPallete[i].blue = pow(linspace(pow(0,2.2),pow(0,2.2),256, i), 1/2.2);
-    }*/
-    /*for (int i = 0; i < 256; i++){
-        Serial.print("Red: ");
-        Serial.print(customPallete[i].red);
-        Serial.print("\t\tGreen: ");
-        Serial.print(customPallete[i].green);
-        Serial.print("\t\tBlue: ");
-        Serial.println(customPallete[i].blue);
-    }
-    */
-    //delay(100000);
     //====
     //====Inicializacion de SD====
     EEPROM.begin(EEPROM_SIZE);
@@ -345,14 +302,6 @@ void setup()
     changePalette(ledModeGlobal);
     Serial.println("Card present");
     //====
-    myFile = SD.open("/");
-    if (!myFile)
-    {
-        Serial.println("No se pudo abrir archivo");
-        return;
-    }
-    root = SD.open("/");
-    //====
     //====recuperar valores de playlist y ordenMode====    
     playListGlobal = romGetPlaylist();
     ordenModeGlobal = romGetOrdenMode();
@@ -393,8 +342,6 @@ void setup()
         ordenModeGlobal = 1;
     }
     //=====
-    Serial.print("Task1 running on core ");
-    Serial.println(xPortGetCoreID());
     //====new task for leds====
     xTaskCreatePinnedToCore(
                     bluetoothThread,   /* Task function. */
@@ -410,9 +357,9 @@ void setup()
 
 void loop()
 {
-#ifdef DEBUGGING_DATA
-    Serial.println("Iniciara la funcion runSansara");
-#endif
+    #ifdef DEBUGGING_DATA
+        Serial.println("Iniciara la funcion runSansara");
+    #endif
     errorCode = run_sandsara(playListGlobal, ordenModeGlobal);
     Serial.print("errorCode de run: ");
     Serial.println(errorCode);
@@ -432,8 +379,6 @@ void loop()
         changePalette(CODE_SDEMPTY_PALLETE);
         SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD);
     }
-    /*errorCode = haloBt.checkBlueTooth();
-    executeCode(errorCode);*/
     delay(3000);
 }
 
@@ -705,7 +650,6 @@ int runFile(String fileName){
             else{
                 return 20;
             }
-            
         }
         if (changeProgram){
             changePositionList = false;
@@ -827,24 +771,6 @@ int runFile(String fileName){
     #ifdef PROCESSING_SIMULATOR
         Serial.println("finished");
     #endif
-    //====Revisar si se desea suspender====
-    /*if (suspensionModeGlobal){
-
-        ledsOffGlobal = true;
-        while(suspensionModeGlobal){
-            delay(100);
-        }
-        ledsOffGlobal = false;
-    }*/
-    
-    //====
-    //====Revisar si se desea cambiar de lista de reproduccion u ordenMode====
-    /*if(playlistChanged || ordenModeChanged){
-        playlistChanged = false;
-        ordenModeChanged = false;
-        return 1;
-    }*/
-    //====
     return 10;
 }
 /**
