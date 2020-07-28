@@ -581,22 +581,30 @@ int CalibMotor::start()
 					Pole_sens1 = Pole1();
 					EEPROM.write(ADDRESSPOLESENSE1, Pole_sens1);
 					EEPROM.commit();
-					Serial.println("Polo 1");
-					Serial.println(Pole_sens1);
+                    #ifdef DEBUGGING_DATA
+                        Serial.println("Polo 1");
+                        Serial.println(Pole_sens1);
+                    #endif
 					Pole_sens2 = Pole2();
-					Serial.println("Polo 2");
-					Serial.println(Pole_sens2);
+                    #ifdef DEBUGGING_DATA
+                        Serial.println("Polo 2");
+                        Serial.println(Pole_sens2);
+                    #endif
 					EEPROM.write(ADDRESSPOLESENSE2, Pole_sens2);
 					EEPROM.commit();
 				}
 				if (Flag_adjust_ini == 0)
 				{
 					Pole_sens1 = EEPROM.read(ADDRESSPOLESENSE1);
-					Serial.println("Polo 1");
-					Serial.println(Pole_sens1);
+                    #ifdef DEBUGGING_DATA
+                        Serial.println("Polo 1");
+                        Serial.println(Pole_sens1);
+                    #endif
 					Pole_sens2 = EEPROM.read(ADDRESSPOLESENSE2);
-					Serial.println("Polo 2");
-					Serial.println(Pole_sens2);
+                    #ifdef DEBUGGING_DATA
+                        Serial.println("Polo 2");
+                        Serial.println(Pole_sens2);
+                    #endif
 				}
 
 				if (Pole_sens1 == 1)

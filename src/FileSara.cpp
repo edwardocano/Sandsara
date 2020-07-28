@@ -65,10 +65,6 @@ FileSara::~FileSara()
 {
     file.close();
     free(dataBufferBin);
-#ifdef DEBUGGING_DATA
-    Serial.print("Se destruyo el archivo: ");
-    Serial.println(fileName);
-#endif
 }
 
 /**

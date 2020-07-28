@@ -62,7 +62,7 @@
  * si DEBUGGING_DETAIL se define se mostraran mensajes por serial que ayudan a debuguear el codigo
  * si DISABLE_MOTORS se define, los motores no se moveran a la hora de dibujar los archivos.
  */
-//#define PROCESSING_SIMULATOR
+#define PROCESSING_SIMULATOR
 //#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
 //#define DISABLE_MOTORS
@@ -123,6 +123,7 @@
 #define ADDRESSPOLESENSE2 402
 #define ADDRESSESTOVERIFY 12
 #define ADDRESSINTERMEDIATECALIBRATION 140
+#define ADDRESSPOSITIONLIST 150
 
 /**
  * Restricciones
@@ -137,6 +138,7 @@
 #define MAX_CHARACTERS_BTNAME 30
 #define MIN_REPRODUCTION_MODE 1
 #define MAX_REPRODUCTION_MODE 4
+#define MAX_POSITIONLIST 1000
 
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0
