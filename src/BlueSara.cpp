@@ -148,7 +148,9 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * code16, significa que se desea cambiar de programa por posicion en la playlist.
  * code17, significa que se desea cambiar de programa por nombre.
  * code18, significa que se modifico la paleta de colores custom.
+ * code19, means that you want to change indexIncrement Variable.
  * code20, means that you want to change the intermediateCalibration Variable.
+ * code21, means that you want to rewind the playlist.
  * code66, actualizar firmware
  * code80, Reiniciar Sandsara
  */
@@ -650,6 +652,10 @@ int BlueSara::checkBlueTooth()
             }
             writeBtln("ok");
             return 200;
+        }
+        else if(line.indexOf("code21") >= 0){
+            writeBtln("ok");
+            return 210;
         }
         else if (line.indexOf("code66") >= 0)
         {

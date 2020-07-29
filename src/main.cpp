@@ -36,8 +36,7 @@ int periodLedsGlobal;
 bool ceroZoneGlobal;
 //====variables gloabales====
 bool ledsOffGlobal = false;
-bool playlistChanged = false;
-bool ordenModeChanged = false;
+bool rewindPlaylist = false;
 bool incrementIndexGlobal = true;
 String currentProgramGlobal;
 String nextProgramGlobal;
@@ -114,11 +113,11 @@ int romGetPositionList();
 //====
 //====Variable leds====
 #define LED_PIN     32
-#define NUM_LEDS    36
+int     NUM_LEDS;
 #define BRIGHTNESS  255
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
-CRGB leds[NUM_LEDS];
+CRGB leds[MAX_NUMBERLEDS];
 //====
 
 uint8_t pruebapaleta[64] = {0,68,3,86,
@@ -259,6 +258,16 @@ void setup()
     halo.init();
     haloBt.init(bluetoothNameGlobal);
     //====
+    //====Select type of product====
+    if (analogRead(PIN_ProducType) < 1000){
+        productType = false;
+        NUM_LEDS = LEDS_OF_HALO;
+    }
+    else{
+        productType = true;
+        NUM_LEDS = LEDS_OF_STELLE;
+    }
+    //====
     //====new task for leds====
     xTaskCreatePinnedToCore(
                     ledsFunc,   /* Task function. */
@@ -273,14 +282,7 @@ void setup()
     //====Seleccionar tipo de producto====
     //pinMode(PIN_ProducType, INPUT);
     delay(1000);
-    //====Select type of product====
-    if (analogRead(PIN_ProducType) < 1000){
-        productType = false;
-    }
-    else{
-        productType = true;
-    }
-    //====
+    
     //====Calibrar====
     #ifdef DEBUGGING_DATA
         Serial.println("init func");
@@ -438,8 +440,6 @@ int run_sandsara(String playList, int ordenMode)
     }
     int numberOfFiles;
     String fileName;
-    ordenModeChanged = false;
-    playlistChanged = false;
     
     if (ordenMode == 1 || ordenMode == 2){
         File file;
@@ -713,10 +713,9 @@ int runFile(String fileName){
             return 40;
         }
         //====Revisar si se cambia playlist u ordenMode====
-        if (playlistChanged || ordenModeChanged){
+        if (rewindPlaylist){
             goHomeSpiral(false);
-            playlistChanged = false;
-            ordenModeChanged = false;
+            rewindPlaylist = false;
             #ifdef PROCESSING_SIMULATOR
                 Serial.println("finished");
             #endif
@@ -854,7 +853,7 @@ int moveInterpolateTo(double x, double y, double distance)
     for (int i = 1; i <= intervals; i++)
     {
         //====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
-        if ((changePositionList || changeProgram || suspensionModeGlobal || playlistChanged || ordenModeChanged) && stopProgramChangeGlobal){
+        if ((changePositionList || changeProgram || suspensionModeGlobal || rewindPlaylist) && stopProgramChangeGlobal){
             return 0;
         }
         //====
@@ -905,7 +904,7 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     for (long i = 1; i < slices; i++)
     {
         //====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
-        if ((changePositionList || changeProgram || suspensionModeGlobal || playlistChanged || ordenModeChanged) && stopProgramChangeGlobal){
+        if ((changePositionList || changeProgram || suspensionModeGlobal || rewindPlaylist) && stopProgramChangeGlobal){
             return 0;
         }
         //====
@@ -954,12 +953,10 @@ void executeCode(int errorCode){
     if (errorCode == 10){
         playListGlobal = "/" + haloBt.getPlaylist();
         romSetPlaylist(playListGlobal);
-        playlistChanged = true;
     }
     else if (errorCode == 20){
         ordenModeGlobal = haloBt.getOrdenMode();
         romSetOrdenMode(ordenModeGlobal);
-        ordenModeChanged = true;
     }
     else if (errorCode == 30){
         ledModeGlobal = haloBt.getLedMode();
@@ -1039,6 +1036,9 @@ void executeCode(int errorCode){
     }
     else if (errorCode == 200){
         intermediateCalibration = romGetIntermediateCalibration();
+    }
+    else if(errorCode == 210){
+        rewindPlaylist = true;
     }
     else if (errorCode == 970){
         romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
@@ -1335,11 +1335,6 @@ int romGetCustomPallete(CRGBPalette256 &pallete){
     }
     //pallete.loadDynamicGradientPalette(newPallete);
     rgb2Interpolation(palleteAuxiliar,newPallete);
-    for (int i = 0; i < 256; i++){
-        palleteAuxiliar[i].red = gamma8[palleteAuxiliar[i].red];
-        palleteAuxiliar[i].green = gamma8[palleteAuxiliar[i].green];
-        palleteAuxiliar[i].blue = gamma8[palleteAuxiliar[i].blue];
-    }
     pallete = palleteAuxiliar;
     return 0;
 }
@@ -1483,6 +1478,11 @@ void ledsFunc( void * pvParameters ){
             }
         }
         FillLEDsFromPaletteColors(startIndex);
+        for (int i = 0; i < NUM_LEDS; i++){
+            leds[i].red = gamma8[leds[i].red];
+            leds[i].green = gamma8[leds[i].green];
+            leds[i].blue = gamma8[leds[i].blue];
+        }      
         FastLED.show();
         startIndex += 1;
         vTaskDelay(delayLeds);
