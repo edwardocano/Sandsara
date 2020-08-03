@@ -581,22 +581,14 @@ int CalibMotor::start()
 					Pole_sens1 = Pole1();
 					EEPROM.write(ADDRESSPOLESENSE1, Pole_sens1);
 					EEPROM.commit();
-					Serial.println("Polo 1");
-					Serial.println(Pole_sens1);
 					Pole_sens2 = Pole2();
-					Serial.println("Polo 2");
-					Serial.println(Pole_sens2);
 					EEPROM.write(ADDRESSPOLESENSE2, Pole_sens2);
 					EEPROM.commit();
 				}
 				if (Flag_adjust_ini == 0)
 				{
 					Pole_sens1 = EEPROM.read(ADDRESSPOLESENSE1);
-					Serial.println("Polo 1");
-					Serial.println(Pole_sens1);
 					Pole_sens2 = EEPROM.read(ADDRESSPOLESENSE2);
-					Serial.println("Polo 2");
-					Serial.println(Pole_sens2);
 				}
 
 				if (Pole_sens1 == 1)
@@ -1697,9 +1689,9 @@ void verif_cal_positiveb1(void)
 		}
 	}
 
-	delay(5000);
+	delay(1000);
 	slow_Calibration_hall1();
-	delay(5000);
+	delay(1000);
 }
 
 /**
@@ -1735,7 +1727,7 @@ void verif_cal_positiveb2(void)
 	{
 		value2_f = meanFilter2.AddValue(analogRead(hall2));
 	}
-	read_hall2 = value1_f / 4;
+	read_hall2 = value2_f / 4;
 	if (read_hall2 < max_hall2)
 	{
 		while (busq2 < 600)
@@ -1801,7 +1793,7 @@ void verif_cal_positiveb2(void)
 		if (Flag2_der == 0 && Flag2_izq == 0)
 		{
 			digitalWrite(DIR_PIN2, LOW);
-			move(600, 1, 5000);
+			move(250, 2, 5000);
 			digitalWrite(DIR_PIN2, HIGH);
 			for (int i = 0; i < 40; i++)
 			{
@@ -1820,9 +1812,9 @@ void verif_cal_positiveb2(void)
 		}
 	}
 
-	delay(5000);
+	delay(1000);
 	slow_Calibration_hall2();
-	delay(5000);
+	delay(1000);
 }
 
 /**
@@ -1945,9 +1937,9 @@ void verif_cal_negativeb1(void)
 		}
 	}
 
-	delay(5000);
+	delay(1000);
 	slow_Calibration_hall1_negative();
-	delay(5000);
+	delay(1000);
 }
 
 /**
@@ -1983,7 +1975,7 @@ void verif_cal_negativeb2(void)
 	{
 		value2_f = meanFilter2.AddValue(analogRead(hall2));
 	}
-	read_hall2 = value1_f / 4;
+	read_hall2 = value2_f / 4;
 	if (read_hall2 > min_hall2)
 	{
 		while (busq2 < 600)
@@ -2049,7 +2041,7 @@ void verif_cal_negativeb2(void)
 		if (Flag2_der == 0 && Flag2_izq == 0)
 		{
 			digitalWrite(DIR_PIN2, LOW);
-			move(600, 2, 5000);
+			move(250, 2, 5000);
 			digitalWrite(DIR_PIN2, HIGH);
 			for (int i = 0; i < 40; i++)
 			{
@@ -2068,9 +2060,9 @@ void verif_cal_negativeb2(void)
 		}
 	}
 
-	delay(5000);
+	delay(1000);
 	slow_Calibration_hall2_negative();
-	delay(5000);
+	delay(1000);
 }
 
 ///////////////////////
