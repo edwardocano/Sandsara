@@ -1,5 +1,6 @@
 #include "Testing.h"
 #include "CalibMotor.h"
+#include <Adafruit_NeoPixel.h>
 
 extern TMC2209Stepper driver;
 extern TMC2209Stepper driver2;
@@ -11,10 +12,13 @@ void Testing(void);
 
 CalibMotor haloCalibTest;
 
+#ifdef __AVR__
+  #include <avr/power.h>
+#endif
 #define PIN 32
 #define NUMPIXELS 36 // numero de pixels en la tira
 Adafruit_NeoPixel pixels_test(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-#define DELAYVAL 50
+#define DELAYVAL 500
 
 
 
@@ -84,6 +88,9 @@ Adafruit_NeoPixel pixels_test(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 void Testing::Test()
 {
+	#if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
+    clock_prescale_set(clock_div_1);
+    #endif
 	haloCalibTest.init();
 	File myFile;
 	File root;
@@ -205,7 +212,7 @@ void Testing::Test()
 	delay(500);
 
 	delay(1000);
-
+    pixels_test.begin();
 	for (int i = 0; i < NUMPIXELS; i++)
 	{
 		pixels_test.setPixelColor(i, pixels_test.Color(255, 255, 255));
