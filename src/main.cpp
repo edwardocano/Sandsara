@@ -291,7 +291,7 @@ void setup()
     #ifdef DEBUGGING_DATA
         Serial.println("start func");
     #endif
-    //haloCalib.start();
+    haloCalib.start();
     #ifdef DEBUGGING_DATA
         Serial.println("Salio de start");
     #endif
@@ -754,7 +754,7 @@ int runFile(String fileName){
         }
         else if (file.fileType == 2)
         {
-            errorCode = movePolarTo(component_1, component_2, couplingAngle);
+            errorCode = movePolarTo(component_1, component_2, couplingAngle, true);
             if (errorCode != 0){
                 return errorCode;
             }
@@ -901,7 +901,7 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     }
     deltaTheta = (thetaNext - thetaCurrent) / slices;
     deltaZ = (zNext - zCurrent) / slices;
-    for (long i = 1; i < slices; i++)
+    for (long i = 0; i < slices; i++)
     {
         //====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
         if ((changePositionList || changeProgram || suspensionModeGlobal || rewindPlaylist) && stopProgramChangeGlobal){
@@ -922,10 +922,10 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
         }
         else
         {
+        //if (distance >0.9){
             halo.moveTo(xAux, yAux, littleMovement);
-            /*errorCode = haloBt.checkBlueTooth();
-            executeCode(errorCode);*/
         }
+        //}
     }
     xAux = zNext * cos(thetaNext);
     yAux = zNext * sin(thetaNext);

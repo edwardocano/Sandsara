@@ -7,7 +7,7 @@
  * the same pushMatrix() and popMatrix() group.
 */
 //import processing.opengl.*;
-float factor = 2;
+float factor = 2.5;
 float x, y;
 float angle1 = 0.0;
 float angle2 = 0.0;
@@ -21,6 +21,7 @@ double x_1 = 0 ,y_1 = 0;
 double[] coordinates = new double[3];
 float x_draw;
 float y_draw;
+float xDrawOld = 0, yDrawOld = 0;
 int shapeSize = 1;
 // variables of hypotrochoid
 float a = 120;
@@ -63,7 +64,7 @@ int numero_linea = 0 ;
 int numberPoint;
 
 void setup() {
-  size(700, 700);
+  size(1024, 1024);
   data_arduino = new long[3];
   data_arduino2 = new long[3];
   x = width * 0.5;
@@ -81,7 +82,7 @@ void setup() {
   steps_of_q[2] = 3200;
   frameRate(60);
   printArray(Serial.list());
-  mySerial = new Serial(this, "COM3", 115200);
+  mySerial = new Serial(this, "COM13", 115200);
   values = new long[3];
   
 }
@@ -145,16 +146,19 @@ void draw() {
       y_draw = (float)-y_dk(coordinates[1],coordinates[2]);
       //draw_and_calculate();
       sandmark.beginDraw();
-      sandmark.noStroke();
-      sandmark.fill(134,201,18);
+      sandmark.stroke(134,201,18);
+      sandmark.strokeWeight(1);
+      //sandmark.fill(134,201,18);
       sandmark.translate(x , y);
-      sandmark.circle(x_draw,y_draw, shapeSize);
+      sandmark.line(xDrawOld,yDrawOld,x_draw,y_draw);
       if (numberPoint == 1){
         sandmark.noStroke();
         sandmark.fill(255,0,0);
         sandmark.circle(x_draw, y_draw, 14);
       }
       sandmark.endDraw();
+      xDrawOld = x_draw;
+      yDrawOld = y_draw;
       image(sandmark, -x, -y);
       //draw the circle
       noFill();
