@@ -523,11 +523,11 @@ double MoveSara::arcLength(double deltaZ, double deltaTheta, double zInit)
         zInit = zInit + deltaZ;
         deltaZ = abs(deltaZ);
     }
-    if (deltaZ < 1.5)
+    if (deltaZ == 0)
     {
         return deltaTheta * (zInit + deltaZ);
     }
-    if (deltaTheta < 10.0 * PI / 180.0)
+    if (deltaTheta == 0)
     {
         return deltaZ;
     }
