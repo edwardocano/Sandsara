@@ -26,8 +26,6 @@ extern bool sdExists(String );
 extern bool sdRemove(String );
 //====
 
-File myFile;
-File root;
 //====variables globales en rom====
 String playListGlobal;
 String bluetoothNameGlobal;
@@ -38,8 +36,7 @@ int periodLedsGlobal;
 bool ceroZoneGlobal;
 //====variables gloabales====
 bool ledsOffGlobal = false;
-bool playlistChanged = false;
-bool ordenModeChanged = false;
+bool rewindPlaylist = false;
 bool incrementIndexGlobal = true;
 String currentProgramGlobal;
 String nextProgramGlobal;
@@ -52,6 +49,7 @@ bool changeProgram;
 bool stopProgramChangeGlobal = true;
 bool stop_boton;
 bool intermediateCalibration = false;
+bool firstExecution;
 //====variables de estado====
 bool pauseModeGlobal = false;
 bool suspensionModeGlobal = false;
@@ -75,8 +73,6 @@ int romSetPlaylist(String );
 String romGetPlaylist();
 int romSetOrdenMode(int );
 int romGetOrdenMode();
-int romSetPosition(int );
-int romGetPosition();
 void Neo_Pixel(int );
 uint32_t rainbow();
 void FillLEDsFromPaletteColors(uint8_t );
@@ -112,14 +108,16 @@ double linspace(double init,double stop, int amount,int index);
 int rgb2Interpolation(CRGBPalette256 &,uint8_t* );
 int romSetIntermediateCalibration(bool );
 bool romGetIntermediateCalibration();
+int romSetPositionList(int );
+int romGetPositionList();
 //====
 //====Variable leds====
 #define LED_PIN     32
-#define NUM_LEDS    36
+int     NUM_LEDS;
 #define BRIGHTNESS  255
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
-CRGB leds[NUM_LEDS];
+CRGB leds[MAX_NUMBERLEDS];
 //====
 
 uint8_t pruebapaleta[64] = {0,68,3,86,
@@ -215,47 +213,6 @@ void setup()
     UPTADATING_PALLETE = breathYellow;
     CALIBRATING_PALLETE = breathBlue;
     SDEMPTY_PALLETE = breathOrange;
-    bytes[0] = 0;
-    bytes[1] = 255;
-    bytes[2] = 0;
-    bytes[3] = 0;
-    bytes[4] = 125;
-    bytes[5] = 0;
-    bytes[6] = 255;
-    bytes[7] = 0;
-    bytes[8] = 255;
-    bytes[9] = 0;
-    bytes[10] = 0;
-    bytes[11] = 255;
-    
-    //customPallete.loadDynamicGradientPalette(pruebapaleta);
-    /*rgb2Interpolation(customPallete,pruebapaleta);
-    for (int i = 0; i < 256; i++){
-        customPallete[i].red = gamma8[customPallete[i].red];
-        customPallete[i].green = gamma8[customPallete[i].green];
-        customPallete[i].blue = gamma8[customPallete[i].blue];
-    }*/
-
-    /*for (int i = 0; i < 256; i++){
-        customPallete[i].red = 2;
-        customPallete[i].green = 2;
-        customPallete[i].blue = 2;
-    }*/
-    /*for (int i = 0; i < 256; i++){
-        customPallete[i].red = pow(linspace(pow(255,2.2),pow(0,2.2),256, i), 1/2.2);
-        customPallete[i].green = pow(linspace(pow(0,2.2),pow(255,2.2),256, i), 1/2.2);
-        customPallete[i].blue = pow(linspace(pow(0,2.2),pow(0,2.2),256, i), 1/2.2);
-    }*/
-    /*for (int i = 0; i < 256; i++){
-        Serial.print("Red: ");
-        Serial.print(customPallete[i].red);
-        Serial.print("\t\tGreen: ");
-        Serial.print(customPallete[i].green);
-        Serial.print("\t\tBlue: ");
-        Serial.println(customPallete[i].blue);
-    }
-    */
-    //delay(100000);
     //====
     //====Inicializacion de SD====
     EEPROM.begin(EEPROM_SIZE);
@@ -301,6 +258,16 @@ void setup()
     halo.init();
     haloBt.init(bluetoothNameGlobal);
     //====
+    //====Select type of product====
+    if (analogRead(PIN_ProducType) < 1000){
+        productType = false;
+        NUM_LEDS = LEDS_OF_HALO;
+    }
+    else{
+        productType = true;
+        NUM_LEDS = LEDS_OF_STELLE;
+    }
+    //====
     //====new task for leds====
     xTaskCreatePinnedToCore(
                     ledsFunc,   /* Task function. */
@@ -315,20 +282,19 @@ void setup()
     //====Seleccionar tipo de producto====
     //pinMode(PIN_ProducType, INPUT);
     delay(1000);
-    //====Select type of product====
-    if (analogRead(PIN_ProducType) < 1000){
-        productType = false;
-    }
-    else{
-        productType = true;
-    }
-    //====
+    
     //====Calibrar====
-    Serial.println("init func");
+    #ifdef DEBUGGING_DATA
+        Serial.println("init func");
+    #endif
     haloCalib.init();
-    Serial.println("start func");
-    haloCalib.start();
-    Serial.println("Salio de start");
+    #ifdef DEBUGGING_DATA
+        Serial.println("start func");
+    #endif
+    //haloCalib.start();
+    #ifdef DEBUGGING_DATA
+        Serial.println("Salio de start");
+    #endif
     
     pinMode(EN_PIN, OUTPUT);
     pinMode(EN_PIN2, OUTPUT);
@@ -339,19 +305,15 @@ void setup()
     while(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
     {
         changePalette(CODE_NOSD_PALLETE);
-        Serial.println("Card failed, or not present");
+        #ifdef DEBUGGING_DATA
+            Serial.println("Card failed, or not present");
+        #endif
         delay(200); 
     }
     changePalette(ledModeGlobal);
-    Serial.println("Card present");
-    //====
-    myFile = SD.open("/");
-    if (!myFile)
-    {
-        Serial.println("No se pudo abrir archivo");
-        return;
-    }
-    root = SD.open("/");
+    #ifdef DEBUGGING_DATA
+        Serial.println("Card present");
+    #endif
     //====
     //====recuperar valores de playlist y ordenMode====    
     playListGlobal = romGetPlaylist();
@@ -362,22 +324,31 @@ void setup()
     }
     changePalette(romGetPallete());
     if (playListGlobal.equals("/")){
-        Serial.print("No hay una playlist guardada, se reproduciran todos los archivos en la sd");
+        #ifdef DEBUGGING_DATA
+            Serial.print("No hay una playlist guardada, se reproduciran todos los archivos en la sd");
+        #endif
         //ordenModeGlobal = 3;
     }
     else
     {
         if (sdExists(playListGlobal)){
-            Serial.print("lista guardada: ");
-            Serial.println(playListGlobal);
+            delay(1);
+            #ifdef DEBUGGING_DATA
+                Serial.print("lista guardada: ");
+                Serial.println(playListGlobal);
+            #endif
         }
         else{
-            Serial.println("La playlist no existe, se reproduciran todos los archivos en la sd");
+            #ifdef DEBUGGING_DATA
+                Serial.println("La playlist no existe, se reproduciran todos los archivos en la sd");
+            #endif
             //ordenModeGlobal = 3;
         }
     }
-    Serial.print("ordenMode guardado: ");
-    Serial.println(ordenModeGlobal);
+    #ifdef DEBUGGING_DATA
+        Serial.print("ordenMode guardado: ");
+        Serial.println(ordenModeGlobal);
+    #endif
     //====
     //====Buscar por nueva actualizacion====
     findUpdate();
@@ -393,8 +364,6 @@ void setup()
         ordenModeGlobal = 1;
     }
     //=====
-    Serial.print("Task1 running on core ");
-    Serial.println(xPortGetCoreID());
     //====new task for leds====
     xTaskCreatePinnedToCore(
                     bluetoothThread,   /* Task function. */
@@ -406,25 +375,32 @@ void setup()
                     0);          /* pin task to core 0 */                  
     delay(500); 
     //====
+    firstExecution = true;
 }
 
 void loop()
 {
-#ifdef DEBUGGING_DATA
-    Serial.println("Iniciara la funcion runSansara");
-#endif
+    #ifdef DEBUGGING_DATA
+        Serial.println("Iniciara la funcion runSansara");
+    #endif
     errorCode = run_sandsara(playListGlobal, ordenModeGlobal);
-    Serial.print("errorCode de run: ");
-    Serial.println(errorCode);
+    #ifdef DEBUGGING_DATA
+        Serial.print("errorCode de run: ");
+        Serial.println(errorCode);
+    #endif
     if (errorCode == -10){
         while(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
         {
             changePalette(CODE_NOSD_PALLETE);
-            Serial.println("Card failed, or not present");
+            #ifdef DEBUGGING_DATA
+                Serial.println("Card failed, or not present");
+            #endif
             delay(200); 
         }
         changePalette(ledModeGlobal);
-        Serial.println("Card present");
+        #ifdef DEBUGGING_DATA
+            Serial.println("Card present");
+        #endif
         
 
     }
@@ -432,9 +408,9 @@ void loop()
         changePalette(CODE_SDEMPTY_PALLETE);
         SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD);
     }
-    /*errorCode = haloBt.checkBlueTooth();
-    executeCode(errorCode);*/
+    firstExecution = false;
     delay(3000);
+    
 }
 
 /**
@@ -456,11 +432,14 @@ void loop()
  */
 int run_sandsara(String playList, int ordenMode)
 {
-    pListFileGlobal = 1;
+    if (firstExecution){
+        pListFileGlobal = romGetPositionList();
+    }
+    else{
+        pListFileGlobal = 1;
+    }
     int numberOfFiles;
     String fileName;
-    ordenModeChanged = false;
-    playlistChanged = false;
     
     if (ordenMode == 1 || ordenMode == 2){
         File file;
@@ -474,9 +453,8 @@ int run_sandsara(String playList, int ordenMode)
             if (ordenMode == 2){
                 orderRandom(playList,numberOfFiles);
                 playList = "/RANDOM.playlist";
+                pListFileGlobal = 1;
             }
-            Serial.print("Numero de archivos: ");
-            Serial.println(numberOfFiles);
         }
         else
         {
@@ -487,8 +465,6 @@ int run_sandsara(String playList, int ordenMode)
                 return -4;
             }
             playList = "/DEFAULT.playlist";
-            Serial.print("Numero de archivos: ");
-            Serial.println(numberOfFiles);
         }
     }
     else if (ordenMode == 4)
@@ -500,8 +476,7 @@ int run_sandsara(String playList, int ordenMode)
         playList = "/auxList32132123.playlist";
         orderRandom(playList,numberOfFiles);
         playList = "/RANDOM.playlist";
-        Serial.print("Numero de archivos: ");
-        Serial.println(numberOfFiles);
+        pListFileGlobal = 1;
     }
     else
     {
@@ -510,26 +485,32 @@ int run_sandsara(String playList, int ordenMode)
             return -4;
         }
         playList = "/DEFAULT.playlist";
+    }
+    #ifdef DEBUGGING_DATA
         Serial.print("Numero de archivos: ");
         Serial.println(numberOfFiles);
-    }
-    
+    #endif
+
     if (numberOfFiles == 0){
         return -4;
     }
+    
     changePalette(romGetPallete());
     //====recuperar playlist====
     currentPlaylistGlobal = playList;
     //====
     while (true)
     {
+        //====Save the current position in playlist====
+        romSetPositionList(pListFileGlobal);
+        //====
         #ifdef DEBUGGING_DATA
             Serial.println("Abrira el siguiente archivo disponible");
         #endif
         errorCode = FileSara::getLineNumber(pListFileGlobal, playList, fileName);
         if (errorCode < 0)
         {
-            //====playList no valida asi que regresa
+            //====playList no valida asi que regresa====
             delay(1000);
             return errorCode;
         }
@@ -546,9 +527,6 @@ int run_sandsara(String playList, int ordenMode)
         File current_file = SD.open("/" + fileName);
         if (!current_file)
         {
-            #ifdef DEBUGGING_DATA
-                Serial.println("No hay archivo disponible");
-            #endif
             delay(1000);
             pListFileGlobal += 1;
             continue;
@@ -705,7 +683,6 @@ int runFile(String fileName){
             else{
                 return 20;
             }
-            
         }
         if (changeProgram){
             changePositionList = false;
@@ -736,10 +713,9 @@ int runFile(String fileName){
             return 40;
         }
         //====Revisar si se cambia playlist u ordenMode====
-        if (playlistChanged || ordenModeChanged){
+        if (rewindPlaylist){
             goHomeSpiral(false);
-            playlistChanged = false;
-            ordenModeChanged = false;
+            rewindPlaylist = false;
             #ifdef PROCESSING_SIMULATOR
                 Serial.println("finished");
             #endif
@@ -754,8 +730,6 @@ int runFile(String fileName){
         }
         if (working_status != 0)
         {
-            /*Serial.print("workingStatus= ");
-            Serial.println(working_status);*/
             break;
         }
         //====revisar bluetooth====
@@ -802,8 +776,10 @@ int runFile(String fileName){
     //====Revisar si hubo problemas con la sd====
     if (working_status == -10)
     {
-        Serial.println("There were problems for reading SD");
-        Serial.println("Se mandara a cero");
+        #ifdef DEBUGGING_DATA
+            Serial.println("There were problems for reading SD");
+            Serial.println("Se mandara a cero");
+        #endif
         movePolarTo(0, 0, 0, true);
         #ifdef PROCESSING_SIMULATOR
             Serial.println("finished");
@@ -816,35 +792,21 @@ int runFile(String fileName){
         movePolarTo(DISTANCIA_MAX, 0, 0, true);
     }
     else if (posisionCase == 0){
-        Serial.println("Se mandara a cero");
+        #ifdef DEBUGGING_DATA
+            Serial.println("Se mandara a cero");
+        #endif
         movePolarTo(0, 0, 0, true);
 		if (intermediateCalibration == true)
 		{
-            Serial.println("se calibrara");
+            #ifdef DEBUGGING_DATA
+                Serial.println("se calibrara");
+            #endif
 			haloCalib.verificacion_cal();
 		}
 	}
     #ifdef PROCESSING_SIMULATOR
         Serial.println("finished");
     #endif
-    //====Revisar si se desea suspender====
-    /*if (suspensionModeGlobal){
-
-        ledsOffGlobal = true;
-        while(suspensionModeGlobal){
-            delay(100);
-        }
-        ledsOffGlobal = false;
-    }*/
-    
-    //====
-    //====Revisar si se desea cambiar de lista de reproduccion u ordenMode====
-    /*if(playlistChanged || ordenModeChanged){
-        playlistChanged = false;
-        ordenModeChanged = false;
-        return 1;
-    }*/
-    //====
     return 10;
 }
 /**
@@ -891,7 +853,7 @@ int moveInterpolateTo(double x, double y, double distance)
     for (int i = 1; i <= intervals; i++)
     {
         //====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
-        if ((changePositionList || changeProgram || suspensionModeGlobal || playlistChanged || ordenModeChanged) && stopProgramChangeGlobal){
+        if ((changePositionList || changeProgram || suspensionModeGlobal || rewindPlaylist) && stopProgramChangeGlobal){
             return 0;
         }
         //====
@@ -942,7 +904,7 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     for (long i = 1; i < slices; i++)
     {
         //====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
-        if ((changePositionList || changeProgram || suspensionModeGlobal || playlistChanged || ordenModeChanged) && stopProgramChangeGlobal){
+        if ((changePositionList || changeProgram || suspensionModeGlobal || rewindPlaylist) && stopProgramChangeGlobal){
             return 0;
         }
         //====
@@ -991,12 +953,10 @@ void executeCode(int errorCode){
     if (errorCode == 10){
         playListGlobal = "/" + haloBt.getPlaylist();
         romSetPlaylist(playListGlobal);
-        playlistChanged = true;
     }
     else if (errorCode == 20){
         ordenModeGlobal = haloBt.getOrdenMode();
         romSetOrdenMode(ordenModeGlobal);
-        ordenModeChanged = true;
     }
     else if (errorCode == 30){
         ledModeGlobal = haloBt.getLedMode();
@@ -1076,6 +1036,9 @@ void executeCode(int errorCode){
     }
     else if (errorCode == 200){
         intermediateCalibration = romGetIntermediateCalibration();
+    }
+    else if(errorCode == 210){
+        rewindPlaylist = true;
     }
     else if (errorCode == 970){
         romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
@@ -1161,33 +1124,6 @@ int romSetOrdenMode(int ordenMode){
 int romGetOrdenMode(){
     uint8_t ordenMode;
     ordenMode = EEPROM.read(ADDRESSORDENMODE);
-    return ordenMode;
-}
-
-/**
- * @brief guarda, en la ROM/FLASH, la posicion en la que va la lista de reproduccion actual.
- * @param pos es el la posicion en la que va la lista de reproduccion que se desea guardar en ROM/FLASH.
- * @return 0 
- */
-int romSetPosition(int pos){
-    uint8_t* p = (uint8_t* ) &pos;
-    for (int i = 0; i < sizeof(pos); i++){
-        EEPROM.write(ADDRESSPOSITION + i, *(p + i));
-    }
-    EEPROM.commit();
-    return 0;
-}
-
-/**
- * @brief recupera, de la ROM/FLASH, la ultima posicion guardada en la que iba la lista de reproduccion.
- * @return la ultima posicion guardada, en ROM/FLASH, en la que iba la lista de reproduccion. 
- */
-int romGetPosition(){
-    int ordenMode;
-    uint8_t* p = (uint8_t* ) &ordenMode;
-    for (int i = 0; i < sizeof(ordenMode); i++){
-        *(p + i) = EEPROM.read(ADDRESSPOSITION + i);
-    }
     return ordenMode;
 }
 
@@ -1399,11 +1335,6 @@ int romGetCustomPallete(CRGBPalette256 &pallete){
     }
     //pallete.loadDynamicGradientPalette(newPallete);
     rgb2Interpolation(palleteAuxiliar,newPallete);
-    for (int i = 0; i < 256; i++){
-        palleteAuxiliar[i].red = gamma8[palleteAuxiliar[i].red];
-        palleteAuxiliar[i].green = gamma8[palleteAuxiliar[i].green];
-        palleteAuxiliar[i].blue = gamma8[palleteAuxiliar[i].blue];
-    }
     pallete = palleteAuxiliar;
     return 0;
 }
@@ -1416,15 +1347,6 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
     startIndex = colorIndex;
     for( int i = 0; i < NUM_LEDS; i++) {
         leds[i] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
-        /*Serial.print("led ");
-        Serial.print(i);
-        Serial.print(" = ");
-        Serial.print(leds[i].red);
-        Serial.print("\t");
-        Serial.print(leds[i].green);
-        Serial.print("\t");
-        Serial.println(leds[i].blue);
-        delay(1000);*/
         if (incrementIndexGlobal){
             colorIndex =startIndex + float(i+1)*(255.0/float(NUM_LEDS));
         }
@@ -1540,8 +1462,6 @@ void ledsFunc( void * pvParameters ){
     FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness( BRIGHTNESS );
     //====
-    unsigned long t=0;
-    String datostiempo;
     for(;;){
         /*currentPalette = customPallete;
         FillLEDsFromPaletteColors(startIndex);
@@ -1558,10 +1478,12 @@ void ledsFunc( void * pvParameters ){
             }
         }
         FillLEDsFromPaletteColors(startIndex);
-        //datostiempo = "a" + String(millis() - t) + "\n";
-        //Serial.print(datostiempo);
+        for (int i = 0; i < NUM_LEDS; i++){
+            leds[i].red = gamma8[leds[i].red];
+            leds[i].green = gamma8[leds[i].green];
+            leds[i].blue = gamma8[leds[i].blue];
+        }      
         FastLED.show();
-        //t = millis();
         startIndex += 1;
         vTaskDelay(delayLeds);
         //FastLED.delay(delayLeds);
@@ -1588,11 +1510,15 @@ void findUpdate(){
             int indexDot2 = fileName.indexOf(".", indexDot1 + 1);
             int indexDot3 = fileName.indexOf(".", indexDot2 + 1);
             if (indexDash1 == -1 || indexDash2 == -1 || indexDot1 == -1 || indexDot2 == -1 || indexDot3 == -1){
-                Serial.println("No se encontraron 3 puntos y 2 dash");
+                #ifdef DEBUGGING_DATA
+                    Serial.println("No se encontraron 3 puntos y 2 dash");
+                #endif
                 continue;
             }
             if (!fileName.substring(indexDot3).equals(".bin")){
-                Serial.println("no es un .bin");
+                #ifdef DEBUGGING_DATA
+                    Serial.println("no es un .bin");
+                #endif
                 continue;
             }
             int v1 = fileName.substring(indexDash1 + 1, indexDot1).toInt();
@@ -1600,7 +1526,9 @@ void findUpdate(){
             int v3 = fileName.substring(indexDot2 + 1, indexDash2).toInt();
             int hash = fileName.substring(indexDash2 + 1, indexDot3).toInt();
             if (hash != v1 + v2 + v3 + 1){
-                Serial.println("El hash no coincide");
+                #ifdef DEBUGGING_DATA
+                    Serial.println("El hash no coincide");
+                #endif
                 continue;
             }
             if (v1 > v1Current){
@@ -1776,4 +1704,34 @@ bool romGetIntermediateCalibration(){
     {
         return true;
     }
+}
+
+/**
+ * @brief save the current position in the playlist in ROM.
+ * @param pList is the currente position to be saved.
+ * @return 0
+ */
+int romSetPositionList(int pList){
+    uint8_t* p = (uint8_t* ) &pList;
+    for (int i = 0; i < sizeof(pList); i++){
+        EEPROM.write(ADDRESSPOSITIONLIST + i, *(p + i));
+    }
+    EEPROM.commit();
+    return 0;
+}
+
+/**
+ * @brief restore the current position in the playlist in ROM.
+ * @return the postion list saved in ROM.
+ */
+int romGetPositionList(){
+    int pList;
+    uint8_t* p = (uint8_t* ) &pList;
+    for (int i = 0; i < sizeof(pList); i++){
+        *(p + i) = EEPROM.read(ADDRESSPOSITIONLIST + i);
+    }
+    if (pList > MAX_POSITIONLIST){
+        pList = 1;
+    }
+    return pList;
 }

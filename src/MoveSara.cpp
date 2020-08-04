@@ -77,7 +77,6 @@ void MoveSara::movePolarTo(double zNext, double thetaNext)
  */
 void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance)
 { //distance is in milimeters
-    String datostiempo;
     long positions[2];
     if (abs(q1_steps) > abs(q2_steps + q1_steps)) //importante
         maxSpeed = abs(q1_steps) * 1L;
@@ -126,15 +125,11 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance)
         p[1] += delta2;
         pL[0] = p[0];
         pL[1] = p[1];
-        //ledsFunc();
         steppers.moveTo(pL);
         steppers.runSpeedToPosition();
     }
     steppers.moveTo(positions);
-    //datostiempo = "b" + String(millis() - timeMotor) + "\n";
-    //Serial.print(datostiempo);
     steppers.runSpeedToPosition();
-    timeMotor = millis();
 #endif
     q1_current += degrees_per_step * q1_steps;
     q2_current += degrees_per_step * q2_steps;
@@ -528,11 +523,11 @@ double MoveSara::arcLength(double deltaZ, double deltaTheta, double zInit)
         zInit = zInit + deltaZ;
         deltaZ = abs(deltaZ);
     }
-    if (deltaZ < 1.5)
+    if (deltaZ == 0)
     {
         return deltaTheta * (zInit + deltaZ);
     }
-    if (deltaTheta < 10.0 * PI / 180.0)
+    if (deltaTheta == 0)
     {
         return deltaZ;
     }
