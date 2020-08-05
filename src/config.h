@@ -27,6 +27,13 @@
 #define l2 76
 
 /**
+ * DISTANCIA_MAX es el radio maximo, desde el centro, que va a dibujar el robot
+ * RESOLUCION_MAX es el numero que representa la DISTANCIA_MAX
+ */
+#define DISTANCIA_MAX 144
+#define RESOLUCION_MAX 32768.0
+
+/**
  * bigPulleySize y littlePulleySize se utilizan para saber la relacion de engranes
  * bigPulleySize es la polea acoplada a los motores.
  * littlePulleySize es la polea acoplada al eslabon 2.
@@ -63,17 +70,10 @@
  * si DISABLE_MOTORS se define, los motores no se moveran a la hora de dibujar los archivos.
  */
 #define PROCESSING_SIMULATOR
-//#define DEBUGGING_DATA
+#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
 //#define DISABLE_MOTORS
 //#define DEBUGGIN_LED2
-
-/**
- * DISTANCIA_MAX es el radio maximo, desde el centro, que va a dibujar el robot
- * RESOLUCION_MAX es el numero que representa la DISTANCIA_MAX
- */
-#define DISTANCIA_MAX (l1 + l2)
-#define RESOLUCION_MAX 32768.0
 
 /**
  * encoder es el pin para la senal del encoder
@@ -192,7 +192,7 @@
  * cada EVERY_MILIMITERS en modulo de recorrido dara una vuelta.
  */
 #define EVERY_MILIMITERS 10
-#define SPEED_TO_CENTER 200
+#define SPEED_TO_CENTER 150
 
 /**
  * BUFFER_BLUETOOTH es la memoria que se reserva para recibir los archivos

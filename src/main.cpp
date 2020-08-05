@@ -13,7 +13,7 @@
 #include "SPI.h"
 #include "SdFat.h"
 SdFat SD;
-
+bool readingSDFile = false;
 #include <math.h>
 
 #include <EEPROM.h>
@@ -816,20 +816,22 @@ int runFile(String fileName){
 void goHomeSpiral(bool stop){
     float degreesToRotate;
     halo.setZCurrent(halo.getCurrentModule());
-    if (halo.getCurrentAngle() > PI){
-        halo.setThetaCurrent(halo.getCurrentAngle() - 2*PI);
-    }
+    degreesToRotate = int(halo.getCurrentModule()/EVERY_MILIMITERS) * 2*PI;
+    //if (halo.getCurrentAngle() > PI){
+        halo.setThetaCurrent(halo.getCurrentAngle() + degreesToRotate);
+    /*}
     else{
-        halo.setThetaCurrent(halo.getCurrentAngle());
-    }
-    degreesToRotate = halo.getCurrentModule()/EVERY_MILIMITERS * 2*PI;
+        halo.setThetaCurrent(halo.getCurrentAngle() + );
+    }*/
+    
     halo.setSpeed(SPEED_TO_CENTER);
     //degreesToRotate = 0;
     stopProgramChangeGlobal = stop;
-    movePolarTo(0, degreesToRotate, 0, true);
+    movePolarTo(0, PI/2, 0, true);
     stopProgramChangeGlobal = true;
     halo.setSpeed(romGetSpeedMotor());
 }
+
 //=========================================================
 /**
  * @brief Se usa esta funcion para avanzar de la posicion actual a un punto nuevo en linea recta por medio de puntos equidistantes a un 1 mm.
@@ -1354,13 +1356,10 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
 }
 
 
-// There are several different palettes of colors demonstrated here.
-//
-// FastLED provides several 'preset' palettes: RainbowColors_p, RainbowStripeColors_p,
-// OceanColors_p, CloudColors_p, LavaColors_p, ForestColors_p, and PartyColors_p.
-//
-// Additionally, you can manually define your own color palettes, or you can write
-// code that creates color palettes on the fly.  All are shown here.
+/**
+ * @brief Change the pallette of leds.
+ * @param pallet indicates the index pallete to be choosed.
+ */
 
 void changePalette(int pallet)
 {
@@ -1385,7 +1384,7 @@ void changePalette(int pallet)
     else   { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;}
 }
 
-// This function fills the palette with totally random colors.
+
 void SetupTotallyRandomPalette()
 {
     for( int i = 0; i < 16; i++) {
@@ -1393,26 +1392,15 @@ void SetupTotallyRandomPalette()
     }
 }
 
-// This function sets up a palette of black and white stripes,
-// using code.  Since the palette is effectively an array of
-// sixteen CRGB colors, the various fill_* functions can be used
-// to set them up.
 void SetupBlackAndWhiteStripedPalette()
 {
-    // 'black out' all 16 palette entries...
     fill_solid( currentPalette, 256, CRGB::Black);
-    // and set every fourth one to white.
     for(int i = 0; i < 16; i++){
         currentPalette[i] = CRGB::White;
     }
-    
-    //currentPalette[4] = CRGB::White;
-    //currentPalette[8] = CRGB::White;
-    //currentPalette[12] = CRGB::White;
-    
 }
 
-// This function sets up a palette of purple and green stripes.
+
 void SetupPurpleAndGreenPalette()
 {
     CRGB purple = CHSV( HUE_PURPLE, 255, 255);
@@ -1426,11 +1414,6 @@ void SetupPurpleAndGreenPalette()
                                    purple, purple, black,  black );
 }
 
-
-// This example shows how to set up a static color palette
-// which is stored in PROGMEM (flash), which is almost always more
-// plentiful than RAM.  A static PROGMEM palette like this
-// takes up 64 bytes of flash.
 const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
 {
     CRGB::Red,
@@ -1490,6 +1473,9 @@ void ledsFunc( void * pvParameters ){
     } 
 }
 
+/**
+ * @brief find if there is a file update in SD, and if there is 
+ */
 void findUpdate(){
     File file;
     File root = SD.open("/");
@@ -1735,3 +1721,25 @@ int romGetPositionList(){
     }
     return pList;
 }
+
+/**
+ * @brief move to a certain position in spiral.
+ * 
+ */
+/*void spiralGoTo(){
+    float degreesToRotate;
+    halo.setZCurrent(halo.getCurrentModule());
+    if (halo.getCurrentAngle() > PI){
+        halo.setThetaCurrent(halo.getCurrentAngle() - 2*PI);
+    }
+    else{
+        halo.setThetaCurrent(halo.getCurrentAngle());
+    }
+    degreesToRotate = halo.getCurrentModule()/EVERY_MILIMITERS * 2*PI;
+    halo.setSpeed(SPEED_TO_CENTER);
+    //degreesToRotate = 0;
+    stopProgramChangeGlobal = stop;
+    movePolarTo(0, degreesToRotate, 0, true);
+    stopProgramChangeGlobal = true;
+    halo.setSpeed(romGetSpeedMotor());
+}*/

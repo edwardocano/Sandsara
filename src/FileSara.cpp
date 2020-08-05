@@ -1,6 +1,7 @@
 #include "FileSara.h"
 #include "MoveSara.h"
 extern SdFat SD;
+extern bool readingSDFile;
 
 //====prototipos de funcion====
 bool sdExists(String );
@@ -328,6 +329,11 @@ String FileSara::nextRow()
  */
 int FileSara::readFile()
 {
+    while (readingSDFile)
+    {
+        delay(1);
+    }
+    readingSDFile = true;
     int bytesRead;
     if (this->directionMode == 0)
     {
@@ -340,6 +346,7 @@ int FileSara::readFile()
             charsToRead = pFile; //check if it has to be +1
             if (pFile == 0)
             {
+                readingSDFile = false;
                 return 1;
             }
             pFile = 0;
@@ -350,6 +357,7 @@ int FileSara::readFile()
         if (bytesRead < charsToRead)
         {
             statusFile = -10;
+            readingSDFile = false;
             return -10;
         }
         *(dataBufferBin + charsToRead) = '\0';
@@ -357,6 +365,7 @@ int FileSara::readFile()
         if (fileType == 3)
         {
             pFileBin = charsToRead / 6;
+            readingSDFile = false;
             return 0;
         }
         //</BINCASE>
@@ -364,17 +373,20 @@ int FileSara::readFile()
         dataBuffer = String((char *)dataBufferBin);
         if (pFile == 0)
         {
+            readingSDFile = false;
             return 0;
         }
         int index_nl = dataBuffer.indexOf(this->lineSeparator);
         dataBuffer = dataBuffer.substring(index_nl + 1);
         pFile += index_nl + 1;
+        readingSDFile = false;
         return 0;
     }
     else
     {
         if (pFile >= file.size())
         {
+            readingSDFile = false;
             return 1;
         }
         if (pFile + charsToRead > file.size())
@@ -387,6 +399,7 @@ int FileSara::readFile()
         if (bytesRead < charsToRead)
         {
             statusFile = -10;
+            readingSDFile = false;
             return -10;
         }
         *(dataBufferBin + charsToRead) = '\0';
@@ -395,6 +408,7 @@ int FileSara::readFile()
         {
             pFile += charsToRead;
             pFileBin = -1;
+            readingSDFile = false;
             return 0;
         }
         //</BINCASE>
@@ -403,11 +417,13 @@ int FileSara::readFile()
         if (index_nl == -1)
         {
             pFile = file.size();
+            readingSDFile = false;
             return 0;
         }
 
         dataBuffer = dataBuffer.substring(0, index_nl + 1);
         pFile += index_nl + 1;
+        readingSDFile = false;
         return 0;
     }
 }
@@ -714,6 +730,10 @@ double FileSara::getStartModule(){
  */
 int FileSara::getLineNumber(int lineNumber, String dirFile, String &lineText)
 {
+    while (readingSDFile){
+        delay(1);
+    }
+    readingSDFile = true;
     File file = SD.open(dirFile);
     long index = 0, lineN, count = 0;
     int character = 1;
@@ -721,14 +741,17 @@ int FileSara::getLineNumber(int lineNumber, String dirFile, String &lineText)
     lineText = "";
     if (lineNumber < 1)
     {
+        readingSDFile = false;
         return -3; //La linea que se desea leer no es valida
     }
     if (!file)
     {
+        readingSDFile = false;
         return -1; //dirFile no se pudo abrir
     }
     if (file.isDirectory())
     {
+        readingSDFile = false;
         return -2; //el archivo es un directorio
     }
     for (int number = 1; number < lineNumber; number++)
@@ -755,6 +778,7 @@ int FileSara::getLineNumber(int lineNumber, String dirFile, String &lineText)
                     {
                         lineText.remove(lineText.indexOf('\r'), 1);
                     }
+                    readingSDFile = false;
                     return 2; //termino sin encontrar la linea numero lineNumber y no encontro un '\n'
                 }
                 lineText.concat(char(character));
@@ -764,6 +788,7 @@ int FileSara::getLineNumber(int lineNumber, String dirFile, String &lineText)
             {
                 lineText.remove(lineText.indexOf('\r'), 1);
             }
+            readingSDFile = false;
             return 3; //termino sin llegar a la linea numero lineNumber, y encontro un '\n'
         }
         index = count;
@@ -779,6 +804,7 @@ int FileSara::getLineNumber(int lineNumber, String dirFile, String &lineText)
             {
                 lineText.remove(lineText.indexOf('\r'), 1);
             }
+            readingSDFile = false;
             return 1; //termino en la linea numero lineNumber, pero no encontro un '\n'
         }
         lineText.concat(char(character));
@@ -789,6 +815,7 @@ int FileSara::getLineNumber(int lineNumber, String dirFile, String &lineText)
         lineText.remove(lineText.indexOf('\r'), 1);
     }
     file.close();
+    readingSDFile = false;
     return 0; //termino en la linea numero lineNumber, y encontro un '\n'
 }
 
