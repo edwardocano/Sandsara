@@ -50,6 +50,7 @@ bool stopProgramChangeGlobal = true;
 bool stop_boton;
 bool intermediateCalibration = false;
 bool firstExecution;
+bool availableDeceleration = false;
 //====variables de estado====
 bool pauseModeGlobal = false;
 bool suspensionModeGlobal = false;
@@ -60,6 +61,7 @@ CRGBPalette16 UPTADATING_PALLETE;
 CRGBPalette16 CALIBRATING_PALLETE;
 CRGBPalette16 SDEMPTY_PALLETE;
 CRGBPalette256 customPallete;
+CRGBPalette256 pallette8;
 //====
 MoveSara halo;
 BlueSara haloBt;
@@ -100,7 +102,7 @@ int orderRandom(String ,int);
 void setFrom1(int [], int);
 void removeIndex(int [], int , int );
 int runFile(String );
-void goHomeSpiral(bool = true);
+void goHomeSpiral();
 void bluetoothThread(void* );
 int romSetIncrementIndexPallete(bool );
 bool romGetIncrementIndexPallete();
@@ -110,6 +112,9 @@ int romSetIntermediateCalibration(bool );
 bool romGetIntermediateCalibration();
 int romSetPositionList(int );
 int romGetPositionList();
+void goCenterSpiral(bool);
+void goEdgeSpiral(bool);
+void spiralGoTo(float , float );
 //====
 //====Variable leds====
 #define LED_PIN     32
@@ -120,7 +125,7 @@ int     NUM_LEDS;
 CRGB leds[MAX_NUMBERLEDS];
 //====
 
-uint8_t pruebapaleta[64] = {0,68,3,86,
+uint8_t pallette8bytes[64] = {0,68,3,86,
 17,72,26,108,
 34,70,48,126,
 51,65,68,135,
@@ -213,6 +218,7 @@ void setup()
     UPTADATING_PALLETE = breathYellow;
     CALIBRATING_PALLETE = breathBlue;
     SDEMPTY_PALLETE = breathOrange;
+    rgb2Interpolation(pallette8, pallette8bytes);
     //====
     //====Inicializacion de SD====
     EEPROM.begin(EEPROM_SIZE);
@@ -626,7 +632,7 @@ int runFile(String fileName){
         couplingAngle = endFileAngle;
     }
     if (true){
-        double zf, thetaf, zi, thetai, zFinal, thetaFinal;
+        double zf, thetaf, zi, thetai, thetaFinal;
         thetaf = MoveSara::normalizeAngle(file.getStartAngle() - couplingAngle);
         zf = file.getStartModule();
         thetai = halo.getCurrentAngle();
@@ -673,7 +679,7 @@ int runFile(String fileName){
         if (changePositionList){
             changePositionList = false;
             changeProgram = false;
-            goHomeSpiral(false);
+            goHomeSpiral();
             #ifdef PROCESSING_SIMULATOR
                 Serial.println("finished");
             #endif
@@ -687,7 +693,7 @@ int runFile(String fileName){
         if (changeProgram){
             changePositionList = false;
             changeProgram = false;
-            goHomeSpiral(false);
+            goHomeSpiral();
             #ifdef PROCESSING_SIMULATOR
                 Serial.println("finished");
             #endif
@@ -706,7 +712,7 @@ int runFile(String fileName){
             }
         }
         if (suspensionModeGlobal == true){
-            goHomeSpiral(false);
+            goHomeSpiral();
             #ifdef PROCESSING_SIMULATOR
                 Serial.println("finished");
             #endif
@@ -714,7 +720,7 @@ int runFile(String fileName){
         }
         //====Revisar si se cambia playlist u ordenMode====
         if (rewindPlaylist){
-            goHomeSpiral(false);
+            goHomeSpiral();
             rewindPlaylist = false;
             #ifdef PROCESSING_SIMULATOR
                 Serial.println("finished");
@@ -809,25 +815,46 @@ int runFile(String fileName){
     #endif
     return 10;
 }
+
 /**
- * @brief regresa a la pocision 0,0
+ * @brief returns to home (0,0) on a spiral path.
  * 
  */
-void goHomeSpiral(bool stop){
-    float degreesToRotate;
-    halo.setZCurrent(halo.getCurrentModule());
-    degreesToRotate = int(halo.getCurrentModule()/EVERY_MILIMITERS) * 2*PI;
-    //if (halo.getCurrentAngle() > PI){
-        halo.setThetaCurrent(halo.getCurrentAngle() + degreesToRotate);
-    /*}
-    else{
-        halo.setThetaCurrent(halo.getCurrentAngle() + );
-    }*/
-    
+void goHomeSpiral(){
+    delay(1000);
+    float currentModule = halo.getCurrentModule();
+    availableDeceleration = true;
+    if (currentModule < DISTANCIA_MAX / sqrt(2)){
+        goCenterSpiral(false);
+    }
+    else
+    {
+        goEdgeSpiral(false);
+    }
+    availableDeceleration = false;
+    delay(5000); 
+}
+
+/**
+ * @brief returns to home (0,0) on a spiral path.
+ * 
+ */
+void goCenterSpiral(bool stop){
     halo.setSpeed(SPEED_TO_CENTER);
-    //degreesToRotate = 0;
     stopProgramChangeGlobal = stop;
-    movePolarTo(0, PI/2, 0, true);
+    spiralGoTo(0,PI/2);
+    stopProgramChangeGlobal = true;
+    halo.setSpeed(romGetSpeedMotor());
+}
+
+/**
+ * @brief returns to the outer end (DISTANCIA_MAX,0) on a spiral path.
+ * 
+ */
+void goEdgeSpiral(bool stop){
+    halo.setSpeed(SPEED_TO_CENTER);
+    stopProgramChangeGlobal = stop;
+    spiralGoTo(DISTANCIA_MAX,0);
     stopProgramChangeGlobal = true;
     halo.setSpeed(romGetSpeedMotor());
 }
@@ -903,6 +930,7 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     }
     deltaTheta = (thetaNext - thetaCurrent) / slices;
     deltaZ = (zNext - zCurrent) / slices;
+    float speed= halo.getSpeed();
     for (long i = 0; i < slices; i++)
     {
         //====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
@@ -910,6 +938,13 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
             return 0;
         }
         //====
+        /*if (availableDeceleration){
+            if (float(i)/slices > 0.5){
+                float speedAux = speed*(1 - float(i)/slices)*2.0;
+                if (speedAux < 1){speedAux = 1;}
+                halo.setSpeed(speedAux);
+            }
+        }*/
         thetaAuxiliar = thetaCurrent + deltaTheta * double(i);
         zAuxliar = zCurrent + deltaZ * double(i);
         xAux = zAuxliar * cos(thetaAuxiliar);
@@ -1373,8 +1408,8 @@ void changePalette(int pallet)
     else if( pallet == 5)   { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND;}
     else if( pallet == 6)   { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND;}
     else if( pallet == 7)   { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND;}
-    else if( pallet == 8)   { currentPalette = PartyColors_p;           currentBlending = LINEARBLEND;}
-    else if( pallet == 9)   { currentPalette = myRedWhiteBluePalette_p; currentBlending = NOBLEND;}
+    else if( pallet == 8)   { currentPalette = pallette8;               currentBlending = LINEARBLEND;}
+    else if( pallet == 9)   { currentPalette = myRedWhiteBluePalette_p;               currentBlending = NOBLEND;}
     else if( pallet == 10)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND;}
     else if( pallet == 11)  { romGetCustomPallete(currentPalette);      currentBlending = LINEARBLEND;}
     else if( pallet == CODE_NOSD_PALLETE    )     { currentPalette = NO_SD_PALLETE;           incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;}
@@ -1726,20 +1761,10 @@ int romGetPositionList(){
  * @brief move to a certain position in spiral.
  * 
  */
-/*void spiralGoTo(){
+void spiralGoTo(float module, float angle){
     float degreesToRotate;
     halo.setZCurrent(halo.getCurrentModule());
-    if (halo.getCurrentAngle() > PI){
-        halo.setThetaCurrent(halo.getCurrentAngle() - 2*PI);
-    }
-    else{
-        halo.setThetaCurrent(halo.getCurrentAngle());
-    }
-    degreesToRotate = halo.getCurrentModule()/EVERY_MILIMITERS * 2*PI;
-    halo.setSpeed(SPEED_TO_CENTER);
-    //degreesToRotate = 0;
-    stopProgramChangeGlobal = stop;
-    movePolarTo(0, degreesToRotate, 0, true);
-    stopProgramChangeGlobal = true;
-    halo.setSpeed(romGetSpeedMotor());
-}*/
+    degreesToRotate = int((halo.getCurrentModule() - module)/EVERY_MILIMITERS) * 2*PI;
+    halo.setThetaCurrent(halo.getCurrentAngle() + degreesToRotate);
+    movePolarTo(module, angle, 0, true);
+}

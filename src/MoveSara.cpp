@@ -99,35 +99,7 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance)
     stepper2.setMaxSpeed(maxSpeed);
     positions[0] = stepper1.currentPosition() + q1_steps;
     positions[1] = stepper2.currentPosition() + q2_steps + q1_steps;
-    //========
-    double factor, p[2];
-    long pL[2];
-    double delta1 = q1_steps;
-    double delta2 = q2_steps + q1_steps;
-    p[0] = stepper1.currentPosition();
-    p[1] = stepper2.currentPosition();
-    if (abs(delta1) > abs(delta2)){
-        factor = delta1/1;
-    }
-    else{
-        factor = delta2/1;
-    }
-    if (factor < 1){
-        factor = 1;
-    }
-    delta1 = delta1/factor;
-    delta2 = delta2/factor;
 #ifndef DISABLE_MOTORS
-    /*steppers.moveTo(positions);
-    steppers.runSpeedToPosition();*/
-    for(int i=0; i < int(factor); i++){
-        p[0] += delta1;
-        p[1] += delta2;
-        pL[0] = p[0];
-        pL[1] = p[1];
-        steppers.moveTo(pL);
-        steppers.runSpeedToPosition();
-    }
     steppers.moveTo(positions);
     steppers.runSpeedToPosition();
 #endif
