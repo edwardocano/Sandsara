@@ -83,8 +83,8 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance)
     else
         maxSpeed = abs(q2_steps + q1_steps) * 1L;
     maxSpeed = (maxSpeed / distance) * millimeterSpeed;
-    if (maxSpeed > 150 * microstepping)
-        maxSpeed = 150 * microstepping;
+    if (maxSpeed > MAX_STEPS_PER_SECOND * microstepping)
+        maxSpeed = MAX_STEPS_PER_SECOND * microstepping;
     if (constantMotorSpeed)
         maxSpeed = 50 * microstepping;
 //variar velocidad

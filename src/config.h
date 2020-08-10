@@ -142,7 +142,7 @@
 #define MAX_NUMBERLEDS 36
 #define LEDS_OF_HALO 30
 #define LEDS_OF_STELLE 36
-
+#define MAX_STEPS_PER_SECOND 100
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0
 

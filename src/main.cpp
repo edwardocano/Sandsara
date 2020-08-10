@@ -301,7 +301,8 @@ void setup()
     #ifdef DEBUGGING_DATA
         Serial.println("Salio de start");
     #endif
-    
+    driver.rms_current(500);
+    driver2.rms_current(500);
     pinMode(EN_PIN, OUTPUT);
     pinMode(EN_PIN2, OUTPUT);
     digitalWrite(EN_PIN, LOW);
