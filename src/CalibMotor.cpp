@@ -62,6 +62,7 @@ CalibMotor::CalibMotor()
 {
 }
 
+long t_old = 0;
 /**
  * @brief Esta funcion activa y desactiva los pines de salida STEP mediante interrupciones. 
  * @param flag Es la variable para determinar que brazo es el que gira.
@@ -70,12 +71,13 @@ CalibMotor::CalibMotor()
  * 2 representa el giro de ambos brazos de manera simultanea.
  * 3 representa el giro del brazo 3.
  */
-
 void IRAM_ATTR onTimer()
 {
 
 	if (flag == 0)
 	{
+        //Serial.println(micros() - t_old);
+        t_old = micros();
 		digitalWrite(STEP_PIN, !digitalRead(STEP_PIN));
 	}
 	if (flag == 2)
@@ -177,6 +179,15 @@ void CalibMotor::init()
   									   // indica una oposicion al movimiento. 
 
 	EEPROM.begin(EEPROM_SIZE);
+    delay(100);
+    while (driver.microsteps() != MICROSTEPPING){
+        driver.microsteps(MICROSTEPPING);
+        delay(100);
+    }
+    while (driver2.microsteps() != MICROSTEPPING){
+        driver2.microsteps(MICROSTEPPING);
+        delay(100);
+    }
 }
 
 int CalibMotor::start()

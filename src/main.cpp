@@ -51,6 +51,7 @@ bool stop_boton;
 bool intermediateCalibration = false;
 bool firstExecution;
 bool availableDeceleration = false;
+bool turnOnLeds = false;
 //====variables de estado====
 bool pauseModeGlobal = false;
 bool suspensionModeGlobal = false;
@@ -274,6 +275,11 @@ void setup()
         NUM_LEDS = LEDS_OF_STELLE;
     }
     //====
+    
+    //====Seleccionar tipo de producto====
+    //pinMode(PIN_ProducType, INPUT);
+    delay(1000);
+    
     //====new task for leds====
     xTaskCreatePinnedToCore(
                     ledsFunc,   /* Task function. */
@@ -285,15 +291,13 @@ void setup()
                     1);          /* pin task to core 0 */                  
     delay(500); 
     //====
-    //====Seleccionar tipo de producto====
-    //pinMode(PIN_ProducType, INPUT);
-    delay(1000);
-    
+
     //====Calibrar====
     #ifdef DEBUGGING_DATA
         Serial.println("init func");
     #endif
     haloCalib.init();
+    
     #ifdef DEBUGGING_DATA
         Serial.println("start func");
     #endif
@@ -301,6 +305,7 @@ void setup()
     #ifdef DEBUGGING_DATA
         Serial.println("Salio de start");
     #endif
+    
     driver.rms_current(500);
     driver2.rms_current(500);
     pinMode(EN_PIN, OUTPUT);
@@ -1504,8 +1509,8 @@ void ledsFunc( void * pvParameters ){
         }      
         FastLED.show();
         startIndex += 1;
-        vTaskDelay(delayLeds);
-        //FastLED.delay(delayLeds);
+        //vTaskDelay(delayLeds);
+        FastLED.delay(delayLeds);
     } 
 }
 
