@@ -52,6 +52,7 @@ bool intermediateCalibration = false;
 bool firstExecution;
 bool availableDeceleration = false;
 bool turnOnLeds = false;
+bool ledsDirection;
 //====variables de estado====
 bool pauseModeGlobal = false;
 bool suspensionModeGlobal = false;
@@ -116,6 +117,8 @@ int romGetPositionList();
 void goCenterSpiral(bool);
 void goEdgeSpiral(bool);
 void spiralGoTo(float , float );
+bool romGetLedsDirection();
+int romSetLedsDirection(bool );
 //====
 //====Variable leds====
 #define LED_PIN     32
@@ -279,7 +282,8 @@ void setup()
     //====Seleccionar tipo de producto====
     //pinMode(PIN_ProducType, INPUT);
     delay(1000);
-    
+    //====Restore leds direction====
+    ledsDirection = romGetLedsDirection();
     //====new task for leds====
     xTaskCreatePinnedToCore(
                     ledsFunc,   /* Task function. */
@@ -1083,6 +1087,9 @@ void executeCode(int errorCode){
     else if(errorCode == 210){
         rewindPlaylist = true;
     }
+    else if(errorCode == 220){
+        ledsDirection = romGetLedsDirection();
+    }
     else if (errorCode == 970){
         romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
         romSetPlaylist(PLAYLIST_DEFAULT);
@@ -1487,13 +1494,6 @@ void ledsFunc( void * pvParameters ){
     FastLED.setBrightness( BRIGHTNESS );
     //====
     for(;;){
-        /*currentPalette = customPallete;
-        FillLEDsFromPaletteColors(startIndex);
-        FastLED.show();
-        startIndex += 1;
-        //vTaskDelay(delayLeds);
-        FastLED.delay(delayLeds);
-        continue;*/
         if (ledsOffGlobal){
             FastLED.clear();
             FastLED.show();
@@ -1508,7 +1508,13 @@ void ledsFunc( void * pvParameters ){
             leds[i].blue = gamma8[leds[i].blue];
         }      
         FastLED.show();
-        startIndex += 1;
+        if (ledsDirection){
+            startIndex += 1;
+        }
+        else{
+            startIndex -= 1;
+        }
+        
         //vTaskDelay(delayLeds);
         FastLED.delay(delayLeds);
     } 
@@ -1773,4 +1779,34 @@ void spiralGoTo(float module, float angle){
     degreesToRotate = int((halo.getCurrentModule() - module)/EVERY_MILIMITERS) * 2*PI;
     halo.setThetaCurrent(halo.getCurrentAngle() + degreesToRotate);
     movePolarTo(module, angle, 0, true);
+}
+
+/**
+ * @brief stored the direction of leds in ROM.
+ * @param direction is the value to be stored.
+ * @return en error code.
+ */
+int romSetLedsDirection(bool direction){
+    if (direction){
+        EEPROM.write(ADRESSLEDSDIRECTION, 255);
+    }
+    else{
+        EEPROM.write(ADRESSLEDSDIRECTION, 0);
+    }
+    EEPROM.commit();
+    return 0;
+}
+
+/**
+ * @brief restored the direction of led saved in ROM.
+ * @return true or false depending on the stored value.
+ */
+bool romGetLedsDirection(){
+    uint8_t var = EEPROM.read(ADRESSLEDSDIRECTION);
+    if (var > 0){
+        return true;
+    }
+    else{
+        return false;
+    }
 }

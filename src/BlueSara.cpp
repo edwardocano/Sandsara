@@ -11,6 +11,7 @@ extern int romSetCustomPallete(uint8_t* ,uint8_t* , uint8_t* ,uint8_t* , int);
 extern int romSetIncrementIndexPallete(bool );
 extern int romSetIntermediateCalibration(bool );
 extern bool romGetIntermediateCalibration();
+extern int romSetLedsDirection(bool );
 //====
 //====
 uint8_t dataBt[BUFFER_BLUETOOTH];
@@ -151,6 +152,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * code19, means that you want to change indexIncrement Variable.
  * code20, means that you want to change the intermediateCalibration Variable.
  * code21, means that you want to rewind the playlist.
+ * code22, means that you want to change the direction of leds.
  * code66, actualizar firmware
  * code80, Reiniciar Sandsara
  */
@@ -656,6 +658,25 @@ int BlueSara::checkBlueTooth()
         else if(line.indexOf("code21") >= 0){
             writeBtln("ok");
             return 210;
+        }
+        else if(line.indexOf("code22") >= 0){
+            writeBtln("request-ledsDirection");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            int direction = line.toInt();
+            if (direction != 0){
+                romSetLedsDirection(true);
+            }
+            else{
+                romSetLedsDirection(false);
+            }
+            writeBtln("ok");
+            return 220;
         }
         else if (line.indexOf("code66") >= 0)
         {
