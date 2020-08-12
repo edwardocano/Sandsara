@@ -831,7 +831,7 @@ int runFile(String fileName){
  * 
  */
 void goHomeSpiral(){
-    delay(1000);
+    delay(200);
     float currentModule = halo.getCurrentModule();
     availableDeceleration = true;
     if (currentModule < DISTANCIA_MAX / sqrt(2)){
@@ -842,7 +842,7 @@ void goHomeSpiral(){
         goEdgeSpiral(false);
     }
     availableDeceleration = false;
-    delay(5000); 
+    delay(500); 
 }
 
 /**

@@ -24,6 +24,8 @@ MoveSara::MoveSara()
     degrees_per_step = (littlePulleySize / bigPulleySize) * (PI / 180.0) * (1.8 / microstepping);
     stepper1 = AccelStepper(1, STEP_PIN, DIR_PIN);
     stepper2 = AccelStepper(1, STEP_PIN2, DIR_PIN2);
+    stepper1.setPinsInverted(true);
+    stepper2.setPinsInverted(true);
 }
 
 /**
