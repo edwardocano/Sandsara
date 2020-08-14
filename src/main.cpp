@@ -8,8 +8,6 @@
 #include "CalibMotor.h"
 #include "Testing.h"
 
-//#define FS_NO_GLOBALS
-//#include <FS.h>
 #include "SPI.h"
 #include "SdFat.h"
 SdFat SD;
@@ -19,108 +17,108 @@ bool readingSDFile = false;
 #include <EEPROM.h>
 
 
-//====Variables externas====
+//====Extern Variables====
 extern TMC2209Stepper driver;
 extern TMC2209Stepper driver2;
 extern bool sdExists(String );
 extern bool sdRemove(String );
 //====
 
-//====variables globales en rom====
-String playListGlobal;
-String bluetoothNameGlobal;
-int ordenModeGlobal;
-int speedMotorGlobal;
-int ledModeGlobal;
-int periodLedsGlobal;
-bool ceroZoneGlobal;
-//====variables gloabales====
-bool ledsOffGlobal = false;
-bool rewindPlaylist = false;
-bool incrementIndexGlobal = true;
-String currentProgramGlobal;
-String nextProgramGlobal;
-String currentPlaylistGlobal;
-int currentPositionListGlobal;
-int delayLeds;
-int pListFileGlobal;
-bool changePositionList;
-bool changeProgram;
-bool stopProgramChangeGlobal = true;
-bool stop_boton;
-bool intermediateCalibration = false;
-bool firstExecution;
-bool availableDeceleration = false;
-bool turnOnLeds = false;
-bool ledsDirection;
-//====variables de estado====
-bool pauseModeGlobal = false;
-bool suspensionModeGlobal = false;
+//====ROM Varibales====
+String  playListGlobal;
+String  bluetoothNameGlobal;
+int     ordenModeGlobal;
+int     speedMotorGlobal;
+int     ledModeGlobal;
+int     periodLedsGlobal;
+bool    ceroZoneGlobal;
+//====Global variables====
+bool    ledsOffGlobal = false;
+bool    rewindPlaylist = false;
+bool    incrementIndexGlobal = true;
+String  currentProgramGlobal;
+String  nextProgramGlobal;
+String  currentPlaylistGlobal;
+int     currentPositionListGlobal;
+int     delayLeds;
+int     pListFileGlobal;
+bool    changePositionList;
+bool    changeProgram;
+bool    stopProgramChangeGlobal = true;
+bool    stop_boton;
+bool    intermediateCalibration = false;
+bool    firstExecution;
+bool    availableDeceleration = false;
+bool    turnOnLeds = false;
+bool    ledsDirection;
+bool    pauseModeGlobal = false;
+bool    suspensionModeGlobal = false;
 //====
-//====Variables de paletas de colores====
-CRGBPalette16 NO_SD_PALLETE;
-CRGBPalette16 UPTADATING_PALLETE;
-CRGBPalette16 CALIBRATING_PALLETE;
-CRGBPalette16 SDEMPTY_PALLETE;
-CRGBPalette256 customPallete;
-CRGBPalette256 pallette8;
+//====Pallete Color Variables====
+CRGBPalette16   NO_SD_PALLETE;
+CRGBPalette16   UPTADATING_PALLETE;
+CRGBPalette16   CALIBRATING_PALLETE;
+CRGBPalette16   SDEMPTY_PALLETE;
+CRGBPalette256  customPallete;
+CRGBPalette256  pallette1, pallette2,pallette3,pallette4,pallette5,pallette6,pallette7,pallette8,pallette9, pallette10;
 //====
 MoveSara halo;
 BlueSara haloBt;
 
 int errorCode;
 
-//====prototipos de funciones====
-int moveInterpolateTo(double x, double y, double distance);
-void executeCode(int );
-int romSetPlaylist(String );
-String romGetPlaylist();
-int romSetOrdenMode(int );
-int romGetOrdenMode();
-void Neo_Pixel(int );
+//====function prototypes====
+extern  int programming(String );
+extern  void rebootEspWithReason(String );
+int     moveInterpolateTo(double x, double y, double distance);
+void    executeCode(int );
+int     romSetPlaylist(String );
+String  romGetPlaylist();
+int     romSetOrdenMode(int );
+int     romGetOrdenMode();
+void    Neo_Pixel(int );
 uint32_t rainbow();
-void FillLEDsFromPaletteColors(uint8_t );
-void changePalette(int );
-void SetupTotallyRandomPalette();
-void SetupBlackAndWhiteStripedPalette();
-void SetupPurpleAndGreenPalette();
-void ledsFunc( void * );
-int run_sandsara(String ,int );
-int movePolarTo(double ,double ,double, bool = false);
-int romSetPallete(int );
-int romGetPallete();
-int romSetSpeedMotor(int );
-int romGetSpeedMotor();
-int romSetPeriodLed(int );
-int romGetPeriodLed();
-int romSetBluetoothName(String );
-int romGetCustomPallete(CRGBPalette256 &);
-int romSetCustomPallete(uint8_t* ,uint8_t* , uint8_t* ,uint8_t*, int);
-String romGetBluetoothName();
-void findUpdate();
-extern int programming(String );
-extern void rebootEspWithReason(String );
-int orderRandom(String ,int);
-void setFrom1(int [], int);
-void removeIndex(int [], int , int );
-int runFile(String );
-void goHomeSpiral();
-void bluetoothThread(void* );
-int romSetIncrementIndexPallete(bool );
-bool romGetIncrementIndexPallete();
-double linspace(double init,double stop, int amount,int index);
-int rgb2Interpolation(CRGBPalette256 &,uint8_t* );
-int romSetIntermediateCalibration(bool );
-bool romGetIntermediateCalibration();
-int romSetPositionList(int );
-int romGetPositionList();
-void goCenterSpiral(bool);
-void goEdgeSpiral(bool);
-void spiralGoTo(float , float );
-bool romGetLedsDirection();
-int romSetLedsDirection(bool );
+void    FillLEDsFromPaletteColors(uint8_t );
+void    changePalette(int );
+void    SetupTotallyRandomPalette();
+void    SetupBlackAndWhiteStripedPalette();
+void    SetupPurpleAndGreenPalette();
+void    ledsFunc( void * );
+int     run_sandsara(String ,int );
+int     movePolarTo(double ,double ,double, bool = false);
+int     romSetPallete(int );
+int     romGetPallete();
+int     romSetSpeedMotor(int );
+int     romGetSpeedMotor();
+int     romSetPeriodLed(int );
+int     romGetPeriodLed();
+int     romGetCustomPallete(CRGBPalette256 &);
+int     romSetCustomPallete(uint8_t* ,uint8_t* , uint8_t* ,uint8_t*, int);
+int     romSetBluetoothName(String );
+String  romGetBluetoothName();
+int     romSetIntermediateCalibration(bool );
+bool    romGetIntermediateCalibration();
+int     romSetPositionList(int );
+int     romGetPositionList();
+int     romSetIncrementIndexPallete(bool );
+bool    romGetIncrementIndexPallete();
+bool    romGetLedsDirection();
+int     romSetLedsDirection(bool );
+void    findUpdate();
+int     orderRandom(String ,int);
+void    setFrom1(int [], int);
+void    removeIndex(int [], int , int );
+int     runFile(String );
+void    goHomeSpiral();
+void    bluetoothThread(void* );
+double  linspace(double init,double stop, int amount,int index);
+int     rgb2Interpolation(CRGBPalette256 &,uint8_t* );
+void    goCenterSpiral(bool);
+void    goEdgeSpiral(bool);
+void    spiralGoTo(float , float );
+
 //====
-//====Variable leds====
+//====Led Variables====
 #define LED_PIN     32
 int     NUM_LEDS;
 #define BRIGHTNESS  255
@@ -128,32 +126,7 @@ int     NUM_LEDS;
 #define COLOR_ORDER GRB
 CRGB leds[MAX_NUMBERLEDS];
 //====
-
-uint8_t pallette8bytes[64] = {0,68,3,86,
-17,72,26,108,
-34,70,48,126,
-51,65,68,135,
-68,57,86,140,
-85,49,104,142,
-102,42,120,142,
-120,36,135,142,
-136,31,152,139,
-153,34,167,133,
-170,52,182,121,
-187,82,197,105,
-204,119,209,83,
-221,162,218,55,
-238,207,225,28,
-255,250,231,34};
-/*uint8_t pruebapaleta[64] = {0,0,0,0,
-127,127,127,127,
-255,255,255,255};*/
-
-CRGBPalette256 currentPalette;
-TBlendType    currentBlending;
-
-extern CRGBPalette256 myRedWhiteBluePalette;
-extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
+#include <leds.h>
 
 unsigned long timeLeds;
 uint8_t startIndex = 0;
@@ -164,67 +137,36 @@ bool productType;
 TaskHandle_t Task1;
 TaskHandle_t Task2;
 //====
-//====Calibracion====
+//====Calibration====
 CalibMotor haloCalib;
 //====Testing========
 Testing haloTest;
 //====
-//====Paletas para codigos de colores
-DEFINE_GRADIENT_PALETTE( breathRed ) {
-        0,     0,   0,  0,   //black
-        128,   255, 0,  0,   //red
-        255,   0,   0,  0};
-        
-DEFINE_GRADIENT_PALETTE( breathBlue ) {
-        0,     0,   0,  0,   //black
-        128,   0, 0,  255,   //azul
-        255,   0,   0,  0};
-
-DEFINE_GRADIENT_PALETTE( breathYellow ) {
-        0,     0,   0,  0,   //black
-        128,   255, 255,  0,   //yellow
-        255,   0,   0,  0};
-
-DEFINE_GRADIENT_PALETTE( breathOrange ) {
-        0,     0,   0,  0,   //black
-        128,   255, 60,  0,   //orange
-        255,   0,   0,  0};                    
-//====
-//====Paleta dinamica====
-byte bytes[12];
-//====
-const uint8_t gamma8[] = {
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,
-    1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,
-    2,  3,  3,  3,  3,  3,  3,  3,  4,  4,  4,  4,  4,  5,  5,  5,
-    5,  6,  6,  6,  6,  7,  7,  7,  7,  8,  8,  8,  9,  9,  9, 10,
-   10, 10, 11, 11, 11, 12, 12, 13, 13, 13, 14, 14, 15, 15, 16, 16,
-   17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 24, 24, 25,
-   25, 26, 27, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 35, 35, 36,
-   37, 38, 39, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 50,
-   51, 52, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 66, 67, 68,
-   69, 70, 72, 73, 74, 75, 77, 78, 79, 81, 82, 83, 85, 86, 87, 89,
-   90, 92, 93, 95, 96, 98, 99,101,102,104,105,107,109,110,112,114,
-  115,117,119,120,122,124,126,127,129,131,133,135,137,138,140,142,
-  144,146,148,150,152,154,156,158,160,162,164,167,169,171,173,175,
-  177,180,182,184,186,189,191,193,196,198,200,203,205,208,210,213,
-  215,218,220,223,225,228,231,233,236,239,241,244,247,249,252,255 };
 
 void setup()
 {
     delay(3000); // power-up safety delay
-    //====Configurar Serial====
+    //====Serial configuration====
     Serial.begin(115200);
     //====
-    //====Inicializar Paletas====
+    //====Palletes initialization====
     NO_SD_PALLETE= breathRed;
     UPTADATING_PALLETE = breathYellow;
     CALIBRATING_PALLETE = breathBlue;
     SDEMPTY_PALLETE = breathOrange;
-    rgb2Interpolation(pallette8, pallette8bytes);
+    rgb2Interpolation(pallette1, palletteColors1);
+    rgb2Interpolation(pallette2, palletteColors2);
+    rgb2Interpolation(pallette3, palletteColors3);
+    rgb2Interpolation(pallette4, palletteColors4);
+    rgb2Interpolation(pallette5, palletteColors5);
+    rgb2Interpolation(pallette6, palletteColors6);
+    rgb2Interpolation(pallette7, palletteColors7);
+    rgb2Interpolation(pallette8, palletteColors8);
+    rgb2Interpolation(pallette9, palletteColors9);
+    rgb2Interpolation(pallette10, palletteColors10);
+
     //====
-    //====Inicializacion de SD====
+    //====EEPROM Initialization====
     EEPROM.begin(EEPROM_SIZE);
     delay(500);
 	//====Testing====
@@ -237,7 +179,7 @@ void setup()
     //====restore the value intermediateCalibration====
     intermediateCalibration = romGetIntermediateCalibration();
     //====
-    //====Recuperar speedMotor====
+    //====Restore speedMotor====
     speedMotorGlobal = romGetSpeedMotor();
     if (speedMotorGlobal > MAX_SPEED_MOTOR || speedMotorGlobal < MIN_SPEED_MOTOR){
         speedMotorGlobal = SPEED_MOTOR_DEFAULT;
@@ -245,14 +187,14 @@ void setup()
     }
     halo.setSpeed(speedMotorGlobal);
     //====
-    //====Recuperar Periodo de refresco de los leds====
+    //====Restoring of refreshing time of leds====
     periodLedsGlobal = romGetPeriodLed();
     if (periodLedsGlobal > MAX_PERIOD_LED || periodLedsGlobal < MIN_PERIOD_LED){
         periodLedsGlobal = PERIOD_LED_DEFAULT;
         romSetPeriodLed(PERIOD_LED_DEFAULT);
     }
     //====
-    //====Recuperar Paleta de color para leds====
+    //====Restoring of the latest pallete choosed====
     ledModeGlobal = romGetPallete();
     if (ledModeGlobal > MAX_PALLETE || ledModeGlobal < MIN_PALLETE){
         ledModeGlobal = PALLETE_DEFAULT;
@@ -261,10 +203,10 @@ void setup()
     changePalette(ledModeGlobal);
     //====
     
-    //====Recuperar nombre del bluetooth====
+    //====Restoring bluetooth name====
     bluetoothNameGlobal = romGetBluetoothName();
     //====
-    //====Configure the halo y bluetooth====
+    //====Configure the halo and bluetooth====
     halo.init();
     haloBt.init(bluetoothNameGlobal);
     //====
@@ -279,8 +221,6 @@ void setup()
     }
     //====
     
-    //====Seleccionar tipo de producto====
-    //pinMode(PIN_ProducType, INPUT);
     delay(1000);
     //====Restore leds direction====
     ledsDirection = romGetLedsDirection();
@@ -296,7 +236,7 @@ void setup()
     delay(500); 
     //====
 
-    //====Calibrar====
+    //====Cablibrating====
     #ifdef DEBUGGING_DATA
         Serial.println("init func");
     #endif
@@ -309,15 +249,15 @@ void setup()
     #ifdef DEBUGGING_DATA
         Serial.println("Salio de start");
     #endif
-    
-    driver.rms_current(700);
-    driver2.rms_current(700);
+    //====After calibration current has to be set up====
+    driver.rms_current(NORMAL_CURRENT);
+    driver2.rms_current(NORMAL_CURRENT);
     pinMode(EN_PIN, OUTPUT);
     pinMode(EN_PIN2, OUTPUT);
     digitalWrite(EN_PIN, LOW);
     digitalWrite(EN_PIN2, LOW);
     //====
-    //====Inicializar SD====
+    //====SD initialization====
     while(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
     {
         changePalette(CODE_NOSD_PALLETE);
@@ -331,7 +271,7 @@ void setup()
         Serial.println("Card present");
     #endif
     //====
-    //====recuperar valores de playlist y ordenMode====    
+    //====Restore playlist name and ordenMode====    
     playListGlobal = romGetPlaylist();
     ordenModeGlobal = romGetOrdenMode();
     if (ordenModeGlobal < MIN_REPRODUCTION_MODE || ordenModeGlobal > MAX_REPRODUCTION_MODE){
@@ -366,7 +306,7 @@ void setup()
         Serial.println(ordenModeGlobal);
     #endif
     //====
-    //====Buscar por nueva actualizacion====
+    //====Searching for an update====
     findUpdate();
     //====
     #ifdef PROCESSING_SIMULATOR
@@ -374,7 +314,7 @@ void setup()
     #endif
     
     
-    //=====si existe el archivos llamado playlist.playlist se ejecutara esa playlist====
+    //=====if the file playlist exits it will be executed====
     if (sdExists("/playlist.playlist")){
         playListGlobal = "/playlist.playlist";
         ordenModeGlobal = 1;
@@ -382,13 +322,13 @@ void setup()
     //=====
     //====new task for leds====
     xTaskCreatePinnedToCore(
-                    bluetoothThread,   /* Task function. */
-                    "Task2",     /* name of task. */
-                    5000,       /* Stack size of task */
-                    NULL,        /* parameter of the task */
-                    4,           /* priority of the task */
-                    &Task2,      /* Task handle to keep track of created task */
-                    0);          /* pin task to core 0 */                  
+                    bluetoothThread,   
+                    "Task2",     
+                    5000,
+                    NULL,
+                    4,
+                    &Task2,
+                    0);
     delay(500); 
     //====
     firstExecution = true;
@@ -431,14 +371,14 @@ void loop()
 
 /**
  * @brief
- * @param playlist el nombre de la playlist a ejecutar, ejemplo "/animales.playlist"
- * @param ordenMode el tipo de reproduccion pudiendo ser
- * 1, se ejecuta en orden desendente segun la playlist.
- * 2, se ejecutan los archivos de la playlist en orden aleatorio.
- * 3, se ejecutan todos los archivos contenidos en el directorio principal de la SD en el orden que la sd los acomoda.
- * 4, se ejecutan todos los archivos contenidos en el directorio principal de la SD en orden aleatorio.
- * @return codigo de error.
- *  1, se cambio la playlist o se cambio el ordenMode
+ * @param playlist the name of playlist to be executed, e.g. "/animales.playlist"
+ * @param ordenMode the orden that files will be executed
+ * 1, files will be reproduced in descending order according to playlist.
+ * 2, files will be reproduced in random order according to playlist.
+ * 3, All files in SD will be reproduced in a determined order.
+ * 4, All files in SD will be reproduced in random order.
+ * @return an error code.
+ *  1, playlist or ordenMode were changed.
  *  0, termino el la funcion sin problemas.
  * -1, No se pudo abrir el archivo con la direccion dirFile de getLineNumber.
  * -2, El archivo abierto es un directorio de getLineNumber.
@@ -1413,17 +1353,17 @@ void changePalette(int pallet)
 {
     incrementIndexGlobal = romGetIncrementIndexPallete();
     delayLeds = romGetPeriodLed();
-    if     ( pallet == 0)  { currentPalette = RainbowColors_p;          currentBlending = LINEARBLEND;}
-    else if( pallet == 1)   { currentPalette = RainbowStripeColors_p;   currentBlending = NOBLEND;}
-    else if( pallet == 2)   { currentPalette = RainbowStripeColors_p;   currentBlending = LINEARBLEND;}
-    else if( pallet == 3)   { SetupPurpleAndGreenPalette();             currentBlending = LINEARBLEND;}
-    else if( pallet == 4)   { SetupTotallyRandomPalette();              currentBlending = LINEARBLEND;}
-    else if( pallet == 5)   { SetupBlackAndWhiteStripedPalette();       currentBlending = NOBLEND;}
-    else if( pallet == 6)   { SetupBlackAndWhiteStripedPalette();       currentBlending = LINEARBLEND;}
-    else if( pallet == 7)   { currentPalette = CloudColors_p;           currentBlending = LINEARBLEND;}
+    if     ( pallet == 0)   { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;}
+    else if( pallet == 1)   { currentPalette = pallette1;               currentBlending = NOBLEND;}
+    else if( pallet == 2)   { currentPalette = pallette2;               currentBlending = LINEARBLEND;}
+    else if( pallet == 3)   { currentPalette = pallette3;               currentBlending = LINEARBLEND;}
+    else if( pallet == 4)   { currentPalette = pallette4;               currentBlending = LINEARBLEND;}
+    else if( pallet == 5)   { currentPalette = pallette5;               currentBlending = NOBLEND;}
+    else if( pallet == 6)   { currentPalette = pallette6;               currentBlending = LINEARBLEND;}
+    else if( pallet == 7)   { currentPalette = pallette7;               currentBlending = LINEARBLEND;}
     else if( pallet == 8)   { currentPalette = pallette8;               currentBlending = LINEARBLEND;}
-    else if( pallet == 9)   { currentPalette = myRedWhiteBluePalette_p;               currentBlending = NOBLEND;}
-    else if( pallet == 10)  { currentPalette = myRedWhiteBluePalette_p; currentBlending = LINEARBLEND;}
+    else if( pallet == 9)   { currentPalette = pallette9;               currentBlending = NOBLEND;}
+    else if( pallet == 10)  { currentPalette = pallette10;               currentBlending = LINEARBLEND;}
     else if( pallet == 11)  { romGetCustomPallete(currentPalette);      currentBlending = LINEARBLEND;}
     else if( pallet == CODE_NOSD_PALLETE    )     { currentPalette = NO_SD_PALLETE;           incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;}
     else if( pallet == CODE_UPDATING_PALLETE)     { currentPalette = UPTADATING_PALLETE;      incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;}

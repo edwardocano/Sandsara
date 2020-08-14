@@ -141,10 +141,12 @@
 #define MIN_REPRODUCTION_MODE 1
 #define MAX_REPRODUCTION_MODE 4
 #define MAX_POSITIONLIST 1000
-#define MAX_NUMBERLEDS 36
-#define LEDS_OF_HALO 30
+#define MAX_NUMBERLEDS 100
+#define LEDS_OF_HALO 60
 #define LEDS_OF_STELLE 36
 #define MAX_STEPS_PER_SECOND 150
+#define NORMAL_CURRENT 700
+
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0
 
