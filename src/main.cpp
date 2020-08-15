@@ -60,7 +60,11 @@ CRGBPalette16   UPTADATING_PALLETE;
 CRGBPalette16   CALIBRATING_PALLETE;
 CRGBPalette16   SDEMPTY_PALLETE;
 CRGBPalette256  customPallete;
-CRGBPalette256  pallette1, pallette2,pallette3,pallette4,pallette5,pallette6,pallette7,pallette8,pallette9, pallette10;
+CRGBPalette256  pallette1, pallette2,pallette3,
+pallette4,pallette5,pallette6,
+pallette7,pallette8,pallette9,
+pallette10,pallette11,pallette12,
+pallette13,pallette14,pallette15;
 //====
 MoveSara halo;
 BlueSara haloBt;
@@ -164,6 +168,11 @@ void setup()
     rgb2Interpolation(pallette8, palletteColors8);
     rgb2Interpolation(pallette9, palletteColors9);
     rgb2Interpolation(pallette10, palletteColors10);
+    rgb2Interpolation(pallette11, palletteColors11);
+    rgb2Interpolation(pallette12, palletteColors12);
+    rgb2Interpolation(pallette13, palletteColors13);
+    rgb2Interpolation(pallette14, palletteColors14);
+    rgb2Interpolation(pallette15, palletteColors15);
 
     //====
     //====EEPROM Initialization====
@@ -226,13 +235,13 @@ void setup()
     ledsDirection = romGetLedsDirection();
     //====new task for leds====
     xTaskCreatePinnedToCore(
-                    ledsFunc,   /* Task function. */
-                    "Task1",     /* name of task. */
-                    5000,       /* Stack size of task */
-                    NULL,        /* parameter of the task */
-                    5,           /* priority of the task */
-                    &Task1,      /* Task handle to keep track of created task */
-                    1);          /* pin task to core 0 */                  
+                    ledsFunc,
+                    "Task1",
+                    5000,
+                    NULL,
+                    5,
+                    &Task1,
+                    1);
     delay(500); 
     //====
 
@@ -283,7 +292,6 @@ void setup()
         #ifdef DEBUGGING_DATA
             Serial.print("No hay una playlist guardada, se reproduciran todos los archivos en la sd");
         #endif
-        //ordenModeGlobal = 3;
     }
     else
     {
@@ -298,7 +306,6 @@ void setup()
             #ifdef DEBUGGING_DATA
                 Serial.println("La playlist no existe, se reproduciran todos los archivos en la sd");
             #endif
-            //ordenModeGlobal = 3;
         }
     }
     #ifdef DEBUGGING_DATA
@@ -314,7 +321,7 @@ void setup()
     #endif
     
     
-    //=====if the file playlist exits it will be executed====
+    //=====if the file playlist.playlist exits it will be executed====
     if (sdExists("/playlist.playlist")){
         playListGlobal = "/playlist.playlist";
         ordenModeGlobal = 1;
@@ -379,10 +386,10 @@ void loop()
  * 4, All files in SD will be reproduced in random order.
  * @return an error code.
  *  1, playlist or ordenMode were changed.
- *  0, termino el la funcion sin problemas.
- * -1, No se pudo abrir el archivo con la direccion dirFile de getLineNumber.
- * -2, El archivo abierto es un directorio de getLineNumber.
- * -3, La linea que se desea leer no es valida de getLineNumber.
+ *  0, ends without error.
+ * -1, playlist was not found.
+ * -2, playlist is a directory.
+ * -3, an attempt to choose an incorrect position in playlist was performed.
  * -4, el numero de archivos es cero.
  * -10, no se detecta SD.
  */
@@ -1328,9 +1335,8 @@ int romGetCustomPallete(CRGBPalette256 &pallete){
     pallete = palleteAuxiliar;
     return 0;
 }
-//=======================================Leds========================================
-//===================================================================================
-//====================Libreria fastled==========================
+//====Leds====
+//====Libreria fastled====
 void FillLEDsFromPaletteColors( uint8_t colorIndex)
 {
     uint8_t brightness = 255;
@@ -1354,75 +1360,28 @@ void changePalette(int pallet)
     incrementIndexGlobal = romGetIncrementIndexPallete();
     delayLeds = romGetPeriodLed();
     if     ( pallet == 0)   { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;}
-    else if( pallet == 1)   { currentPalette = pallette1;               currentBlending = NOBLEND;}
+    else if( pallet == 1)   { currentPalette = pallette1;               currentBlending = LINEARBLEND;}
     else if( pallet == 2)   { currentPalette = pallette2;               currentBlending = LINEARBLEND;}
     else if( pallet == 3)   { currentPalette = pallette3;               currentBlending = LINEARBLEND;}
     else if( pallet == 4)   { currentPalette = pallette4;               currentBlending = LINEARBLEND;}
-    else if( pallet == 5)   { currentPalette = pallette5;               currentBlending = NOBLEND;}
+    else if( pallet == 5)   { currentPalette = pallette5;               currentBlending = LINEARBLEND;}
     else if( pallet == 6)   { currentPalette = pallette6;               currentBlending = LINEARBLEND;}
     else if( pallet == 7)   { currentPalette = pallette7;               currentBlending = LINEARBLEND;}
     else if( pallet == 8)   { currentPalette = pallette8;               currentBlending = LINEARBLEND;}
-    else if( pallet == 9)   { currentPalette = pallette9;               currentBlending = NOBLEND;}
+    else if( pallet == 9)   { currentPalette = pallette9;               currentBlending = LINEARBLEND;}
     else if( pallet == 10)  { currentPalette = pallette10;               currentBlending = LINEARBLEND;}
-    else if( pallet == 11)  { romGetCustomPallete(currentPalette);      currentBlending = LINEARBLEND;}
+    else if( pallet == 11)  { currentPalette = pallette11;               currentBlending = LINEARBLEND;}
+    else if( pallet == 12)  { currentPalette = pallette12;               currentBlending = LINEARBLEND;}
+    else if( pallet == 13)  { currentPalette = pallette13;               currentBlending = LINEARBLEND;}
+    else if( pallet == 14)  { currentPalette = pallette14;               currentBlending = LINEARBLEND;}
+    else if( pallet == 15)  { currentPalette = pallette15;               currentBlending = LINEARBLEND;}
+    else if( pallet == 51)  { romGetCustomPallete(currentPalette);      currentBlending = LINEARBLEND;}
     else if( pallet == CODE_NOSD_PALLETE    )     { currentPalette = NO_SD_PALLETE;           incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;}
     else if( pallet == CODE_UPDATING_PALLETE)     { currentPalette = UPTADATING_PALLETE;      incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;}
     else if( pallet == CODE_CALIBRATING_PALLETE)  { currentPalette = CALIBRATING_PALLETE;     incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;}
     else if( pallet == CODE_SDEMPTY_PALLETE)      { currentPalette = SDEMPTY_PALLETE;         incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;}
     else   { currentPalette = RainbowColors_p;         currentBlending = LINEARBLEND;}
 }
-
-
-void SetupTotallyRandomPalette()
-{
-    for( int i = 0; i < 16; i++) {
-        currentPalette[i] = CHSV( random8(), 255, random8());
-    }
-}
-
-void SetupBlackAndWhiteStripedPalette()
-{
-    fill_solid( currentPalette, 256, CRGB::Black);
-    for(int i = 0; i < 16; i++){
-        currentPalette[i] = CRGB::White;
-    }
-}
-
-
-void SetupPurpleAndGreenPalette()
-{
-    CRGB purple = CHSV( HUE_PURPLE, 255, 255);
-    CRGB green  = CHSV( HUE_GREEN, 255, 255);
-    CRGB black  = CRGB::Black;
-    
-    currentPalette = CRGBPalette256(
-                                   green,  green,  black,  black,
-                                   purple, purple, black,  black,
-                                   green,  green,  black,  black,
-                                   purple, purple, black,  black );
-}
-
-const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
-{
-    CRGB::Red,
-    CRGB::Gray, // 'white' is too bright compared to red and blue
-    CRGB::Blue,
-    CRGB::Black,
-    
-    CRGB::Red,
-    CRGB::Gray,
-    CRGB::Blue,
-    CRGB::Black,
-    
-    CRGB::Red,
-    CRGB::Red,
-    CRGB::Gray,
-    CRGB::Gray,
-    CRGB::Blue,
-    CRGB::Blue,
-    CRGB::Black,
-    CRGB::Black
-};
 
 /**
  * @brief se encarga de animar la secuencia de leds
