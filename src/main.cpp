@@ -384,14 +384,14 @@ void loop()
  * 2, files will be reproduced in random order according to playlist.
  * 3, All files in SD will be reproduced in a determined order.
  * 4, All files in SD will be reproduced in random order.
- * @return an error code.
+ * @return an error code that could be one below.
  *  1, playlist or ordenMode were changed.
  *  0, ends without error.
  * -1, playlist was not found.
  * -2, playlist is a directory.
  * -3, an attempt to choose an incorrect position in playlist was performed.
- * -4, el numero de archivos es cero.
- * -10, no se detecta SD.
+ * -4, number of files in playlist or SD are zero.
+ * -10, SD was not found.
  */
 int run_sandsara(String playList, int ordenMode)
 {
@@ -459,7 +459,7 @@ int run_sandsara(String playList, int ordenMode)
     }
     
     changePalette(romGetPallete());
-    //====recuperar playlist====
+    //====restore playlist====
     currentPlaylistGlobal = playList;
     //====
     while (true)
@@ -473,7 +473,7 @@ int run_sandsara(String playList, int ordenMode)
         errorCode = FileSara::getLineNumber(pListFileGlobal, playList, fileName);
         if (errorCode < 0)
         {
-            //====playList no valida asi que regresa====
+            //====playList is not valid====
             delay(1000);
             return errorCode;
         }
@@ -504,7 +504,7 @@ int run_sandsara(String playList, int ordenMode)
         current_file.getName(nameF,NAME_LENGTH);
         fileName = nameF;
         current_file.close();
-        //====Correr programa====
+        //====run program====
         errorCode = runFile(fileName);
         //====
         if (errorCode == -70)   {continue;}
@@ -529,28 +529,28 @@ int run_sandsara(String playList, int ordenMode)
             continue;
         }
         else if (errorCode != 10)    {return errorCode;}
-        //====Aumentar la posicion en la lista de reproduccion====
+        //====Increment pListFileGlobal====
         pListFileGlobal += 1;
         //====
     }
     return 0;
 }
 /**
- * @brief ejecuta un programa
- * @param dirFile, direccion en la SD del programa.
- * @return un codigo de error
- * -70, es en lugar del continue
- * -71, es en lugar de un break
- *   1, se desea cambiar de ordenMode o Playlist
- *  10, no se presento algun return
- *  20, se desea cambiar de programa por posicion.
- *  30, se desea cambiar de programa por nombre
- *  40, se desea suspender.
+ * @brief execute a path
+ * @param dirFile, path direction in SD.
+ * @return an errorCode
+ * -70, instruction continue has to be performed.
+ * -71, instruction break has to be performed.
+ *   1, ordenMode or playlist have been changed.
+ *  10, the function finished without errors.
+ *  20, an instruction for changing path by postion was recieved.
+ *  30, an instruction for changing path by name was recieved.
+ *  40, an instruction for suspention was recieved.
  */
 int runFile(String fileName){
     double component_1, component_2, distance;
     int working_status = 0;
-    //====recuperar el nombre del programa y su posicion en la lista
+    //====restore the path name and its position in the playlist.
     currentProgramGlobal = fileName;
     currentPositionListGlobal = pListFileGlobal;
     //====
@@ -563,8 +563,9 @@ int runFile(String fileName){
     }
 
     double zInit = halo.getCurrentModule();
-    //se selecciona modo de lectura
+    //====read of File mode is selected.
     file.autoSetMode(zInit);
+    //====
     if (!file.isValid()){
         pListFileGlobal += 1;
         return -70;
@@ -617,7 +618,7 @@ int runFile(String fileName){
             return errorCode;
         }
     }
-    //si es thr, se guardan los valores del primer punto para que tenga referencia de donde empezar a moverse.
+    //if file is thr, the start point is save in order to know where is located.
     if (file.fileType == 2)
     {
         working_status = file.getNextComponents(&component_1, &component_2);
@@ -629,10 +630,10 @@ int runFile(String fileName){
         halo.setThetaCurrent(component_2 - couplingAngle);
     }
 
-    //parara hasta que el codigo de error del archivo sea diferente de cero.
+    //the next while is stopped until file is finished or is interrupted.
     while (true)
     {
-        //====comprobar si se desea cambiar de archivo====
+        //====check if you want to change the path====
         if (changePositionList){
             changePositionList = false;
             changeProgram = false;
@@ -661,7 +662,7 @@ int runFile(String fileName){
                 return 30;
             }
         }
-        //====Revisar si se suspende o pausa====
+        //====check for suspention or pause====
         if (pauseModeGlobal == true){
             while (pauseModeGlobal)
             {
@@ -675,7 +676,7 @@ int runFile(String fileName){
             #endif
             return 40;
         }
-        //====Revisar si se cambia playlist u ordenMode====
+        //====Check if you want to change playlist or Orden mode====
         if (rewindPlaylist){
             goHomeSpiral();
             rewindPlaylist = false;
@@ -685,7 +686,7 @@ int runFile(String fileName){
             return 1;
         }
         //====
-        //====se obtienen los siguientes componentes
+        //====Get new components of the next point to go====
         working_status = file.getNextComponents(&component_1, &component_2);                
         if (working_status == 3)
         {
@@ -695,10 +696,7 @@ int runFile(String fileName){
         {
             break;
         }
-        //====revisar bluetooth====
-        /*errorCode = haloBt.checkBlueTooth();
-        executeCode(errorCode);*/
-        //dependiendo del tipo de archivo se ejecuta la funcion correspondiente de movimiento.
+        //====According to type of file the functions moveTo or movePolarTo will be executed====
         if (file.fileType == 1 || file.fileType == 3)
         {
             MoveSara::rotate(component_1, component_2, -couplingAngle);
@@ -727,7 +725,7 @@ int runFile(String fileName){
             break;
         }
     }
-    //====Actualizar z y theta current====
+    //====update z and theta current====
     halo.setZCurrent(halo.getCurrentModule());
     if (halo.getCurrentAngle() > PI){
         halo.setThetaCurrent(halo.getCurrentAngle() - 2*PI);
@@ -736,7 +734,7 @@ int runFile(String fileName){
         halo.setThetaCurrent(halo.getCurrentAngle());
     }
     //====
-    //====Revisar si hubo problemas con la sd====
+    //====check if there was a SD problem====
     if (working_status == -10)
     {
         #ifdef DEBUGGING_DATA
@@ -818,14 +816,14 @@ void goEdgeSpiral(bool stop){
 
 //=========================================================
 /**
- * @brief Se usa esta funcion para avanzar de la posicion actual a un punto nuevo en linea recta por medio de puntos equidistantes a un 1 mm.
- * @param x coordenada en el eje x, medida en milimetros, a la que se desea avanzar.
- * @param y coordenada en el eje y, medida en milimetros, a la que se desea avanzar.
- * @param distance es la distancia, medida en milimetros, entre el punto actual y el punto al que se desea avanzar.
- * @return un codigo de error referente al bluetooth.
- * 1, se requiere cambio de playlist
- * 2, se requiere cambio de ordenMode
- * 0, termino 
+ * @brief this function is used to go from one point to another in a straight line path formed by equidistant points of 1 mm.
+ * @param x X axis coordinate of the target point, measured in milimeters.
+ * @param y Y axis coordinate of the target point, measured in milimeters.
+ * @param distance is the distance between the current point and the target point.
+ * @return an error code relating to bluetooth, this could be.
+ * 1, playlist has changed.
+ * 2, ordenMode has changed.
+ * 0, finished.
  */
 int moveInterpolateTo(double x, double y, double distance)
 {
@@ -838,18 +836,14 @@ int moveInterpolateTo(double x, double y, double distance)
 	
     for (int i = 1; i <= intervals; i++)
     {
-        //====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
+        //====check if this function has to stop because of program has change, pause or stop. or playlist has changed====
         if ((changePositionList || changeProgram || suspensionModeGlobal || rewindPlaylist) && stopProgramChangeGlobal){
             return 0;
         }
         //====
-        //====Comprobar si se pausa
         x_aux += delta_x;
         y_aux += delta_y;
         halo.moveTo(x_aux, y_aux);
-        //executeCode(errorCode);
-        /*errorCode = haloBt.checkBlueTooth();
-        executeCode(errorCode);*/
     }
     halo.moveTo(x, y);
     return 0;
@@ -890,18 +884,10 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     float speed= halo.getSpeed();
     for (long i = 0; i < slices; i++)
     {
-        //====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
+        ///====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
         if ((changePositionList || changeProgram || suspensionModeGlobal || rewindPlaylist) && stopProgramChangeGlobal){
             return 0;
         }
-        //====
-        /*if (availableDeceleration){
-            if (float(i)/slices > 0.5){
-                float speedAux = speed*(1 - float(i)/slices)*2.0;
-                if (speedAux < 1){speedAux = 1;}
-                halo.setSpeed(speedAux);
-            }
-        }*/
         thetaAuxiliar = thetaCurrent + deltaTheta * double(i);
         zAuxliar = zCurrent + deltaZ * double(i);
         xAux = zAuxliar * cos(thetaAuxiliar);
@@ -914,12 +900,9 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
                 return errorCode;
             }
         }
-        else
-        {
-        //if (distance >0.9){
+        else{
             halo.moveTo(xAux, yAux, littleMovement);
         }
-        //}
     }
     xAux = zNext * cos(thetaNext);
     yAux = zNext * sin(thetaNext);
@@ -929,7 +912,7 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     return 0;
 }
 /**
- * @brief mantiene en poling el bluetooth.
+ * @brief Este es una tarea en paralelo que revisa si hay algun mensaje por bluetooth.
  */
 void bluetoothThread(void * pvParameters ){
     for(;;){
@@ -940,8 +923,7 @@ void bluetoothThread(void * pvParameters ){
 }
 
 /**
- * @brief Ejecuta los codigos que regresa la funcion checkBluetooth();
- * 
+ * @brief Ejecuta los codigos que regresa la funcion checkBluetooth()
  */
 void executeCode(int errorCode){
     if (errorCode == 10){
@@ -956,7 +938,6 @@ void executeCode(int errorCode){
         ledModeGlobal = haloBt.getLedMode();
         changePalette(ledModeGlobal);
         romSetPallete(ledModeGlobal);
-        //Neo_Pixel(ledModeGlobal);
     }
     else if (errorCode == 50){
         int speed = haloBt.getSpeed();
@@ -1053,13 +1034,13 @@ void executeCode(int errorCode){
     }
 }
 
-//------------Guardar variables importantes en FLASH----------------
+//====ROM functions Section====
 
 /**
- * @brief actualiza el valor, en la ROM/FLASH, el nombre de la lista de reproduccion.
- * @param str es la direccion del archivo de lista de reproduccion, ejemplo "/animales.playlist"
- * @note unicamente guarda el nombre, ignorando '/' y ".playlist", ejemplo si str es "/animales.playlist" solo guarda "animales"
- *       pero la funcion romGetPlaylist la devuelve como "/animales.playList" 
+ * @brief actualiza el valor, en la ROM/FLASH, el nombre de la lista de reproducción.
+ * @param str es la dirección en la SD de la lista de reproducción, ejemplo "/animales.playlist".
+ * @note únicamente guarda el nombre, ignorando '/' y ".playlist", por ejemplo, si str es "/animales.playlist" solo guarda "animales".
+ *pero la funcion romGetPlaylist() la devuelve como "/animales.playList" .
  */
 int romSetPlaylist(String str){
     if (str.charAt(0) == '/')
@@ -1083,7 +1064,7 @@ int romSetPlaylist(String str){
 }
 
 /**
- * @brief recupera el nombre de la playlist guardada en rom
+ * @brief recupera el nombre de la playlist guardada en ROM
  * @return la direccion del archivo, ejemplo "/animales.playlist"
  * @note regresa siempre un nombre con terminacion ".playlist"
  */
@@ -1103,7 +1084,7 @@ String romGetPlaylist(){
 }
 
 /**
- * @brief guarda el tipo de orden de reporduccion en la memoria rom
+ * @brief guarda el tipo de orden de reporduccion en la memoria ROM
  * @param ordenMode el valor que corresponde al orden de reproduccion que va a ser almacenado en ROM.
  * @return 0
  */
@@ -1115,8 +1096,8 @@ int romSetOrdenMode(int ordenMode){
 }
 
 /**
- * @brief recupera el valor correspondiente al tipo de reporduccion guardado en la memoria ROM/FLASH.
- * @return el valor correspondiente al tipo de orden de reporduccion guardado en la ROM/FLASH.
+ * @brief recupera el valor correspondiente al tipo de reporduccion guardado en la memoria ROM.
+ * @return el valor correspondiente al tipo de orden de reporduccion guardado en la ROM.
  */
 int romGetOrdenMode(){
     uint8_t ordenMode;
@@ -1139,7 +1120,7 @@ int romSetPallete(int pallete){
 }
 
 /**
- * @brief recupera, de la ROM/FLASH, la ultima palleta de colores guardada.
+ * @brief recupera, de la ROM, la ultima palleta de colores guardada.
  * @return un numero entero que indaca una paleta de colores. 
  */
 int romGetPallete(){
@@ -1152,8 +1133,8 @@ int romGetPallete(){
 }
 
 /**
- * @brief guarda la velocidad del robot en rom
- * @param speed es la velocidad en milimetros por segundo del robot.
+ * @brief guarda la velocidad de Sandsara en la ROM
+ * @param speed es la velocidad en milimetros por segundo de Sandsara.
  * @return 0
  */
 int romSetSpeedMotor(int speed){
@@ -1166,8 +1147,8 @@ int romSetSpeedMotor(int speed){
 }
 
 /**
- * @brief recupera, de la ROM/FLASH, la velocidad del robot.
- * @return un numero entero que indaca la velocidad del robot, en milimetros por segundo. 
+ * @brief recupera, de la ROM, la velocidad de Sandsara.
+ * @return un numero entero que indaca la velocidad de Sandsara, medida en milimetros por segundo. 
  */
 int romGetSpeedMotor(){
     int speed;
@@ -1179,8 +1160,8 @@ int romGetSpeedMotor(){
 }
 
 /**
- * @brief guarda el periodo de refresco de los leds en ROM.
- * @param periodLed es el periodo de refresco de los leds.
+ * @brief guarda el tiempo de refresco de los leds en ROM.
+ * @param periodLed es el tiempo de refresco de los leds, medido en milisegundos.
  * @return 0
  */
 int romSetPeriodLed(int periodLed){
@@ -1192,8 +1173,8 @@ int romSetPeriodLed(int periodLed){
     return 0;
 }
 /**
- * @brief recupera, de la ROM/FLASH, el periodo de refresco de los leds.
- * @return el periodo de refresco de los leds. 
+ * @brief recupera, de la ROM, el tiempo de refresco de los leds.
+ * @return el tiempo de refresco de los leds. 
  */
 int romGetPeriodLed(){
     int periodLed;
@@ -1206,7 +1187,7 @@ int romGetPeriodLed(){
 
 /**
  * @brief guarda el nombre del dispositivo bluetooth.
- * @param str corresponde al nombre del bluetooth
+ * @param str corresponde al nombre del bluetooth.
  */
 int romSetBluetoothName(String str){
     if (str.length() > MAX_CHARACTERS_BTNAME){
@@ -1246,7 +1227,7 @@ String romGetBluetoothName(){
 /**
  * @brief guarda la variable incrementIndexPallete.
  * @param incrementIndex es el valor que se va a guardar.
- * @return un codigo de error
+ * @return 0.
  */
 int romSetIncrementIndexPallete(bool incrementIndex){
     if (incrementIndex){
@@ -1259,7 +1240,7 @@ int romSetIncrementIndexPallete(bool incrementIndex){
     return 0;
 }
 /**
- * @brief guarda la variable incrementIndexPallete.
+ * @brief recupera la variable incrementIndexPallete.
  * @return true o false dependiendo lo que haya guardado en la memoria.
  */
 bool romGetIncrementIndexPallete(){
@@ -1297,14 +1278,8 @@ int romSetCustomPallete(uint8_t* positions ,uint8_t* red , uint8_t* green, uint8
 }
 
 /**
- * @brief guarda una custom pallete en la memoria ROM.
- * @param positions es la posicion del color en la paleta de colores va de 0 a 255.
- * @param red es un array que contiene los valores de Red de las posiciones en la paleta de colores.
- * @param green es un array que contiene los valores de green de las posiciones en la paleta de colores.
- * @param blue es un array que contiene los valores de blue de las posiciones en la paleta de colores.
- * @return un codigo de error que puede significar lo siguiente.
- * 0, todo salio normal.
- * -1, no habia un valor valido en ADDRESSCUSTOMPALLETE_COLORS y regreso un palleta predefinida.
+ * @brief recupera una paleta de colores personalizada de la memoria ROM.
+ * @param pallete es la paleta que se recupera de la rom.
  */
 int romGetCustomPallete(CRGBPalette256 &pallete){
     uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
@@ -1330,13 +1305,13 @@ int romGetCustomPallete(CRGBPalette256 &pallete){
         newPallete[i*4 + 2] = EEPROM.read(ADDRESSCUSTOMPALLETE_GREEN + i);
         newPallete[i*4 + 3] = EEPROM.read(ADDRESSCUSTOMPALLETE_BLUE + i);
     }
-    //pallete.loadDynamicGradientPalette(newPallete);
     rgb2Interpolation(palleteAuxiliar,newPallete);
     pallete = palleteAuxiliar;
     return 0;
 }
-//====Leds====
-//====Libreria fastled====
+
+//====Funciones de Leds====
+
 void FillLEDsFromPaletteColors( uint8_t colorIndex)
 {
     uint8_t brightness = 255;
@@ -1348,7 +1323,6 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
         }
     }
 }
-
 
 /**
  * @brief Change the pallette of leds.
@@ -1384,8 +1358,7 @@ void changePalette(int pallet)
 }
 
 /**
- * @brief se encarga de animar la secuencia de leds
- * 
+ * @brief ledsFunc es una tarea que se corre en paralelo y que se encarga de encender los leds.
  */
 void ledsFunc( void * pvParameters ){
     //====Configurar fastled====
@@ -1413,14 +1386,13 @@ void ledsFunc( void * pvParameters ){
         else{
             startIndex -= 1;
         }
-        
         //vTaskDelay(delayLeds);
         FastLED.delay(delayLeds);
     } 
 }
 
 /**
- * @brief find if there is a file update in SD, and if there is 
+ * @brief this function find if there is a file update in SD, and if there is one the firmware is updated.
  */
 void findUpdate(){
     File file;
@@ -1543,7 +1515,8 @@ int orderRandom(String dirFile, int numberLines){
 /**
  * @brief inicializa los valores del vector en orden ascendente empezando en 1.
  * @param list es el array que se desea inicializar.
- * @note ejemplo el array terminara con elemento  list[0] = 1, list[1] = 2, list[2] = 3...
+ * @param elements es la cantidad de elementos que va a contener el array.
+ * @note ejemplo, el array resultante sera de forma general como este list[0] = 1, list[1] = 2, list[2] = 3... list[elements - 1] = elements.
  */
 void setFrom1(int list[], int elements){
     for (int i = 1; i <= elements; i++){
@@ -1564,11 +1537,11 @@ void removeIndex(int list[], int index, int elements){
 }
 
 /**
- * @brief realiza una interpolacion lineal entre el valor init y stop dividio en amount partes.
+ * @brief realiza una interpolacion lineal entre el valor init y stop dividio en tantas partes como lo indica la variable amount.
  * @param init es el valor inicial de la interpolacion.
  * @param stop es el valor final de la interpolacion.
  * @param amount es la cantidad de divisiones que va a tener la linea.
- * @param index es la posicion en las divisiones de la linea, el index 0 representa el valor init.
+ * @param index es la posicion correspondiente a cada division en la linea, el index 0 representa el valor init.
  * @return el valor en la posicion index de la linea.
  */
 double linspace(double init,double stop, int amount,int index){
@@ -1639,7 +1612,7 @@ bool romGetIntermediateCalibration(){
 }
 
 /**
- * @brief save the current position in the playlist in ROM.
+ * @brief This function save the current playlist position in ROM.
  * @param pList is the currente position to be saved.
  * @return 0
  */
@@ -1669,8 +1642,7 @@ int romGetPositionList(){
 }
 
 /**
- * @brief move to a certain position in spiral.
- * 
+ * @brief move to a certain position in spiral path.
  */
 void spiralGoTo(float module, float angle){
     float degreesToRotate;
@@ -1683,7 +1655,7 @@ void spiralGoTo(float module, float angle){
 /**
  * @brief stored the direction of leds in ROM.
  * @param direction is the value to be stored.
- * @return en error code.
+ * @return an error code.
  */
 int romSetLedsDirection(bool direction){
     if (direction){
@@ -1697,7 +1669,7 @@ int romSetLedsDirection(bool direction){
 }
 
 /**
- * @brief restored the direction of led saved in ROM.
+ * @brief restored the direction of leds saved in ROM.
  * @return true or false depending on the stored value.
  */
 bool romGetLedsDirection(){

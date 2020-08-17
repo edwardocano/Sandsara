@@ -5,18 +5,16 @@
 
 unsigned long timeMotor = 0;
 
-//extern void ledsFunc();
 double m[no_picos * 2], b[no_picos * 2];
 extern bool productType;
 extern bool pauseModeGlobal;
 
-//====Prototipos de funcion====
+//====Function prototypes====
 double dkX(double , double );
 double dkY(double , double );
 
 /**
- * @brief es el contructor de la clase
- * @param microstepping es el microstepping que tienen los motores, por defecto es 16
+ * @brief It's the class constructor
  */
 MoveSara::MoveSara()
 {
@@ -26,46 +24,6 @@ MoveSara::MoveSara()
     stepper2 = AccelStepper(1, STEP_PIN2, DIR_PIN2);
     stepper1.setPinsInverted(true);
     stepper2.setPinsInverted(true);
-}
-
-/**
- * @brief Interpola los puntos necesarios entre el punto actual y el siguiente con el objetivo que
- * se mueva en coordenadas polares como lo hace sisyphus.
- * @param zNext valor en el eje z polar, medido en milimetros.
- * @param thetaNext valor en el eje theta polar, medido en radianes.
- * @note es muy importante que se hayan definido las variables zCurrent y thetaCurrent antes
- * de llamar a esta funcion porque es apartir de estas variables que se calcula cuanto se debe mover.
- */
-void MoveSara::movePolarTo(double zNext, double thetaNext)
-{
-    double slicesFactor = 1000;
-    long slices;
-    double distancePoints = 100, deltaTheta, deltaZ;
-    double thetaAuxiliar, zAuxliar, xAux, yAux;
-    int overIterates = 0;
-    deltaTheta = thetaNext - thetaCurrent;
-    deltaZ = zNext - zCurrent;
-    slicesFactor = arcLength(deltaZ, deltaTheta, zCurrent);
-    slices = slicesFactor;
-    if (slices < 1)
-    {
-        slices = 1;
-    }
-    deltaTheta = (thetaNext - thetaCurrent) / slices;
-    deltaZ = (zNext - zCurrent) / slices;
-    for (long i = 1; i < slices; i++)
-    {
-        thetaAuxiliar = thetaCurrent + deltaTheta * double(i);
-        zAuxliar = zCurrent + deltaZ * double(i);
-        xAux = zAuxliar * cos(thetaAuxiliar);
-        yAux = zAuxliar * sin(thetaAuxiliar);
-        moveTo(xAux, yAux);
-    }
-    xAux = zNext * cos(thetaNext);
-    yAux = zNext * sin(thetaNext);
-    moveTo(xAux, yAux);
-    thetaCurrent = thetaNext;
-    zCurrent = zNext;
 }
 
 /**
