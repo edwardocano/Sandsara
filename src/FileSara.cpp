@@ -3,7 +3,7 @@
 extern SdFat SD;
 extern bool readingSDFile;
 
-//====prototipos de funcion====
+//====function produtypes====
 bool sdExists(String );
 bool sdRemove(String );
 //====
@@ -11,7 +11,7 @@ bool sdRemove(String );
 /**
  * @brief es el contructor de la clase FileSara
  * @param nameF es el nombre del archivo que se va a leer desde la SD
- * @param directionMode es la direccion de lectura del archivo, por defecto es 1.
+ * @param directionMode es el modo en que se va a leer del archivo, por defecto es 1.
  * 1 representa que se va a leer el archivo de arriba hacia abajo y 0 que se debe leer de abajo para arriba.
  */
 FileSara::FileSara(String nameF, int directionMode)
@@ -58,9 +58,7 @@ FileSara::FileSara(String nameF, int directionMode)
 
 /**
  * @brief es el destructor de la clase
- * 
- * se utiliza un destructor para limpiar liberar la memoria dinamica y cerrar el
- * el archivo de tipo File
+ * se utiliza un destructor para limpiar y liberar la memoria dinamica y cerrar el archivo de tipo File
  */
 FileSara::~FileSara()
 {
@@ -134,6 +132,7 @@ int FileSara::getNextComponents(double *component1, double *component2)
 }
 
 /**
+ * @brief obtiene la variable miembro statusFile
  * @return el estado actual del archivo leido
  * @see getNextComponents
  */
@@ -143,7 +142,7 @@ int FileSara::getStatus()
 }
 
 /**
- * @brief Encuentra el tipo de archivo que se va a leer.
+ * @brief determina el tipo de archivo por extension.
  * @return un numero que representa uno de los siguientes tipos de archivo.
  * 1 para un .txt.
  * 2 para un .thr.
@@ -174,7 +173,6 @@ int FileSara::getType(String name_file)
  *  3, la linea es un comentario
  * -1, no encuentra el caracter separador.
  * -4, no encuentra el segundo componente.
- * 
  * @see getNextComponents.
  */
 int FileSara::getComponents(String line, double *c1, double *c2)
@@ -221,7 +219,7 @@ int FileSara::getComponents(String line, double *c1, double *c2)
  * @param c1 es donde se va a almacenar el valor del componente 1.
  * @param c2 es donde se va a almacenar el valor del componente 2.
  * @note los valores devuelven por medio de c1 y c2.
- * @return un codigo de error.
+ * @return 0.
  * @see getNextComponents.
  */
 int FileSara::getComponentsBin(uint8_t *line, double *c1, double *c2)
@@ -244,10 +242,10 @@ int FileSara::getComponentsBin(uint8_t *line, double *c1, double *c2)
 
 /**
  * @brief Encuentra la siguiente linea a ser leida del archivo o su direccion en el caso de un archivo .bin.
- * @return Un texto que representa la siguiente linea del archivo. En el caso de estar leyendo un .bin
+ * @return Un String que representa la siguiente linea del archivo. En el caso de estar leyendo un .bin
  * regresara la pablabra "nonStop" si aun hay lineas por leer y un "" si ya no hay mas lineas por leer.
  * @note En el caso de estar leyendo un .bin se modificara la variable pFileBin la cual
- * representa el el numero de linea siguiente.
+ * representa el numero de linea siguiente para ser leida.
  */
 String FileSara::nextRow()
 {
@@ -394,7 +392,6 @@ int FileSara::readFile()
             charsToRead = file.size() - pFile; //
         }
         this->file.seek(pFile);
-        //char input_char[charsToRead + 1];
         bytesRead = this->file.read(dataBufferBin, charsToRead);
         if (bytesRead < charsToRead)
         {
@@ -547,12 +544,12 @@ double FileSara::getFinalPoint(int component, int ignoreZero)
 }
 
 /**
- * @brief Seleccion la direccion de lectura del archivo dependiendo del estado actual del robot
+ * @brief Seleccion el modo de lectura del archivo dependiendo del estado actual de Sandsara.
  * 
- * para ello encuentra el modulo del primer y utlimo punto del archivo y calcula cual es el más cercano de la posicion actual del robot
+ * para ello encuentra el modulo del primer y utlimo punto del archivo y calcula cual es el más cercano de la posicion actual de Sandsara
  * si es el ultimo punto del archivo, entonces iniciará a leerlo de arriba hacia abajo y si no, de abajo hacia arriba
  * si la distancia a la que se encuentra es la misma de ambos puntos del archivo entonces leera el archivo de arriba hacia abajo
- * @param zCurrent Es la distancia actual del centro a la punta del robot
+ * @param zCurrent Es la distancia actual del centro a la esfera.
  * @note No regresa nada, pero cambia el valor de la variable directionMode
  */
 void FileSara::autoSetMode(double zCurrent)
@@ -599,7 +596,7 @@ void FileSara::autoSetMode(double zCurrent)
 
 /**
  * @brief la funcion encuentra el angulo del ultimo punto que va a ser leido, esto
- * depende de la dirección de lectura (directionMode)
+ * depende del modo de lectura (directionMode)
  * @note Esta funcion debe ser llamada antes del proceso de lectura porque modifica
  * las variables pFile y dataBuffer, y despues de haber asignado un valor a directionMode
  * @return un valor que representa un angulo en radianes pudiendo tomar cualquier valor que permita un tipo de dato double
@@ -640,7 +637,7 @@ double FileSara::getFinalAngle()
 }
 /**
  * @brief la funcion encuentra el angulo del primer punto que va a ser leido, esto
- * depende de la dirección de lectura (directionMode)
+ * depende del modo de lectura (directionMode)
  * @return un valor que representa un angulo en radianes pudiendo tomar cualquier valor que permita un tipo de dato double
  */
 double FileSara::getStartAngle()
