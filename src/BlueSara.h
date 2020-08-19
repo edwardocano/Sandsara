@@ -21,7 +21,7 @@ class BlueSara {
     private:
         BluetoothSerial SerialBT;
         File file;
-        unsigned long timeOutBt = 20000;
+        unsigned long timeOutBt = OUTOFTIME_BLUETOOTH;
         //int debugCount = 0;
         //int codeErrorC;
         int indexWord, bytesToRead;
@@ -31,7 +31,7 @@ class BlueSara {
         String fileNameBt;
         //datos enviados por bluetooth
         String playList = "";
-        int ordenMode;
+        int orderMode;
         int ledMode;
         int speed;
         int periodLed;
@@ -49,7 +49,7 @@ class BlueSara {
         int readBt(uint8_t [], int );
         static String GetMD5String(uint8_t *msg, int mlen);
         String getPlaylist();
-        int getOrdenMode();
+        int getOrderMode();
         int getLedMode();
         int getSpeed();
         int getPeriodLed();

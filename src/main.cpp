@@ -27,7 +27,7 @@ extern bool sdRemove(String );
 //====ROM Varibales====
 String  playListGlobal;
 String  bluetoothNameGlobal;
-int     ordenModeGlobal;
+int     orderModeGlobal;
 int     speedMotorGlobal;
 int     ledModeGlobal;
 int     periodLedsGlobal;
@@ -78,8 +78,8 @@ int     moveInterpolateTo(double x, double y, double distance);
 void    executeCode(int );
 int     romSetPlaylist(String );
 String  romGetPlaylist();
-int     romSetOrdenMode(int );
-int     romGetOrdenMode();
+int     romSetOrderMode(int );
+int     romGetOrderMode();
 void    Neo_Pixel(int );
 uint32_t rainbow();
 void    FillLEDsFromPaletteColors(uint8_t );
@@ -280,12 +280,12 @@ void setup()
         Serial.println("Card present");
     #endif
     //====
-    //====Restore playlist name and ordenMode====    
+    //====Restore playlist name and orderMode====    
     playListGlobal = romGetPlaylist();
-    ordenModeGlobal = romGetOrdenMode();
-    if (ordenModeGlobal < MIN_REPRODUCTION_MODE || ordenModeGlobal > MAX_REPRODUCTION_MODE){
-        ordenModeGlobal = 3;
-        romSetOrdenMode(3);
+    orderModeGlobal = romGetOrderMode();
+    if (orderModeGlobal < MIN_REPRODUCTION_MODE || orderModeGlobal > MAX_REPRODUCTION_MODE){
+        orderModeGlobal = 3;
+        romSetOrderMode(3);
     }
     changePalette(romGetPallete());
     if (playListGlobal.equals("/")){
@@ -309,8 +309,8 @@ void setup()
         }
     }
     #ifdef DEBUGGING_DATA
-        Serial.print("ordenMode guardado: ");
-        Serial.println(ordenModeGlobal);
+        Serial.print("orderMode guardado: ");
+        Serial.println(orderModeGlobal);
     #endif
     //====
     //====Searching for an update====
@@ -324,7 +324,7 @@ void setup()
     //=====if the file playlist.playlist exits it will be executed====
     if (sdExists("/playlist.playlist")){
         playListGlobal = "/playlist.playlist";
-        ordenModeGlobal = 1;
+        orderModeGlobal = 1;
     }
     //=====
     //====new task for leds====
@@ -346,7 +346,7 @@ void loop()
     #ifdef DEBUGGING_DATA
         Serial.println("Iniciara la funcion runSansara");
     #endif
-    errorCode = run_sandsara(playListGlobal, ordenModeGlobal);
+    errorCode = run_sandsara(playListGlobal, orderModeGlobal);
     #ifdef DEBUGGING_DATA
         Serial.print("errorCode de run: ");
         Serial.println(errorCode);
@@ -379,13 +379,13 @@ void loop()
 /**
  * @brief
  * @param playlist the name of playlist to be executed, e.g. "/animales.playlist"
- * @param ordenMode the orden that files will be executed
+ * @param orderMode the orden that files will be executed
  * 1, files will be reproduced in descending order according to playlist.
  * 2, files will be reproduced in random order according to playlist.
  * 3, All files in SD will be reproduced in a determined order.
  * 4, All files in SD will be reproduced in random order.
  * @return an error code that could be one below.
- *  1, playlist or ordenMode were changed.
+ *  1, playlist or orderMode were changed.
  *  0, ends without error.
  * -1, playlist was not found.
  * -2, playlist is a directory.
@@ -393,7 +393,7 @@ void loop()
  * -4, number of files in playlist or SD are zero.
  * -10, SD was not found.
  */
-int run_sandsara(String playList, int ordenMode)
+int run_sandsara(String playList, int orderMode)
 {
     if (firstExecution){
         pListFileGlobal = romGetPositionList();
@@ -404,7 +404,7 @@ int run_sandsara(String playList, int ordenMode)
     int numberOfFiles;
     String fileName;
     
-    if (ordenMode == 1 || ordenMode == 2){
+    if (orderMode == 1 || orderMode == 2){
         File file;
         file = SD.open(playList);
         if (file && !file.isDirectory()){
@@ -413,7 +413,7 @@ int run_sandsara(String playList, int ordenMode)
             if (numberOfFiles < 0){
                 return -4;
             }
-            if (ordenMode == 2){
+            if (orderMode == 2){
                 orderRandom(playList,numberOfFiles);
                 playList = "/RANDOM.playlist";
                 pListFileGlobal = 1;
@@ -422,7 +422,7 @@ int run_sandsara(String playList, int ordenMode)
         else
         {
             file.close();
-            ordenMode = 3;
+            orderMode = 3;
             numberOfFiles = FileSara::creatListOfFiles("/DEFAULT.playlist");
             if (numberOfFiles < 0){
                 return -4;
@@ -430,7 +430,7 @@ int run_sandsara(String playList, int ordenMode)
             playList = "/DEFAULT.playlist";
         }
     }
-    else if (ordenMode == 4)
+    else if (orderMode == 4)
     {
         numberOfFiles = FileSara::creatListOfFiles("/auxList32132123.playlist");
         if (numberOfFiles < 0){
@@ -541,7 +541,7 @@ int run_sandsara(String playList, int ordenMode)
  * @return an errorCode
  * -70, instruction continue has to be performed.
  * -71, instruction break has to be performed.
- *   1, ordenMode or playlist have been changed.
+ *   1, orderMode or playlist have been changed.
  *  10, the function finished without errors.
  *  20, an instruction for changing path by postion was recieved.
  *  30, an instruction for changing path by name was recieved.
@@ -822,7 +822,7 @@ void goEdgeSpiral(bool stop){
  * @param distance is the distance between the current point and the target point.
  * @return an error code relating to bluetooth, this could be.
  * 1, playlist has changed.
- * 2, ordenMode has changed.
+ * 2, orderMode has changed.
  * 0, finished.
  */
 int moveInterpolateTo(double x, double y, double distance)
@@ -860,7 +860,7 @@ int moveInterpolateTo(double x, double y, double distance)
  * @return un codigo de error:
  * 0, no se recibio nada por bluetooth
  * 1, se cambio la playlist
- * 2, se cambio el ordenMode
+ * 2, se cambio el orderMode
  */
 int movePolarTo(double component_1, double component_2, double couplingAngle, bool littleMovement){
     double zNext = component_1;
@@ -931,8 +931,8 @@ void executeCode(int errorCode){
         romSetPlaylist(playListGlobal);
     }
     else if (errorCode == 20){
-        ordenModeGlobal = haloBt.getOrdenMode();
-        romSetOrdenMode(ordenModeGlobal);
+        orderModeGlobal = haloBt.getOrderMode();
+        romSetOrderMode(orderModeGlobal);
     }
     else if (errorCode == 30){
         ledModeGlobal = haloBt.getLedMode();
@@ -1023,7 +1023,7 @@ void executeCode(int errorCode){
         romSetPlaylist(PLAYLIST_DEFAULT);
         romSetPallete(PALLETE_DEFAULT);
         romSetPeriodLed(PERIOD_LED_DEFAULT);
-        romSetOrdenMode(ORDENMODE_DEFAULT);
+        romSetOrderMode(ORDERMODE_DEFAULT);
         romSetBluetoothName(BLUETOOTHNAME);
         romSetIntermediateCalibration(false);
         for (int i = ADDRESSPOLESENSE1; i < ADDRESSPOLESENSE1 + ADDRESSESTOVERIFY; i++){
@@ -1085,12 +1085,12 @@ String romGetPlaylist(){
 
 /**
  * @brief guarda el tipo de orden de reporduccion en la memoria ROM
- * @param ordenMode el valor que corresponde al orden de reproduccion que va a ser almacenado en ROM.
+ * @param orderMode el valor que corresponde al orden de reproduccion que va a ser almacenado en ROM.
  * @return 0
  */
-int romSetOrdenMode(int ordenMode){
-    uint8_t Mode = ordenMode;
-    EEPROM.write(ADDRESSORDENMODE, Mode);
+int romSetOrderMode(int orderMode){
+    uint8_t Mode = orderMode;
+    EEPROM.write(ADDRESSORDERMODE, Mode);
     EEPROM.commit();
     return 0;
 }
@@ -1099,10 +1099,10 @@ int romSetOrdenMode(int ordenMode){
  * @brief recupera el valor correspondiente al tipo de reporduccion guardado en la memoria ROM.
  * @return el valor correspondiente al tipo de orden de reporduccion guardado en la ROM.
  */
-int romGetOrdenMode(){
-    uint8_t ordenMode;
-    ordenMode = EEPROM.read(ADDRESSORDENMODE);
-    return ordenMode;
+int romGetOrderMode(){
+    uint8_t orderMode;
+    orderMode = EEPROM.read(ADDRESSORDERMODE);
+    return orderMode;
 }
 
 /**

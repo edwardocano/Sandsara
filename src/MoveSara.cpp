@@ -29,7 +29,10 @@ MoveSara::MoveSara()
 /**
  * @brief mueve los motores 1 y 2.
  * 
- * Los movera a una velocidad que depende de la distancia que va a recorrer del punto actual al final.
+ * La velocidad de los motores se ajusta dependiendo de la distancia a recorrer del punto inicial al final, con la intencion
+ * de que la velocidad a la que viaje la esfera sea una velocidad constante. Si la velocidad de los motores es constante, la velocidad
+ * a la que se mueve la esfera no lo va a ser debido a la geometria del mecanismo.
+ * Cada vez que se mueve la posicion a la que se movio se guarda como la posicion actual del robot.
  * @param q1_steps es el numero de pasos que va a girar el motor correspondiente al angulo q1.
  * @param q2_steps es el numero de pasos que va a girar el motor correspondiente al angulo q2.
  * @param distance es la distancia que va a recorrer entre el punto actual y el punto despues del movimiento.
@@ -79,6 +82,7 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance)
  * Si la distancia a recorrer es mayor a 1.1 milimetros, entonces se avanza en linea recta al nuevo punto en una trayectoria de puntos equidistantes a 1 mm formando una linea recta.
  * @param x es la coordenada en el eje x, medida en milimetros, hacia donde se desea avanzar.
  * @param y es la coordenada en el eje y, medida en milimetros, hacia donde se desea avanzar.
+ * @param littleMovement es una variable que si su valor es false entonces no se movera a menos que la distancia minima sea 0.5 mm y true para que se mueva en cualquier caso.
  */
 void MoveSara::moveTo(double x, double y, bool littleMovement)
 {
@@ -112,6 +116,8 @@ void MoveSara::moveTo(double x, double y, bool littleMovement)
 
 /**
  * @brief Se usa esta funcion para avanzar de la posicion actual a un punto nuevo en linea recta por medio de puntos equidistantes a un 1 mm.
+ * 
+ * La esfera va avanzando cada 1 mm hasta la posicion final, para esto se calcula un incremento en el eje 'x' y otro en el eje 'y' para cada interacion.
  * @param x coordenada en el eje x, medida en milimetros, a la que se desea avanzar.
  * @param y coordenada en el eje y, medida en milimetros, a la que se desea avanzar.
  * @param distance es la distancia, medida en milimetros, entre el punto actual y el punto al que se desea avanzar.
@@ -154,7 +160,7 @@ double MoveSara::getCurrentAngle()
 }
 
 /**
- * @brief devuelve un valor para saber en donde se encuentra la bola.
+ * @brief devuelve un valor para saber en donde se encuentra la esfera.
  * @returns un entero que puede significar lo siguiente.
  * 0, se encuentra en el centro o a 2 mm.
  * 1, no se encuentra ni en el centro ni en la orilla.
@@ -279,7 +285,8 @@ double dkY(double q1, double q2)
 }
 
 /**
- * @brief Calcula la cinematica inversa del robot.
+ * @brief Calcula la cinematica inversa de Sandsara.
+ * Las matematicas para resolver la cinematica inversa de Sandsara se vasan en la solucion para un robot SCARA.
  * @param x coordenada en el eje x, medida en milimetros.
  * @param y coordenada en el eje y, medida en milimetros.
  * @param q1 el angulo calculado correspondiente al motor 1 para la posicion x,y.
@@ -319,6 +326,8 @@ void MoveSara::ik(double x, double y, double *q1, double *q2)
 ///====perations with components====
 /**
  * @brief rota la posicion x,y con centro en 0,0 tantos grados como se desee.
+ * 
+ * por ejemplo, si se rota la posicion (1,0) 90 grados el resultado seria un punto (0,1).
  * @param x coordenada en el eje x.
  * @param y coordenada en el eje y.
  * @param angle es el angulo que se desea rotar los puntos x,y.
@@ -402,6 +411,7 @@ double MoveSara::thetaPolar(double x, double y)
 
 /**
  *@brief normaliza un angulo para estar en el rango de [0,2*PI).
+ *
  *@param angle es el angulo, medido en radianes, que se desea normalizar.
  *@return un valor con el rango de [0 , 2*PI).
  */
@@ -421,6 +431,9 @@ double MoveSara::normalizeAngle(double angle)
 
 /**
  * @brief calcula la longitud de arco que se forma al girar de un punto A a un punto B en coordenadas polares.
+ * 
+ * En otras palabras, se calcula la distancia que se recorre en una trayectoria espiral de un punto A a un punto B, el numero grados totales que gira
+ * esta definido por el parametro deltaTheta.
  * @param deltaZ es la diferencia entre la componente modulo del punto final menos la componente modulo del punto inicial.
  * @param deltaTheta es la diferencia entre la componente angulo del punto final menos la componente angulo del punto inicial.
  * @param zInit es la componente modulo del punto inicial.
@@ -455,6 +468,9 @@ double MoveSara::arcLength(double deltaZ, double deltaTheta, double zInit)
 //====Workspace mathematics====
 /**
  * @brief Calcula las escuaciones que describen la geometria de Stelle.
+ * 
+ * Las ecuaciones que describen la geometria de Stelle son 10 lineas rectas, lo que calcula esta funcion son los parametros m y b de una recta de la forma
+ * y = mx + b.
  * @return no retorna ningun valor pero modifica las variables miembro m y b.
  * @note m contiene las pendientes de las rectas que describen la geometria de Stelle.
  *       b contiene informacion de las rectas que describen la geometria de Stelle.

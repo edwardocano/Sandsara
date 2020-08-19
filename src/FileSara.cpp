@@ -675,6 +675,10 @@ double FileSara::getStartAngle()
     }
 }
 
+/**
+ * @brief obtiene el modulo del ultimo punto que se leera del archivo.
+ * @return el modulo correspondiente al ultimo punto que se leera del archivo.
+ */
 double FileSara::getStartModule(){
     double module, x, y;
     if (directionMode == 0)
@@ -709,10 +713,8 @@ double FileSara::getStartModule(){
     }
 }
 
-//------------------------------Ordenar archivos----------------------------------
-//--------------------------------------------------------------------------------
 /**
- * @brief devuelve la linea lineNumber del archivo dirFile.
+ * @brief devuelve la linea lineNumber del archivo con ruta dirFile.
  * @param lineNumber es el numero de la linea que se desea leer, para la primera linea este parametro debe ser 1, no 0.
  * @param dirFile es la direccion del archivo, empezando con '/'.
  * @param lineText es la variable donde se va a guardar el contenido de la linea leida.
@@ -739,17 +741,17 @@ int FileSara::getLineNumber(int lineNumber, String dirFile, String &lineText)
     if (lineNumber < 1)
     {
         readingSDFile = false;
-        return -3; //La linea que se desea leer no es valida
+        return -3; ///invalid line number to be read.
     }
     if (!file)
     {
         readingSDFile = false;
-        return -1; //dirFile no se pudo abrir
+        return -1; ///dirFile coudn't open.
     }
     if (file.isDirectory())
     {
         readingSDFile = false;
-        return -2; //el archivo es un directorio
+        return -2; ///the file is a directory
     }
     for (int number = 1; number < lineNumber; number++)
     {
@@ -776,7 +778,7 @@ int FileSara::getLineNumber(int lineNumber, String dirFile, String &lineText)
                         lineText.remove(lineText.indexOf('\r'), 1);
                     }
                     readingSDFile = false;
-                    return 2; //termino sin encontrar la linea numero lineNumber y no encontro un '\n'
+                    return 2; //function ends without getting the line number lineNumber and character '\n' was not found
                 }
                 lineText.concat(char(character));
             }
@@ -786,7 +788,7 @@ int FileSara::getLineNumber(int lineNumber, String dirFile, String &lineText)
                 lineText.remove(lineText.indexOf('\r'), 1);
             }
             readingSDFile = false;
-            return 3; //termino sin llegar a la linea numero lineNumber, y encontro un '\n'
+            return 3; //function ends without reach the line lineNumber and '\n' was found.
         }
         index = count;
     }
@@ -802,7 +804,7 @@ int FileSara::getLineNumber(int lineNumber, String dirFile, String &lineText)
                 lineText.remove(lineText.indexOf('\r'), 1);
             }
             readingSDFile = false;
-            return 1; //termino en la linea numero lineNumber, pero no encontro un '\n'
+            return 1; //lineNumber was found, but '\n' wasn't.
         }
         lineText.concat(char(character));
     }
@@ -813,14 +815,13 @@ int FileSara::getLineNumber(int lineNumber, String dirFile, String &lineText)
     }
     file.close();
     readingSDFile = false;
-    return 0; //termino en la linea numero lineNumber, y encontro un '\n'
+    return 0; //lineNumber and '\n' were found and.
 }
 
 /**
  * @brief Crea un archivo que almacena los nombres de los archivos en el directorio "/"
  * @param fileName es el nombre del archivo que se va a crear.
- * @return el numero de archivos que encontro y registro.
- * o -1 si no se pudo crear el archivo.
+ * @return el numero de archivos que encontro y registro o -1 si no se pudo crear el archivo.
  */
 int FileSara::creatListOfFiles(String fileName)
 {
@@ -831,7 +832,7 @@ int FileSara::creatListOfFiles(String fileName)
     file = SD.open(fileName, FILE_WRITE);
     if (!file)
     {
-        return -1; //no se pudo crear el archivo
+        return -1; ///file coudn't be created.
     }
     fileName.toLowerCase();
     while (true)
@@ -863,7 +864,7 @@ int FileSara::creatListOfFiles(String fileName)
 
 /**
  * @brief calcula el numero de lineas de un archivo
- * @param dir es la direccion en la sd del archivo, debe contener un '/', ejemplo "/archivo.thr".
+ * @param dir es la direccion, en la sd, del archivo, debe contener un '/', ejemplo "/archivo.thr".
  * @return el numero de lineas que contiene el archivo
  */
 int FileSara::numberOfLines(String dir){
@@ -917,10 +918,16 @@ bool FileSara::isValid(){
     }
 }
 
+/**
+ * @brief esta funcion sirve para poder utilizar la funcion miembro "exists" de la libreria SdFat pero con un String como argumento.
+ */
 bool sdExists(String dirName){
     return SD.exists(dirName.c_str());
 }
 
+/**
+ * @brief esta funcion sirve para poder utilizar la funcion miembro "remove" de la libreria SdFat pero con un String como argumento.
+ */
 bool sdRemove(String dirName){
     return SD.remove(dirName.c_str());
 }
