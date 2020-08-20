@@ -20,7 +20,7 @@ int performUpdate(Stream &, size_t );
 // check given FS for valid update.bin and perform update if available
 int updateFromFS(SdFat &, String );
 int programming(String );
-void rebootEspWithReason(String );
+void rebootWithMessage(String );
 int stringToArray(String , uint8_t* , int );
 //====
 extern String romGetPlaylist();
@@ -657,7 +657,7 @@ int BlueSara::checkBlueTooth()
             if (codeError == 1)
             {
                 writeBtln("ok");
-                rebootEspWithReason("Reiniciando");
+                rebootWithMessage("Reiniciando");
                 return codeError;
             }
             else{
@@ -669,7 +669,7 @@ int BlueSara::checkBlueTooth()
         else if (line.indexOf("code80") >= 0)
         {
             writeBtln("ok");
-            rebootEspWithReason("Reiniciando");
+            rebootWithMessage("Reiniciando");
             return -666;
         }
         else if (line.indexOf("code97") >= 0)
@@ -1139,7 +1139,7 @@ int updateFromFS(SdFat &fs, String name)
  * @brief intenta actualizar el firmware
  * @return un codigo para saber si ocurre un error a la hora de realizar la actualizacion.
  */
-int programming(String name) {
+int programming(String name){
     int errorCode;
     errorCode = updateFromFS(SD, name);
     return errorCode;
@@ -1149,9 +1149,9 @@ int programming(String name) {
  * @brief reinicia el Esp32 pero antes escribe un mensaje por Serial.
  * @return un codigo para saber si ocurre un error a la hora de realizar la actualizacion.
  */
-void rebootEspWithReason(String reason){
+void rebootWithMessage(String reason){
     #ifdef DEBUGGING_DATA
-        erial.println(reason);
+        Serial.println(reason);
     #endif
     delay(1000);
     ESP.restart();

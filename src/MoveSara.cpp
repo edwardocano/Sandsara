@@ -48,7 +48,7 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance)
     maxSpeed = (maxSpeed / distance) * millimeterSpeed;
     if (maxSpeed > MAX_STEPS_PER_SECOND * microstepping)
         maxSpeed = MAX_STEPS_PER_SECOND * microstepping;
-    if (constantMotorSpeed)
+    if (constantMotorSpeed) 
         maxSpeed = 50 * microstepping;
 #ifdef PROCESSING_SIMULATOR
     Serial.print(q1_steps);

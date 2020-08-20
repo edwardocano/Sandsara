@@ -73,7 +73,7 @@ int errorCode;
 
 //====function prototypes====
 extern  int programming(String );
-extern  void rebootEspWithReason(String );
+extern  void rebootWithMessage(String );
 int     moveInterpolateTo(double x, double y, double distance);
 void    executeCode(int );
 int     romSetPlaylist(String );
@@ -1043,7 +1043,7 @@ void executeCode(int errorCode){
             EEPROM.write(i, -1);
         }
         delay(1000);
-        rebootEspWithReason("Se hiso reset de fabrica, Reiniciando...");
+        rebootWithMessage("Se hiso reset de fabrica, Reiniciando...");
     }
 }
 
@@ -1547,7 +1547,7 @@ void findUpdate(){
                 changePalette(CODE_UPDATING_PALLETE);
                 int errorCode = programming(fileName);
                 if (errorCode == 1){
-                    rebootEspWithReason("Reiniciando");
+                    rebootWithMessage("Reiniciando");
                 }
                 continue;
             }
@@ -1556,7 +1556,7 @@ void findUpdate(){
                     changePalette(CODE_UPDATING_PALLETE);
                     int errorCode = programming(fileName);
                     if (errorCode == 1){
-                        rebootEspWithReason("Reiniciando");
+                        rebootWithMessage("Reiniciando");
                     }
                     continue;
                 }
@@ -1565,7 +1565,7 @@ void findUpdate(){
                         changePalette(CODE_UPDATING_PALLETE);
                         int errorCode = programming(fileName);
                         if (errorCode == 1){
-                            rebootEspWithReason("Reiniciando");
+                            rebootWithMessage("Reiniciando");
                         }
                         continue;
                     }
