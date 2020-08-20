@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "FileSara.h"
 #include "MoveSara.h"
-#include "BlueSara.h"
+#include "Bluetooth.h"
 #include <Adafruit_NeoPixel.h>
 #define FASTLED_ESP32_I2S true
 #include <FastLED.h>
@@ -66,8 +66,8 @@ pallette7,pallette8,pallette9,
 pallette10,pallette11,pallette12,
 pallette13,pallette14,pallette15;
 //====
-MoveSara halo;
-BlueSara haloBt;
+MoveSara Sandsara;
+Bluetooth SandsaraBt;
 
 int errorCode;
 
@@ -196,7 +196,7 @@ void setup()
         speedMotorGlobal = SPEED_MOTOR_DEFAULT;
         romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
     }
-    halo.setSpeed(speedMotorGlobal);
+    Sandsara.setSpeed(speedMotorGlobal);
     //====
     //====Restoring of refreshing time of leds====
     periodLedsGlobal = romGetPeriodLed();
@@ -218,8 +218,8 @@ void setup()
     bluetoothNameGlobal = romGetBluetoothName();
     //====
     //====Configure the halo and bluetooth====
-    halo.init();
-    haloBt.init(bluetoothNameGlobal);
+    Sandsara.init();
+    SandsaraBt.init(bluetoothNameGlobal);
     //====
     //====Select type of product====
     if (analogRead(PIN_ProducType) < 1000){
@@ -511,13 +511,13 @@ int run_sandsara(String playList, int orderMode)
         //====
         if (errorCode == -70)   {continue;}
         else if (errorCode == -71)   {break;}
-        else if (errorCode == 20)    {pListFileGlobal = haloBt.getPositionList(); continue;}
+        else if (errorCode == 20)    {pListFileGlobal = SandsaraBt.getPositionList(); continue;}
         else if (errorCode == 30)    {
             while(errorCode == 30){
-                fileName = haloBt.getProgram();
+                fileName = SandsaraBt.getProgram();
                 errorCode = runFile(fileName);
             }
-            if (errorCode == 20)    {pListFileGlobal = haloBt.getPositionList(); continue;}
+            if (errorCode == 20)    {pListFileGlobal = SandsaraBt.getPositionList(); continue;}
             pListFileGlobal += 1;
             continue;
         }
@@ -564,7 +564,7 @@ int runFile(String fileName){
         return -70;
     }
 
-    double zInit = halo.getCurrentModule();
+    double zInit = Sandsara.getCurrentModule();
     //====read of File mode is selected.
     file.autoSetMode(zInit);
     //====
@@ -581,7 +581,7 @@ int runFile(String fileName){
     endFileAngle = file.getFinalAngle();
     endFileAngle = MoveSara::normalizeAngle(endFileAngle);
     
-    posisionCase = halo.position();
+    posisionCase = Sandsara.position();
     if (posisionCase == 2){
         couplingAngle = startFileAngle;
     }
@@ -595,10 +595,10 @@ int runFile(String fileName){
         double zf, thetaf, zi, thetai, thetaFinal;
         thetaf = MoveSara::normalizeAngle(file.getStartAngle() - couplingAngle);
         zf = file.getStartModule();
-        thetai = halo.getCurrentAngle();
-        zi = halo.getCurrentModule();
-        halo.setZCurrent(zi);
-        halo.setThetaCurrent(thetai);
+        thetai = Sandsara.getCurrentAngle();
+        zi = Sandsara.getCurrentModule();
+        Sandsara.setZCurrent(zi);
+        Sandsara.setThetaCurrent(thetai);
         if (thetai > thetaf){
             if (thetai - thetaf > PI){
                 thetaFinal = thetai + (2*PI - (thetai - thetaf));
@@ -628,8 +628,8 @@ int runFile(String fileName){
         {
             working_status = file.getNextComponents(&component_1, &component_2);
         }
-        halo.setZCurrent(component_1);
-        halo.setThetaCurrent(component_2 - couplingAngle);
+        Sandsara.setZCurrent(component_1);
+        Sandsara.setThetaCurrent(component_2 - couplingAngle);
     }
 
     //the next while is stopped until file is finished or is interrupted.
@@ -702,7 +702,7 @@ int runFile(String fileName){
         if (file.fileType == 1 || file.fileType == 3)
         {
             MoveSara::rotate(component_1, component_2, -couplingAngle);
-            distance = halo.module(component_1, component_2, halo.x_current, halo.y_current);
+            distance = Sandsara.module(component_1, component_2, Sandsara.x_current, Sandsara.y_current);
             if (distance > 1.1)
             {
                 errorCode = moveInterpolateTo(component_1, component_2, distance);
@@ -712,7 +712,7 @@ int runFile(String fileName){
             }
             else
             {
-                halo.moveTo(component_1, component_2);
+                Sandsara.moveTo(component_1, component_2);
             }
         }
         else if (file.fileType == 2)
@@ -728,12 +728,12 @@ int runFile(String fileName){
         }
     }
     //====update z and theta current====
-    halo.setZCurrent(halo.getCurrentModule());
-    if (halo.getCurrentAngle() > PI){
-        halo.setThetaCurrent(halo.getCurrentAngle() - 2*PI);
+    Sandsara.setZCurrent(Sandsara.getCurrentModule());
+    if (Sandsara.getCurrentAngle() > PI){
+        Sandsara.setThetaCurrent(Sandsara.getCurrentAngle() - 2*PI);
     }
     else{
-        halo.setThetaCurrent(halo.getCurrentAngle());
+        Sandsara.setThetaCurrent(Sandsara.getCurrentAngle());
     }
     //====
     //====check if there was a SD problem====
@@ -750,7 +750,7 @@ int runFile(String fileName){
         return -10;
     }
     //====
-    posisionCase = halo.position();
+    posisionCase = Sandsara.position();
     if (posisionCase == 2){
         movePolarTo(DISTANCIA_MAX, 0, 0, true);
     }
@@ -779,7 +779,7 @@ int runFile(String fileName){
  */
 void goHomeSpiral(){
     delay(200);
-    float currentModule = halo.getCurrentModule();
+    float currentModule = Sandsara.getCurrentModule();
     availableDeceleration = true;
     if (currentModule < DISTANCIA_MAX / sqrt(2)){
         goCenterSpiral(false);
@@ -797,11 +797,11 @@ void goHomeSpiral(){
  * 
  */
 void goCenterSpiral(bool stop){
-    halo.setSpeed(SPEED_TO_CENTER);
+    Sandsara.setSpeed(SPEED_TO_CENTER);
     stopProgramChangeGlobal = stop;
     spiralGoTo(0,PI/2);
     stopProgramChangeGlobal = true;
-    halo.setSpeed(romGetSpeedMotor());
+    Sandsara.setSpeed(romGetSpeedMotor());
 }
 
 /**
@@ -809,11 +809,11 @@ void goCenterSpiral(bool stop){
  * 
  */
 void goEdgeSpiral(bool stop){
-    halo.setSpeed(SPEED_TO_CENTER);
+    Sandsara.setSpeed(SPEED_TO_CENTER);
     stopProgramChangeGlobal = stop;
     spiralGoTo(DISTANCIA_MAX,0);
     stopProgramChangeGlobal = true;
-    halo.setSpeed(romGetSpeedMotor());
+    Sandsara.setSpeed(romGetSpeedMotor());
 }
 
 /**
@@ -821,9 +821,9 @@ void goEdgeSpiral(bool stop){
  */
 void spiralGoTo(float module, float angle){
     float degreesToRotate;
-    halo.setZCurrent(halo.getCurrentModule());
-    degreesToRotate = int((halo.getCurrentModule() - module)/EVERY_MILIMITERS) * 2*PI;
-    halo.setThetaCurrent(halo.getCurrentAngle() + degreesToRotate);
+    Sandsara.setZCurrent(Sandsara.getCurrentModule());
+    degreesToRotate = int((Sandsara.getCurrentModule() - module)/EVERY_MILIMITERS) * 2*PI;
+    Sandsara.setThetaCurrent(Sandsara.getCurrentAngle() + degreesToRotate);
     movePolarTo(module, angle, 0, true);
 }
 
@@ -840,9 +840,9 @@ void spiralGoTo(float module, float angle){
  */
 int moveInterpolateTo(double x, double y, double distance)
 {
-    double alpha = atan2(y - halo.y_current, x - halo.x_current);
+    double alpha = atan2(y - Sandsara.y_current, x - Sandsara.x_current);
     double delta_x, delta_y;
-    double x_aux = halo.x_current, y_aux = halo.y_current;
+    double x_aux = Sandsara.x_current, y_aux = Sandsara.y_current;
     delta_x = cos(alpha);
     delta_y = sin(alpha);
     int intervals = distance;
@@ -856,9 +856,9 @@ int moveInterpolateTo(double x, double y, double distance)
         //====
         x_aux += delta_x;
         y_aux += delta_y;
-        halo.moveTo(x_aux, y_aux);
+        Sandsara.moveTo(x_aux, y_aux);
     }
-    halo.moveTo(x, y);
+    Sandsara.moveTo(x, y);
     return 0;
 }
 
@@ -878,15 +878,15 @@ int moveInterpolateTo(double x, double y, double distance)
 int movePolarTo(double component_1, double component_2, double couplingAngle, bool littleMovement){
     double zNext = component_1;
     double thetaNext = component_2 - couplingAngle;
-    double thetaCurrent = halo.getThetaCurrent();
-    double zCurrent = halo.getZCurrent();
+    double thetaCurrent = Sandsara.getThetaCurrent();
+    double zCurrent = Sandsara.getZCurrent();
     double slicesFactor, distance;
     long slices;
     double deltaTheta, deltaZ;
     double thetaAuxiliar, zAuxliar, xAux, yAux;
     deltaTheta = thetaNext - thetaCurrent;
     deltaZ = zNext - zCurrent;
-    slicesFactor = halo.arcLength(deltaZ, deltaTheta, zCurrent);
+    slicesFactor = Sandsara.arcLength(deltaZ, deltaTheta, zCurrent);
     slices = slicesFactor;
     if (slices < 1)
     {
@@ -894,7 +894,7 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     }
     deltaTheta = (thetaNext - thetaCurrent) / slices;
     deltaZ = (zNext - zCurrent) / slices;
-    float speed= halo.getSpeed();
+    float speed= Sandsara.getSpeed();
     for (long i = 0; i < slices; i++)
     {
         ///====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
@@ -905,7 +905,7 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
         zAuxliar = zCurrent + deltaZ * double(i);
         xAux = zAuxliar * cos(thetaAuxiliar);
         yAux = zAuxliar * sin(thetaAuxiliar);
-        distance = halo.module(xAux, yAux, halo.x_current, halo.y_current);
+        distance = Sandsara.module(xAux, yAux, Sandsara.x_current, Sandsara.y_current);
         if (distance > 1.1)
         {
             errorCode = moveInterpolateTo(xAux, yAux, distance);
@@ -914,14 +914,14 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
             }
         }
         else{
-            halo.moveTo(xAux, yAux, littleMovement);
+            Sandsara.moveTo(xAux, yAux, littleMovement);
         }
     }
     xAux = zNext * cos(thetaNext);
     yAux = zNext * sin(thetaNext);
-    halo.moveTo(xAux, yAux, littleMovement);
-    halo.setThetaCurrent(thetaNext);
-    halo.setZCurrent(zNext);
+    Sandsara.moveTo(xAux, yAux, littleMovement);
+    Sandsara.setThetaCurrent(thetaNext);
+    Sandsara.setZCurrent(zNext);
     return 0;
 }
 /**
@@ -929,7 +929,7 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
  */
 void bluetoothThread(void * pvParameters ){
     for(;;){
-        errorCode = haloBt.checkBlueTooth();
+        errorCode = SandsaraBt.checkBlueTooth();
         executeCode(errorCode);
         vTaskDelay(100);
     }
@@ -940,31 +940,31 @@ void bluetoothThread(void * pvParameters ){
  */
 void executeCode(int errorCode){
     if (errorCode == 10){
-        playListGlobal = "/" + haloBt.getPlaylist();
+        playListGlobal = "/" + SandsaraBt.getPlaylist();
         romSetPlaylist(playListGlobal);
     }
     else if (errorCode == 20){
-        orderModeGlobal = haloBt.getOrderMode();
+        orderModeGlobal = SandsaraBt.getOrderMode();
         romSetOrderMode(orderModeGlobal);
     }
     else if (errorCode == 30){
-        ledModeGlobal = haloBt.getLedMode();
+        ledModeGlobal = SandsaraBt.getLedMode();
         changePalette(ledModeGlobal);
         romSetPallete(ledModeGlobal);
     }
     else if (errorCode == 50){
-        int speed = haloBt.getSpeed();
-        halo.setSpeed(speed);
+        int speed = SandsaraBt.getSpeed();
+        Sandsara.setSpeed(speed);
         romSetSpeedMotor(speed);
     }
     else if (errorCode == 60){
-        int periodLed = haloBt.getPeriodLed();
+        int periodLed = SandsaraBt.getPeriodLed();
         periodLedsGlobal = periodLed;
         delayLeds = periodLed;
         romSetPeriodLed(periodLedsGlobal);
     }
     else if (errorCode == 70){
-        String blueName = haloBt.getBluetoothName();
+        String blueName = SandsaraBt.getBluetoothName();
         bluetoothNameGlobal = blueName;
         romSetBluetoothName(bluetoothNameGlobal);
     }
@@ -980,36 +980,36 @@ void executeCode(int errorCode){
         suspensionModeGlobal = false;
     }
     else if (errorCode == 130){
-        haloBt.writeBt("currentProgram= ");
-        haloBt.writeBtln(currentProgramGlobal);
+        SandsaraBt.writeBt("currentProgram= ");
+        SandsaraBt.writeBtln(currentProgramGlobal);
     }
     else if (errorCode == 140){
-        haloBt.writeBt("nextProgram= ");
-        haloBt.writeBtln(nextProgramGlobal);
+        SandsaraBt.writeBt("nextProgram= ");
+        SandsaraBt.writeBtln(nextProgramGlobal);
     }
     else if (errorCode == 150){
         String fileName;
         int i = 1, errorCode;
-        haloBt.writeBt("playlist: ");
-        haloBt.writeBtln(currentPlaylistGlobal);
+        SandsaraBt.writeBt("playlist: ");
+        SandsaraBt.writeBtln(currentPlaylistGlobal);
         for (;;){
             errorCode = FileSara::getLineNumber(i,currentPlaylistGlobal, fileName);
             if (errorCode < 0){
-                haloBt.writeBtln("error");
+                SandsaraBt.writeBtln("error");
                 break;
             }
             if (errorCode > 0){
                 if (!fileName.equals("")){
-                    haloBt.writeBt(String(i) + ": ");
-                    haloBt.writeBtln(fileName);
+                    SandsaraBt.writeBt(String(i) + ": ");
+                    SandsaraBt.writeBtln(fileName);
                 }
                 break;
             }
-            haloBt.writeBt(String(i) + ": ");
-            haloBt.writeBtln(fileName);
+            SandsaraBt.writeBt(String(i) + ": ");
+            SandsaraBt.writeBtln(fileName);
             i++;
         }
-        haloBt.writeBtln("ok");
+        SandsaraBt.writeBtln("ok");
     }
     else if (errorCode == 160){
         changePositionList = true;

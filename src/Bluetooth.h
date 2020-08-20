@@ -13,11 +13,11 @@
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
 #endif
 /**
- * @class BlueSara es la clase que se encarga de manejar el bluetooth
+ * @class Bluetooth es la clase que se encarga de manejar el bluetooth
  * @param timeOutBt es el tiempo, en milisegundos, que se va a esperar para recibir respuesta del dispositivo bluetooth conectado.
  * @param dataBt es donde se va a almacenar la informacion recibida.
  */
-class BlueSara {
+class Bluetooth {
     private:
         BluetoothSerial SerialBT;
         File file;
@@ -40,7 +40,7 @@ class BlueSara {
         int positionList;
     public:
         
-        BlueSara(); 
+        Bluetooth(); 
         int init(String );
         int checkBlueTooth();
         int writeBt(String );

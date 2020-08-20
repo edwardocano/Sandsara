@@ -1,6 +1,7 @@
-#include "BlueSara.h"
+#include "Bluetooth.h"
 #include <Update.h>
 #include <FileSara.h>
+
 //====extern variables and functions====
 extern SdFat SD;
 extern bool sdExists(String );
@@ -35,11 +36,11 @@ extern String romGetBluetoothName();
 //-------------------------------------------------------------------------------
 void callback(esp_spp_cb_event_t , esp_spp_cb_param_t* );
 
-BlueSara::BlueSara(){
+Bluetooth::Bluetooth(){
     
 }
 
-int BlueSara::init(String name){
+int Bluetooth::init(String name){
     if (!SerialBT.begin(name)){ //Bluetooth device name
         SerialBT.begin("Sandsara");
 #ifdef BLUECOMMENTS
@@ -150,7 +151,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * -185, numero de colores blue distinto a numero de colores en la paleta.
 
  */
-int BlueSara::checkBlueTooth()
+int Bluetooth::checkBlueTooth()
 {
     int codeError = 0;
     String checksum;
@@ -704,14 +705,14 @@ int BlueSara::checkBlueTooth()
  * @brief recupera el dato que se envio por medio de bluetooth que corresponde al index de la paleta de colores.
  * @return el index de la paleta de colores que se envio por bluetooth.
  */
-int BlueSara::getLedMode(){
+int Bluetooth::getLedMode(){
     return ledMode;
 }
 /**
  * @brief recupera el dato que se envio por medio de bluetooth que corresponde al nombre de la playlist
  * @return el nombre de la playlist.
  */
-String BlueSara::getPlaylist(){
+String Bluetooth::getPlaylist(){
     return playList;
 }
 
@@ -719,7 +720,7 @@ String BlueSara::getPlaylist(){
  * @brief recupera el dato que se envio por medio de bluetooth que corresponde a la velocidad de los motores
  * @return la valocidad de los motores, medida en mm/s
  */
-int BlueSara::getSpeed(){
+int Bluetooth::getSpeed(){
     return speed;
 }
 
@@ -727,7 +728,7 @@ int BlueSara::getSpeed(){
  * @brief recupera el dato que se envio por medio de bluetooth que corresponde al tiempo de actualizacion de los leds
  * @return el tiempo de actualizacion de los leds, medido en milisegundos.
  */
-int BlueSara::getPeriodLed(){
+int Bluetooth::getPeriodLed(){
     return periodLed;
 }
 
@@ -735,7 +736,7 @@ int BlueSara::getPeriodLed(){
  * @brief recupera el dato que se envio por medio de bluetooth que corresponde al orden de reproduccion.
  * @return el orden de reproduccion de los archivos.
  */
-int BlueSara::getOrderMode(){
+int Bluetooth::getOrderMode(){
     return orderMode;
 }
 
@@ -743,7 +744,7 @@ int BlueSara::getOrderMode(){
  * @brief recupera el dato que se envio por medio de bluetooth que corresponde al nombre del bluetooth.
  * @return el ultimo numero referente al oreden de reproduccion que se solicito por bluetooth.
  */
-String BlueSara::getBluetoothName(){
+String Bluetooth::getBluetoothName(){
     return bluetoothName;
 }
 
@@ -752,7 +753,7 @@ String BlueSara::getBluetoothName(){
  * @param msg es el mensaje que va a ser enviado por bluetooth.
  * @return 0 cuando termina la funcion.
  */
-int BlueSara::writeBt(String msg)
+int Bluetooth::writeBt(String msg)
 {
     uint8_t* msg8 = (uint8_t *) calloc(msg.length() + 1, 1);
     msg8 = (uint8_t *) msg.c_str();
@@ -767,7 +768,7 @@ int BlueSara::writeBt(String msg)
  * @return 0 cuando termina la funcion.
  * @note el salto de linea se hace con "\r\n"
  */
-int BlueSara::writeBtln(String msg)
+int Bluetooth::writeBtln(String msg)
 {
     msg.concat("\r\n");
     writeBt(msg);
@@ -782,7 +783,7 @@ int BlueSara::writeBtln(String msg)
  * -3, significa que ha transcurrido mas tiempo del esperado sin encontrar un '\n' (depende de la variable timeOutBt).
  * -9, significa que se han leido mas de MAX_CHARACTER_PER_LINE caracteres sin econtrar un '\n'.
  */
-int BlueSara::readLine(String &line)
+int Bluetooth::readLine(String &line)
 {
     line = "";
     int indexRemove;
@@ -834,7 +835,7 @@ int BlueSara::readLine(String &line)
  *  0, todo termino con normalidad.
  * -10, significa que ha transcurrido mas tiempo del esperado sin encontrar un '\n' (depende de la variable timeOutBt).
  */
-int BlueSara::readBt(uint8_t dataBt[], int bytesToRead)
+int Bluetooth::readBt(uint8_t dataBt[], int bytesToRead)
 {
     int i = 0;
     unsigned long tInit = millis();
@@ -1003,7 +1004,7 @@ static unsigned *MD5Hash(uint8_t *msg, int mlen)
     return h;
 }
 
-String BlueSara::GetMD5String(uint8_t *msg, int mlen)
+String Bluetooth::GetMD5String(uint8_t *msg, int mlen)
 {
     String str;
     int j, k;
@@ -1161,7 +1162,7 @@ void rebootWithMessage(String reason){
  * @brief recupera el dato que se envio por medio de bluetooth que corresponde al nombre del programa que se desea reproducir.
  * @return el nombre del archivo que se desea reproducir.
  */
-String BlueSara::getProgram(){
+String Bluetooth::getProgram(){
     return program;
 }
 
@@ -1169,7 +1170,7 @@ String BlueSara::getProgram(){
  * @brief recupera el dato que se envio por medio de bluetooth que corresponde a la posicion del archivo que se desea reproducir.
  * @return la posicion en la playlist que se desea reproducir.
  */
-int BlueSara::getPositionList(){
+int Bluetooth::getPositionList(){
     return positionList;
 }
 
