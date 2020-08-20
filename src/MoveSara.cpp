@@ -12,7 +12,8 @@ extern bool pauseModeGlobal;
 //====Function prototypes====
 double dkX(double , double );
 double dkY(double , double );
-
+//====
+bool q2DirectionNew = false, q1DirectionNew = false, q2DirectionOld = false, q1DirectionOld = false;
 /**
  * @brief It's the class constructor
  */
@@ -61,10 +62,28 @@ void MoveSara::moveSteps(long q1_steps, long q2_steps, double distance)
     stepper2.setMaxSpeed(maxSpeed);
     positions[0] = stepper1.currentPosition() + q1_steps;
     positions[1] = stepper2.currentPosition() + q2_steps + q1_steps;
-#ifndef DISABLE_MOTORS
-    steppers.moveTo(positions);
-    steppers.runSpeedToPosition();
-#endif
+    /*if (q2_steps + q1_steps > 0){
+        q2DirectionNew = true;
+    }
+    else if (q2_steps + q1_steps < 0){
+        q2DirectionNew = false;
+    }
+    if (q1_steps > 0){
+        q1DirectionNew = true;
+    }
+    else if (q1_steps < 0){
+        q1DirectionNew = false;
+    }
+    if (q1DirectionNew ^ q1DirectionOld){
+        delay(15);
+    }
+    else if (q2DirectionNew ^ q2DirectionOld){
+        delay(15);
+    }*/
+    #ifndef DISABLE_MOTORS
+        steppers.moveTo(positions);
+        steppers.runSpeedToPosition();
+    #endif
     q1_current += degrees_per_step * q1_steps;
     q2_current += degrees_per_step * q2_steps;
     q1_current = normalizeAngle(q1_current);
