@@ -90,6 +90,7 @@ void    SetupPurpleAndGreenPalette();
 void    ledsFunc( void * );
 int     run_sandsara(String ,int );
 int     movePolarTo(double ,double ,double, bool = false);
+
 int     romSetPallete(int );
 int     romGetPallete();
 int     romSetSpeedMotor(int );
@@ -108,6 +109,7 @@ int     romSetIncrementIndexPallete(bool );
 bool    romGetIncrementIndexPallete();
 bool    romGetLedsDirection();
 int     romSetLedsDirection(bool );
+
 void    findUpdate();
 int     orderRandom(String ,int);
 void    setFrom1(int [], int);
@@ -814,6 +816,17 @@ void goEdgeSpiral(bool stop){
     halo.setSpeed(romGetSpeedMotor());
 }
 
+/**
+ * @brief move to a certain position in spiral path.
+ */
+void spiralGoTo(float module, float angle){
+    float degreesToRotate;
+    halo.setZCurrent(halo.getCurrentModule());
+    degreesToRotate = int((halo.getCurrentModule() - module)/EVERY_MILIMITERS) * 2*PI;
+    halo.setThetaCurrent(halo.getCurrentAngle() + degreesToRotate);
+    movePolarTo(module, angle, 0, true);
+}
+
 //=========================================================
 /**
  * @brief this function is used to go from one point to another in a straight line path formed by equidistant points of 1 mm.
@@ -1172,6 +1185,7 @@ int romSetPeriodLed(int periodLed){
     EEPROM.commit();
     return 0;
 }
+
 /**
  * @brief recupera, de la ROM, el tiempo de refresco de los leds.
  * @return el tiempo de refresco de los leds. 
@@ -1239,6 +1253,7 @@ int romSetIncrementIndexPallete(bool incrementIndex){
     EEPROM.commit();
     return 0;
 }
+
 /**
  * @brief recupera la variable incrementIndexPallete.
  * @return true o false dependiendo lo que haya guardado en la memoria.
@@ -1252,6 +1267,7 @@ bool romGetIncrementIndexPallete(){
         return false;
     }
 }
+
 /**
  * @brief guarda una custom pallete en la memoria ROM.
  * @param positions es la posicion del color en la paleta de colores va de 0 a 255.
@@ -1310,6 +1326,99 @@ int romGetCustomPallete(CRGBPalette256 &pallete){
     return 0;
 }
 
+/**
+ * @brief save the variable IntermediateCalibration in ROM.
+ * @param state is the value to be saved in ROM.
+ * @return a code of error.
+ * @note if state is true 0 will be saved in ROM and if it's false 255 will be saved instead.
+ */
+int romSetIntermediateCalibration(bool state){
+    if (state){
+        EEPROM.write(ADDRESSINTERMEDIATECALIBRATION,0);
+    }
+    else
+    {
+        EEPROM.write(ADDRESSINTERMEDIATECALIBRATION,255);
+    }
+    EEPROM.commit();
+    return 0;
+}
+
+/**
+ * @brief get the variable IntermediateCalibration from ROM.
+ * @return true or false depending on what is stored in ROM.
+ * @note if the stored value in ROM is greater than 0 false will be returned if it's not, true will be returned instead.
+ */
+bool romGetIntermediateCalibration(){
+    if (EEPROM.read(ADDRESSINTERMEDIATECALIBRATION) > 0){
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+/**
+ * @brief This function save the current playlist position in ROM.
+ * @param pList is the currente position to be saved.
+ * @return 0
+ */
+int romSetPositionList(int pList){
+    uint8_t* p = (uint8_t* ) &pList;
+    for (int i = 0; i < sizeof(pList); i++){
+        EEPROM.write(ADDRESSPOSITIONLIST + i, *(p + i));
+    }
+    EEPROM.commit();
+    return 0;
+}
+
+/**
+ * @brief restore the current position in the playlist in ROM.
+ * @return the postion list saved in ROM.
+ */
+int romGetPositionList(){
+    int pList;
+    uint8_t* p = (uint8_t* ) &pList;
+    for (int i = 0; i < sizeof(pList); i++){
+        *(p + i) = EEPROM.read(ADDRESSPOSITIONLIST + i);
+    }
+    if (pList > MAX_POSITIONLIST){
+        pList = 1;
+    }
+    return pList;
+}
+
+/**
+ * @brief stored the direction of leds in ROM.
+ * @param direction is the value to be stored.
+ * @return an error code.
+ */
+int romSetLedsDirection(bool direction){
+    if (direction){
+        EEPROM.write(ADRESSLEDSDIRECTION, 255);
+    }
+    else{
+        EEPROM.write(ADRESSLEDSDIRECTION, 0);
+    }
+    EEPROM.commit();
+    return 0;
+}
+
+/**
+ * @brief restored the direction of leds saved in ROM.
+ * @return true or false depending on the stored value.
+ */
+bool romGetLedsDirection(){
+    uint8_t var = EEPROM.read(ADRESSLEDSDIRECTION);
+    if (var > 0){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
 //====Funciones de Leds====
 
 void FillLEDsFromPaletteColors( uint8_t colorIndex)
@@ -1328,7 +1437,6 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
  * @brief Change the pallette of leds.
  * @param pallet indicates the index pallete to be choosed.
  */
-
 void changePalette(int pallet)
 {
     incrementIndexGlobal = romGetIncrementIndexPallete();
@@ -1578,106 +1686,5 @@ int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matrix){
     return 0;
 }
 
-/**
- * @brief save the variable IntermediateCalibration in ROM.
- * @param state is the value to be saved in ROM.
- * @return a code of error.
- * @note if state is true 0 will be saved in ROM and if it's false 255 will be saved instead.
- */
-int romSetIntermediateCalibration(bool state){
-    if (state){
-        EEPROM.write(ADDRESSINTERMEDIATECALIBRATION,0);
-    }
-    else
-    {
-        EEPROM.write(ADDRESSINTERMEDIATECALIBRATION,255);
-    }
-    EEPROM.commit();
-    return 0;
-}
 
-/**
- * @brief get the variable IntermediateCalibration from ROM.
- * @return true or false depending on what is stored in ROM.
- * @note if the stored value in ROM is greater than 0 false will be returned if it's not, true will be returned instead.
- */
-bool romGetIntermediateCalibration(){
-    if (EEPROM.read(ADDRESSINTERMEDIATECALIBRATION) > 0){
-        return false;
-    }
-    else
-    {
-        return true;
-    }
-}
 
-/**
- * @brief This function save the current playlist position in ROM.
- * @param pList is the currente position to be saved.
- * @return 0
- */
-int romSetPositionList(int pList){
-    uint8_t* p = (uint8_t* ) &pList;
-    for (int i = 0; i < sizeof(pList); i++){
-        EEPROM.write(ADDRESSPOSITIONLIST + i, *(p + i));
-    }
-    EEPROM.commit();
-    return 0;
-}
-
-/**
- * @brief restore the current position in the playlist in ROM.
- * @return the postion list saved in ROM.
- */
-int romGetPositionList(){
-    int pList;
-    uint8_t* p = (uint8_t* ) &pList;
-    for (int i = 0; i < sizeof(pList); i++){
-        *(p + i) = EEPROM.read(ADDRESSPOSITIONLIST + i);
-    }
-    if (pList > MAX_POSITIONLIST){
-        pList = 1;
-    }
-    return pList;
-}
-
-/**
- * @brief move to a certain position in spiral path.
- */
-void spiralGoTo(float module, float angle){
-    float degreesToRotate;
-    halo.setZCurrent(halo.getCurrentModule());
-    degreesToRotate = int((halo.getCurrentModule() - module)/EVERY_MILIMITERS) * 2*PI;
-    halo.setThetaCurrent(halo.getCurrentAngle() + degreesToRotate);
-    movePolarTo(module, angle, 0, true);
-}
-
-/**
- * @brief stored the direction of leds in ROM.
- * @param direction is the value to be stored.
- * @return an error code.
- */
-int romSetLedsDirection(bool direction){
-    if (direction){
-        EEPROM.write(ADRESSLEDSDIRECTION, 255);
-    }
-    else{
-        EEPROM.write(ADRESSLEDSDIRECTION, 0);
-    }
-    EEPROM.commit();
-    return 0;
-}
-
-/**
- * @brief restored the direction of leds saved in ROM.
- * @return true or false depending on the stored value.
- */
-bool romGetLedsDirection(){
-    uint8_t var = EEPROM.read(ADRESSLEDSDIRECTION);
-    if (var > 0){
-        return true;
-    }
-    else{
-        return false;
-    }
-}

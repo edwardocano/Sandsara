@@ -1037,35 +1037,49 @@ int performUpdate(Stream &updateSource, size_t updateSize)
         size_t written = Update.writeStream(updateSource);
         if (written == updateSize)
         {
-            Serial.println("Written : " + String(written) + " successfully");
+            #ifdef DEBUGGING_DATA
+                Serial.println("Written : " + String(written) + " successfully");
+            #endif
         }
         else
         {
-            Serial.println("Written only : " + String(written) + "/" + String(updateSize) + ". Retry?");
+            #ifdef DEBUGGING_DATA
+                Serial.println("Written only : " + String(written) + "/" + String(updateSize) + ". Retry?");
+            #endif
+            
         }
         if (Update.end())
         {
             Serial.println("OTA done!");
             if (Update.isFinished())
             {
-                Serial.println("Update successfully completed. Rebooting.");
+                #ifdef DEBUGGING_DATA
+                    Serial.println("Update successfully completed. Rebooting.");
+                #endif
+                
                 return 1;
             }
             else
             {
-                Serial.println("Update not finished? Something went wrong!");
+                #ifdef DEBUGGING_DATA
+                    Serial.println("Update not finished? Something went wrong!");
+                #endif
                 return -4;
             }
         }
         else
         {
-            Serial.println("Error Occurred. Error #: " + String(Update.getError()));
+            #ifdef DEBUGGING_DATA
+                Serial.println("Error Occurred. Error #: " + String(Update.getError()));
+            #endif
             return -6;
         }
     }
     else
     {
-        Serial.println("Not enough space to begin OTA");
+        #ifdef DEBUGGING_DATA
+            Serial.println("Not enough space to begin OTA");
+        #endif
         return -5;
     }
 }
@@ -1121,14 +1135,24 @@ int updateFromFS(SdFat &fs, String name)
     }
 }
 
+/**
+ * @brief intenta actualizar el firmware
+ * @return un codigo para saber si ocurre un error a la hora de realizar la actualizacion.
+ */
 int programming(String name) {
     int errorCode;
     errorCode = updateFromFS(SD, name);
     return errorCode;
 }
 
+/**
+ * @brief reinicia el Esp32 pero antes escribe un mensaje por Serial.
+ * @return un codigo para saber si ocurre un error a la hora de realizar la actualizacion.
+ */
 void rebootEspWithReason(String reason){
-    Serial.println(reason);
+    #ifdef DEBUGGING_DATA
+        erial.println(reason);
+    #endif
     delay(1000);
     ESP.restart();
 }

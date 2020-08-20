@@ -356,7 +356,7 @@ double MoveSara::module(double x1, double y1, double x2, double y2)
 }
 
 /**
- * @brief Calcula la distancia entre 2 puntos Polares.
+ * @brief Calcula la distancia entre 2 puntos en coordenadas Polares.
  * @param z1 es el valor en el eje z del primer punto.
  * @param t1 es el valor en el eje theta del primer punto.
  * @param z2 es el valor en el eje z del segundo punto.
@@ -432,7 +432,7 @@ double MoveSara::normalizeAngle(double angle)
 /**
  * @brief calcula la longitud de arco que se forma al girar de un punto A a un punto B en coordenadas polares.
  * 
- * En otras palabras, se calcula la distancia que se recorre en una trayectoria espiral de un punto A a un punto B, el numero grados totales que gira
+ * En otras palabras, se calcula la distancia que se recorre en una trayectoria espiral de un punto A a un punto B, el numero de grados totales que gira
  * esta definido por el parametro deltaTheta.
  * @param deltaZ es la diferencia entre la componente modulo del punto final menos la componente modulo del punto inicial.
  * @param deltaTheta es la diferencia entre la componente angulo del punto final menos la componente angulo del punto inicial.
