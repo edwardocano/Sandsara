@@ -1,6 +1,4 @@
-#ifndef _BLUETOOTHS_H_
-#define _BLUETOOTHS_H_
-
+#pragma once
 //#define BLUECOMMENTS
 
 #include "config.h"
@@ -57,5 +55,3 @@ class Bluetooth {
         String getProgram();
         int getPositionList();
 };
-
-#endif

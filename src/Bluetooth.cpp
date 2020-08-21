@@ -1,6 +1,6 @@
 #include "Bluetooth.h"
 #include <Update.h>
-#include <FileSara.h>
+#include <SdFiles.h>
 
 //====extern variables and functions====
 extern SdFat SD;
@@ -493,7 +493,7 @@ int Bluetooth::checkBlueTooth()
                 return codeError;
             }
             program = line;
-            if (FileSara::getType(line) < 0){
+            if (SdFiles::getType(line) < 0){
                 writeBtln("error= -172");
                 return -172;
             }

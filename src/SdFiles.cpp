@@ -1,4 +1,4 @@
-#include "FileSara.h"
+#include "SdFiles.h"
 #include "MoveSara.h"
 extern SdFat SD;
 extern bool readingSDFile;
@@ -9,12 +9,12 @@ bool sdRemove(String );
 //====
 
 /**
- * @brief es el contructor de la clase FileSara
+ * @brief es el contructor de la clase SdFiles
  * @param nameF es el nombre del archivo que se va a leer desde la SD
  * @param directionMode es el modo en que se va a leer del archivo, por defecto es 1.
  * 1 representa que se va a leer el archivo de arriba hacia abajo y 0 que se debe leer de abajo para arriba.
  */
-FileSara::FileSara(String nameF, int directionMode)
+SdFiles::SdFiles(String nameF, int directionMode)
 {
     fileName = nameF;
     fileType = getType(fileName);
@@ -60,7 +60,7 @@ FileSara::FileSara(String nameF, int directionMode)
  * @brief es el destructor de la clase
  * se utiliza un destructor para limpiar y liberar la memoria dinamica y cerrar el archivo de tipo File
  */
-FileSara::~FileSara()
+SdFiles::~SdFiles()
 {
     file.close();
     free(dataBufferBin);
@@ -84,7 +84,7 @@ FileSara::~FileSara()
  * -6 no es un tipo de archivo valido
  * -10 ya no hay mas archivos por leer por posible problema con memoria sd.
  */
-int FileSara::getNextComponents(double *component1, double *component2)
+int SdFiles::getNextComponents(double *component1, double *component2)
 {
     int resp;
     currentRow = nextRow();
@@ -136,7 +136,7 @@ int FileSara::getNextComponents(double *component1, double *component2)
  * @return el estado actual del archivo leido
  * @see getNextComponents
  */
-int FileSara::getStatus()
+int SdFiles::getStatus()
 {
     return this->statusFile;
 }
@@ -149,7 +149,7 @@ int FileSara::getStatus()
  * 3 para un .bin.
  * -1 ninguno de los anteriores.
  */
-int FileSara::getType(String name_file)
+int SdFiles::getType(String name_file)
 {
     name_file = name_file.substring(name_file.lastIndexOf('.') + 1);
     name_file.toLowerCase();
@@ -175,7 +175,7 @@ int FileSara::getType(String name_file)
  * -4, no encuentra el segundo componente.
  * @see getNextComponents.
  */
-int FileSara::getComponents(String line, double *c1, double *c2)
+int SdFiles::getComponents(String line, double *c1, double *c2)
 {
     if (line.charAt(0) == '/' || line.charAt(0) == '#' || line.charAt(0) == '\r' || line.charAt(0) == '\n')
     {
@@ -222,7 +222,7 @@ int FileSara::getComponents(String line, double *c1, double *c2)
  * @return 0.
  * @see getNextComponents.
  */
-int FileSara::getComponentsBin(uint8_t *line, double *c1, double *c2)
+int SdFiles::getComponentsBin(uint8_t *line, double *c1, double *c2)
 {
     if (*(line + 2) != ',')
     {
@@ -247,7 +247,7 @@ int FileSara::getComponentsBin(uint8_t *line, double *c1, double *c2)
  * @note En el caso de estar leyendo un .bin se modificara la variable pFileBin la cual
  * representa el numero de linea siguiente para ser leida.
  */
-String FileSara::nextRow()
+String SdFiles::nextRow()
 {
     String return_str;
     int index_separator;
@@ -325,7 +325,7 @@ String FileSara::nextRow()
  *  1 ya no hay datos restantes por leer.
  * -10 ya no hay mas archivos por leer por posible problema con memoria sd.
  */
-int FileSara::readFile()
+int SdFiles::readFile()
 {
     while (readingSDFile)
     {
@@ -436,7 +436,7 @@ int FileSara::readFile()
  * si es un archivo .thr este parametro no aplica.
  * @return el componente deseado del primer punto del archivo.
  */
-double FileSara::getStartPoint(int component, int ignoreZero)
+double SdFiles::getStartPoint(int component, int ignoreZero)
 {
     int resp;
     int stackMode = directionMode;
@@ -495,7 +495,7 @@ double FileSara::getStartPoint(int component, int ignoreZero)
  * si es un archivo .thr este parametro no aplica.
  * @return el componente deseado del ultimo punto del archivo.
  */
-double FileSara::getFinalPoint(int component, int ignoreZero)
+double SdFiles::getFinalPoint(int component, int ignoreZero)
 {
     int resp;
     int stackMode = directionMode;
@@ -552,7 +552,7 @@ double FileSara::getFinalPoint(int component, int ignoreZero)
  * @param zCurrent Es la distancia actual del centro a la esfera.
  * @note No regresa nada, pero cambia el valor de la variable directionMode
  */
-void FileSara::autoSetMode(double zCurrent)
+void SdFiles::autoSetMode(double zCurrent)
 {
     double startZ, finalZ, diff1, diff2;
     double angle, x, y;
@@ -601,7 +601,7 @@ void FileSara::autoSetMode(double zCurrent)
  * las variables pFile y dataBuffer, y despues de haber asignado un valor a directionMode
  * @return un valor que representa un angulo en radianes pudiendo tomar cualquier valor que permita un tipo de dato double
  */
-double FileSara::getFinalAngle()
+double SdFiles::getFinalAngle()
 {
     double angle, x, y;
     if (directionMode == 0)
@@ -640,7 +640,7 @@ double FileSara::getFinalAngle()
  * depende del modo de lectura (directionMode)
  * @return un valor que representa un angulo en radianes pudiendo tomar cualquier valor que permita un tipo de dato double
  */
-double FileSara::getStartAngle()
+double SdFiles::getStartAngle()
 {
     double angle, x, y;
     if (directionMode == 0)
@@ -679,7 +679,7 @@ double FileSara::getStartAngle()
  * @brief obtiene el modulo del ultimo punto que se leera del archivo.
  * @return el modulo correspondiente al ultimo punto que se leera del archivo.
  */
-double FileSara::getStartModule(){
+double SdFiles::getStartModule(){
     double module, x, y;
     if (directionMode == 0)
     {
@@ -727,7 +727,7 @@ double FileSara::getStartModule(){
  * -2, El archivo abierto es un directorio.
  * -3, La linea que se desea leer no es valida.
  */
-int FileSara::getLineNumber(int lineNumber, String dirFile, String &lineText)
+int SdFiles::getLineNumber(int lineNumber, String dirFile, String &lineText)
 {
     while (readingSDFile){
         delay(1);
@@ -823,7 +823,7 @@ int FileSara::getLineNumber(int lineNumber, String dirFile, String &lineText)
  * @param fileName es el nombre del archivo que se va a crear.
  * @return el numero de archivos que encontro y registro o -1 si no se pudo crear el archivo.
  */
-int FileSara::creatListOfFiles(String fileName)
+int SdFiles::creatListOfFiles(String fileName)
 {
     File file, root, fileObj;
     int numberOfFiles = 0;
@@ -867,7 +867,7 @@ int FileSara::creatListOfFiles(String fileName)
  * @param dir es la direccion, en la sd, del archivo, debe contener un '/', ejemplo "/archivo.thr".
  * @return el numero de lineas que contiene el archivo
  */
-int FileSara::numberOfLines(String dir){
+int SdFiles::numberOfLines(String dir){
     File f;
     int character, count = 1;
     f = SD.open(dir);
@@ -894,7 +894,7 @@ int FileSara::numberOfLines(String dir){
  * @brief comprueba si un archivo es valido.
  * @return si es valido regresa true si no false.
  */
-bool FileSara::isValid(){
+bool SdFiles::isValid(){
     int resp;
     int stackMode = directionMode;
     int stackPFileBin = pFileBin;

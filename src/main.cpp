@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "FileSara.h"
+#include "SdFiles.h"
 #include "MoveSara.h"
 #include "Bluetooth.h"
 #include <Adafruit_NeoPixel.h>
@@ -411,7 +411,7 @@ int run_sandsara(String playList, int orderMode)
         file = SD.open(playList);
         if (file && !file.isDirectory()){
             file.close();
-            numberOfFiles = FileSara::numberOfLines(playList);
+            numberOfFiles = SdFiles::numberOfLines(playList);
             if (numberOfFiles < 0){
                 return -4;
             }
@@ -425,7 +425,7 @@ int run_sandsara(String playList, int orderMode)
         {
             file.close();
             orderMode = 3;
-            numberOfFiles = FileSara::creatListOfFiles("/DEFAULT.playlist");
+            numberOfFiles = SdFiles::creatListOfFiles("/DEFAULT.playlist");
             if (numberOfFiles < 0){
                 return -4;
             }
@@ -434,7 +434,7 @@ int run_sandsara(String playList, int orderMode)
     }
     else if (orderMode == 4)
     {
-        numberOfFiles = FileSara::creatListOfFiles("/auxList32132123.playlist");
+        numberOfFiles = SdFiles::creatListOfFiles("/auxList32132123.playlist");
         if (numberOfFiles < 0){
             return -4;
         }
@@ -445,7 +445,7 @@ int run_sandsara(String playList, int orderMode)
     }
     else
     {
-        numberOfFiles = FileSara::creatListOfFiles("/DEFAULT.playlist");
+        numberOfFiles = SdFiles::creatListOfFiles("/DEFAULT.playlist");
         if (numberOfFiles < 0){
             return -4;
         }
@@ -472,14 +472,14 @@ int run_sandsara(String playList, int orderMode)
         #ifdef DEBUGGING_DATA
             Serial.println("Abrira el siguiente archivo disponible");
         #endif
-        errorCode = FileSara::getLineNumber(pListFileGlobal, playList, fileName);
+        errorCode = SdFiles::getLineNumber(pListFileGlobal, playList, fileName);
         if (errorCode < 0)
         {
             //====playList is not valid====
             delay(1000);
             return errorCode;
         }
-        errorCode = FileSara::getLineNumber(pListFileGlobal + 1, playList, nextProgramGlobal);
+        errorCode = SdFiles::getLineNumber(pListFileGlobal + 1, playList, nextProgramGlobal);
         if (errorCode < 0)
         {
             nextProgramGlobal = "none";
@@ -558,7 +558,7 @@ int runFile(String fileName){
     //====
     double couplingAngle, startFileAngle, endFileAngle;
     int posisionCase;
-    FileSara file(fileName);
+    SdFiles file(fileName);
     if (file.fileType < 0){
         pListFileGlobal += 1;
         return -70;
@@ -993,7 +993,7 @@ void executeCode(int errorCode){
         SandsaraBt.writeBt("playlist: ");
         SandsaraBt.writeBtln(currentPlaylistGlobal);
         for (;;){
-            errorCode = FileSara::getLineNumber(i,currentPlaylistGlobal, fileName);
+            errorCode = SdFiles::getLineNumber(i,currentPlaylistGlobal, fileName);
             if (errorCode < 0){
                 SandsaraBt.writeBtln("error");
                 break;
@@ -1605,7 +1605,7 @@ int orderRandom(String dirFile, int numberLines){
     setFrom1(availableNumber, numberLines);
     for(int i = 0; i < limit; i++){
         randomNumber = random(0, numberLines);
-        errorCode = FileSara::getLineNumber(availableNumber[randomNumber], dirFile, fileName);
+        errorCode = SdFiles::getLineNumber(availableNumber[randomNumber], dirFile, fileName);
         if (errorCode < 0){
             file.close();
             sdRemove(dirFile);

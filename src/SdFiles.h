@@ -1,5 +1,4 @@
-#ifndef _FILESARA_H_
-#define _FILESARA_H_
+#pragma once
 
 #include "config.h"
 //#define FS_NO_GLOBALS
@@ -9,7 +8,7 @@
 
 
 /**
- * @class FileSara
+ * @class SdFiles
  * @param fileName contiene el nombre del archivo que se va a leer.
  * @param pFile se utiliza como apuntador a alguna linea del archivo.
  * @param fileType almacena el tipo de archivo pudiendo ser:
@@ -35,7 +34,7 @@
  * @param currentRow almacena una linea del archivo como texto.
  * @param dataBuffer almacena parte del archivo de la SD.
  */
-class FileSara {
+class SdFiles {
     public:
         String fileName;
         long pFile;
@@ -54,8 +53,8 @@ class FileSara {
         String currentRow = "";
         String dataBuffer = "";
     public:
-        FileSara(String , int = 1);
-        ~FileSara();
+        SdFiles(String , int = 1);
+        ~SdFiles();
         int getNextComponents(double* , double* );
         int getStatus();
         void autoSetMode(double );
@@ -75,5 +74,3 @@ class FileSara {
         String nextRow();
         int readFile();
 };
-
-#endif
