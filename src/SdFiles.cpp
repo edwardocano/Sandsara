@@ -443,7 +443,7 @@ double SdFiles::getStartPoint(int component, int ignoreZero)
     int stackPFileBin = pFileBin;
     long stackPFile = pFile;
     directionMode = 1;
-    double component1, component2, zStart, thetaStart;
+    double component1, component2;
     pFile = 0;
     pFileBin = charsToRead / 6;
     if (ignoreZero == 1 && fileType != 2)
@@ -502,7 +502,7 @@ double SdFiles::getFinalPoint(int component, int ignoreZero)
     int stackPFileBin = pFileBin;
     long stackPFile = pFile;
     directionMode = 0;
-    double component1, component2, zFinal, thetaFinal;
+    double component1, component2;
     pFile = file.size();
     pFileBin = 0;
     if (ignoreZero == 1 && fileType != 2)
@@ -555,7 +555,7 @@ double SdFiles::getFinalPoint(int component, int ignoreZero)
 void SdFiles::autoSetMode(double zCurrent)
 {
     double startZ, finalZ, diff1, diff2;
-    double angle, x, y;
+    double x, y;
     x = getStartPoint(1, 0);
     y = getStartPoint(2, 0);
     startZ = Motors::zPolar(x, y);
@@ -734,7 +734,7 @@ int SdFiles::getLineNumber(int lineNumber, String dirFile, String &lineText)
     }
     readingSDFile = true;
     File file = SD.open(dirFile);
-    long index = 0, lineN, count = 0;
+    long index = 0, count = 0;
     int character = 1;
 
     lineText = "";

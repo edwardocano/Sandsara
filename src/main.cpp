@@ -70,7 +70,6 @@ Motors Sandsara;
 Bluetooth SandsaraBt;
 
 int errorCode;
-
 //====function prototypes====
 extern  int programming(String );
 extern  void rebootWithMessage(String );
@@ -895,7 +894,6 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     }
     deltaTheta = (thetaNext - thetaCurrent) / slices;
     deltaZ = (zNext - zCurrent) / slices;
-    float speed= Sandsara.getSpeed();
     for (long i = 0; i < slices; i++)
     {
         ///====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
