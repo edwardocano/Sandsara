@@ -340,6 +340,7 @@ void setup()
                     0);
     delay(500); 
     //====
+    goEdgeSpiral(false);
     firstExecution = true;
 }
 
