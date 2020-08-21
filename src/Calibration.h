@@ -9,9 +9,9 @@
 #include <EEPROM.h>
 #include "config.h"
 
-class CalibMotor{
+class Calibration{
     public:
-        CalibMotor();
+        Calibration();
         void verificacion_cal();
     private:
 

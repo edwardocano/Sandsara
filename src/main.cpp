@@ -5,7 +5,7 @@
 #include <Adafruit_NeoPixel.h>
 #define FASTLED_ESP32_I2S true
 #include <FastLED.h>
-#include "CalibMotor.h"
+#include "Calibration.h"
 #include "Testing.h"
 
 #include "SPI.h"
@@ -144,7 +144,7 @@ TaskHandle_t Task1;
 TaskHandle_t Task2;
 //====
 //====Calibration====
-CalibMotor haloCalib;
+Calibration haloCalib;
 //====Testing========
 Testing haloTest;
 //====

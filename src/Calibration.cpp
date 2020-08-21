@@ -1,4 +1,4 @@
-#include "CalibMotor.h"
+#include "Calibration.h"
 
 hw_timer_t *timer1 = NULL;
 
@@ -58,7 +58,7 @@ int Pole1(void);
 int Pole2(void);
 int Check_ini(void);
 
-CalibMotor::CalibMotor()
+Calibration::Calibration()
 {
 }
 
@@ -91,7 +91,7 @@ void IRAM_ATTR onTimer()
 	}
 }
 
-void CalibMotor::init()
+void Calibration::init()
 {
 
 	SERIAL_PORT.begin(115200);
@@ -189,7 +189,7 @@ void CalibMotor::init()
     }
 }
 
-int CalibMotor::start()
+int Calibration::start()
 {
 	//====WITH STALLGUARD====
 	int value_f;
@@ -2075,7 +2075,7 @@ void verif_cal_negativeb2(void)
 /**
  * @brief Esta funcion se seleccionan las funciones necesarias para la verificacion de los brazos segun la polaridad correspondiente a cada iman.
  */
-void CalibMotor::verificacion_cal()
+void Calibration::verificacion_cal()
 {
 	if (Pole_sens1 == 1)
 	{

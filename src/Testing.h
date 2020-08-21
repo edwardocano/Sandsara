@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
-#include "CalibMotor.h"
+#include "Calibration.h"
 #include "SPI.h"
 #include "SdFat.h"
 #include <EEPROM.h>

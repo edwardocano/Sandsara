@@ -1,5 +1,5 @@
 #include "Testing.h"
-#include "CalibMotor.h"
+#include "Calibration.h"
 #include <Adafruit_NeoPixel.h>
 
 extern TMC2209Stepper driver;
@@ -10,7 +10,7 @@ void info_motor2(void);
 void mover(int,int,int);
 void Testing(void);
 
-CalibMotor haloCalibTest;
+Calibration haloCalibTest;
 
 #ifdef __AVR__
   #include <avr/power.h>
