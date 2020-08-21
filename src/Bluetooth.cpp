@@ -643,6 +643,28 @@ int Bluetooth::checkBlueTooth()
             writeBtln("ok");
             return 220;
         }
+        else if(line.indexOf("code23") >= 0){
+            writeBtln("request-nameToDelete");
+            codeError = readLine(line);
+            if (codeError != 0)
+            {
+                writeBt("error= ");
+                writeBtln(String(codeError));
+                return codeError;
+            }
+            if (!sdExists("/" + line))
+            {
+                codeError = -231;
+                writeBtln("error= -231"); //file alrady exits
+                return codeError;
+            }
+            else
+            {
+                sdRemove("/" + line);
+            }
+            writeBtln("ok");
+            return 220;
+        }
         else if (line.indexOf("code66") >= 0)
         {
             writeBtln("request-nameUpdate");
