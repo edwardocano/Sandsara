@@ -123,7 +123,7 @@ void Calibration::init()
 	
 	driver.blank_time(24);
 	
-	driver.rms_current(500);          // Fija el valor de la corriente
+	driver.rms_current(CURRENT_IN_CALIBRATION);          // Fija el valor de la corriente
 
 	driver.microsteps(MICROSTEPPING); // Se define el valor de microstepps
 
@@ -155,7 +155,7 @@ void Calibration::init()
 
 	driver2.blank_time(24);
 
-	driver2.rms_current(500);          // Fija el valor de la corriente
+	driver2.rms_current(CURRENT_IN_CALIBRATION);          // Fija el valor de la corriente
 
 	driver2.microsteps(MICROSTEPPING); // Se define el valor de microstepps
 
@@ -458,8 +458,8 @@ int Calibration::start()
 				{
 						slow_Calibration_hall2_negative();
 				}
-				driver.rms_current(500);
-				driver2.rms_current(500);
+				driver.rms_current(CURRENT_IN_CALIBRATION);
+				driver2.rms_current(CURRENT_IN_CALIBRATION);
 				digitalWrite(EN_PIN, LOW);
 				digitalWrite(EN_PIN2, LOW);
 				avoid = 1;
@@ -629,8 +629,8 @@ int Calibration::start()
 				{
 						slow_Calibration_hall2_negative();
 				}
-				driver.rms_current(500);
-				driver2.rms_current(500);
+				driver.rms_current(CURRENT_IN_CALIBRATION);
+				driver2.rms_current(CURRENT_IN_CALIBRATION);
 				avoid = 1;
 				return 0;
 			}

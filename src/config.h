@@ -148,6 +148,7 @@
 #define NORMAL_CURRENT 700
 #define MAX_CHARACTER_PER_LINE 1000
 #define OUTOFTIME_BLUETOOTH 20000
+#define CURRENT_IN_CALIBRATION 500
 
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0
