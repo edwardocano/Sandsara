@@ -45,7 +45,7 @@
 #define littlePulleySize 2.0
 
 /**
- * DIR_PIN, STEP_PIN, DIR_PIN2 y STEP_PIN2 se utilizan en la clase MoveSara para representar los pines de conexion de los motores
+ * DIR_PIN, STEP_PIN, DIR_PIN2 y STEP_PIN2 se utilizan en la clase Motors para representar los pines de conexion de los motores
  * DIR_PIN es el pin de direccion del driver del motor 1
  * STEP_PIN es el pin step del driver para el motor 1
  * EN_PIN es el pin enable del driver del motor 1

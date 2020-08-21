@@ -1,5 +1,4 @@
-#ifndef _MOVESARA_H_
-#define _MOVESARA_H_
+#pragma once
 
 //Speed
 //#define millimeterSpeed 15;
@@ -10,7 +9,7 @@
 #include "config.h"
 
 /**
- * @class MoveSara
+ * @class Motors
  * @param microstepping almacena el valor de microstepping del motor
  * @param x_current alamacena la coordenada x de la posicion actual de Sandsara (en milimetros).
  * @param y_current alamacena la coordenada y de la posicion actual de Sandsara (en milimetros).
@@ -22,7 +21,7 @@
  * @param constantMotorSpeed Si esta variable es true, los motores se moveran a una velocidad constante siempre, si es false la velocidad
  * dependera de la distancia recorrida de un punto a otro.
  */
-class MoveSara {
+class Motors {
     public:
         int microstepping;
         double degrees_per_step;
@@ -45,7 +44,7 @@ class MoveSara {
         int millimeterSpeed = 15;
 
     public:
-        MoveSara();
+        Motors();
         void moveTo(double x, double y, bool = false);
         void movePolarTo(double , double ); //(modulo,angulo)
         void init(double = 0,double = 0);
@@ -78,5 +77,3 @@ class MoveSara {
 
         void ik(double , double , double* , double* );
 };
-
-#endif

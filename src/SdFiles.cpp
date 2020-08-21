@@ -1,5 +1,5 @@
 #include "SdFiles.h"
-#include "MoveSara.h"
+#include "Motors.h"
 extern SdFat SD;
 extern bool readingSDFile;
 
@@ -558,7 +558,7 @@ void SdFiles::autoSetMode(double zCurrent)
     double angle, x, y;
     x = getStartPoint(1, 0);
     y = getStartPoint(2, 0);
-    startZ = MoveSara::zPolar(x, y);
+    startZ = Motors::zPolar(x, y);
     if (fileType == 2)
     {
         startZ = x;
@@ -566,7 +566,7 @@ void SdFiles::autoSetMode(double zCurrent)
 
     x = getFinalPoint(1, 0);
     y = getFinalPoint(2, 0);
-    finalZ = MoveSara::zPolar(x, y);
+    finalZ = Motors::zPolar(x, y);
     if (fileType == 2)
     {
         finalZ = x;
@@ -615,7 +615,7 @@ double SdFiles::getFinalAngle()
         {
             x = getStartPoint(1, 1);
             y = getStartPoint(2, 1);
-            angle = MoveSara::thetaPolar(x, y);
+            angle = Motors::thetaPolar(x, y);
             return angle;
         }
     }
@@ -630,7 +630,7 @@ double SdFiles::getFinalAngle()
         {
             x = getFinalPoint(1, 1);
             y = getFinalPoint(2, 1);
-            angle = MoveSara::thetaPolar(x, y);
+            angle = Motors::thetaPolar(x, y);
             return angle;
         }
     }
@@ -654,7 +654,7 @@ double SdFiles::getStartAngle()
         {
             x = getFinalPoint(1, 1);
             y = getFinalPoint(2, 1);
-            angle = MoveSara::thetaPolar(x, y);
+            angle = Motors::thetaPolar(x, y);
             return angle;
         }
     }
@@ -669,7 +669,7 @@ double SdFiles::getStartAngle()
         {
             x = getStartPoint(1, 1);
             y = getStartPoint(2, 1);
-            angle = MoveSara::thetaPolar(x, y);
+            angle = Motors::thetaPolar(x, y);
             return angle;
         }
     }
@@ -692,7 +692,7 @@ double SdFiles::getStartModule(){
         {
             x = getFinalPoint(1, 1);
             y = getFinalPoint(2, 1);
-            module = MoveSara::zPolar(x, y);
+            module = Motors::zPolar(x, y);
             return module;
         }
     }
@@ -707,7 +707,7 @@ double SdFiles::getStartModule(){
         {
             x = getStartPoint(1, 1);
             y = getStartPoint(2, 1);
-            module = MoveSara::zPolar(x, y);
+            module = Motors::zPolar(x, y);
             return module;
         }
     }

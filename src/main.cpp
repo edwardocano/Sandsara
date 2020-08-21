@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "SdFiles.h"
-#include "MoveSara.h"
+#include "Motors.h"
 #include "Bluetooth.h"
 #include <Adafruit_NeoPixel.h>
 #define FASTLED_ESP32_I2S true
@@ -66,7 +66,7 @@ pallette7,pallette8,pallette9,
 pallette10,pallette11,pallette12,
 pallette13,pallette14,pallette15;
 //====
-MoveSara Sandsara;
+Motors Sandsara;
 Bluetooth SandsaraBt;
 
 int errorCode;
@@ -577,9 +577,9 @@ int runFile(String fileName){
         Serial.println(fileName);
     #endif
     startFileAngle = file.getStartAngle();
-    startFileAngle = MoveSara::normalizeAngle(startFileAngle);
+    startFileAngle = Motors::normalizeAngle(startFileAngle);
     endFileAngle = file.getFinalAngle();
-    endFileAngle = MoveSara::normalizeAngle(endFileAngle);
+    endFileAngle = Motors::normalizeAngle(endFileAngle);
     
     posisionCase = Sandsara.position();
     if (posisionCase == 2){
@@ -593,7 +593,7 @@ int runFile(String fileName){
     }
     if (true){
         double zf, thetaf, zi, thetai, thetaFinal;
-        thetaf = MoveSara::normalizeAngle(file.getStartAngle() - couplingAngle);
+        thetaf = Motors::normalizeAngle(file.getStartAngle() - couplingAngle);
         zf = file.getStartModule();
         thetai = Sandsara.getCurrentAngle();
         zi = Sandsara.getCurrentModule();
@@ -701,7 +701,7 @@ int runFile(String fileName){
         //====According to type of file the functions moveTo or movePolarTo will be executed====
         if (file.fileType == 1 || file.fileType == 3)
         {
-            MoveSara::rotate(component_1, component_2, -couplingAngle);
+            Motors::rotate(component_1, component_2, -couplingAngle);
             distance = Sandsara.module(component_1, component_2, Sandsara.x_current, Sandsara.y_current);
             if (distance > 1.1)
             {
