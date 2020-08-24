@@ -93,7 +93,6 @@ void IRAM_ATTR onTimer()
 
 void Calibration::init()
 {
-
 	SERIAL_PORT.begin(115200);
 	SERIAL_PORT2.begin(115200);
 

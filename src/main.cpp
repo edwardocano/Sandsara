@@ -245,7 +245,17 @@ void setup()
                     1);
     delay(500); 
     //====
-
+    //====new task for leds====
+    xTaskCreatePinnedToCore(
+                    bluetoothThread,   
+                    "Task2",     
+                    5000,
+                    NULL,
+                    4,
+                    &Task2,
+                    0);
+    delay(500); 
+    //====
     //====Cablibrating====
     #ifdef DEBUGGING_DATA
         Serial.println("init func");
@@ -328,17 +338,7 @@ void setup()
         orderModeGlobal = 1;
     }
     //=====
-    //====new task for leds====
-    xTaskCreatePinnedToCore(
-                    bluetoothThread,   
-                    "Task2",     
-                    5000,
-                    NULL,
-                    4,
-                    &Task2,
-                    0);
-    delay(500); 
-    //====
+    
     goEdgeSpiral(false);
     firstExecution = true;
 }
