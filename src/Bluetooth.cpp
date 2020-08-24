@@ -4,15 +4,24 @@
 
 //====extern variables and functions====
 extern SdFat SD;
-extern bool sdExists(String );
-extern bool sdRemove(String );
-extern bool sdExists(String );
-extern bool pauseModeGlobal;
-extern int romSetCustomPallete(uint8_t* ,uint8_t* , uint8_t* ,uint8_t* , int);
-extern int romSetIncrementIndexPallete(bool );
-extern int romSetIntermediateCalibration(bool );
-extern bool romGetIntermediateCalibration();
-extern int romSetLedsDirection(bool );
+extern bool     sdExists(String );
+extern bool     sdRemove(String );
+extern bool     sdExists(String );
+extern bool     pauseModeGlobal;
+extern int      romSetCustomPallete(uint8_t* ,uint8_t* , uint8_t* ,uint8_t* , int);
+extern int      romSetIncrementIndexPallete(bool );
+extern int      romSetIntermediateCalibration(bool );
+extern int      romSetLedsDirection(bool );
+extern bool     romGetIntermediateCalibration();
+extern int      romGetPositionList();
+extern String   romGetPlaylist();
+extern int      romGetOrderMode();
+extern int      romGetPallete();
+extern int      romGetSpeedMotor();
+extern int      romGetPeriodLed();
+extern String   romGetBluetoothName();
+extern bool     romGetIncrementIndexPallete();
+extern bool     romGetLedsDirection();
 //====
 uint8_t dataBt[BUFFER_BLUETOOTH];
 //====
@@ -24,13 +33,7 @@ int programming(String );
 void rebootWithMessage(String );
 int stringToArray(String , uint8_t* , int );
 //====
-extern String romGetPlaylist();
-extern int romGetOrderMode();
-extern int romGetPosition();
-extern int romGetPallete();
-extern int romGetSpeedMotor();
-extern int romGetPeriodLed();
-extern String romGetBluetoothName();
+
 //====
 //--------------Bluetooth--------------------------------------------------------
 //-------------------------------------------------------------------------------
@@ -434,26 +437,36 @@ int Bluetooth::checkBlueTooth()
             writeBt(String(v2Current));
             writeBt(".");
             writeBtln(String(v3Current));
-            writeBt("Nombre del bluetooth= ");
+            writeBt("Bluetooth Name= ");
             writeBtln(romGetBluetoothName());
-            writeBt("Velocidad de motores= ");
+            writeBt("Motor Speed= ");
             writeBtln(String(romGetSpeedMotor()));
-            writeBt("Paleta de colores= ");
+            writeBt("Palette Index= ");
             writeBtln(String(romGetPallete()));
-            writeBt("Periodo de los leds= ");
+            writeBt("Led Refreshing Time= ");
             writeBtln(String(romGetPeriodLed()));
-            writeBt("Lista de reproduccion= ");
+            writeBt("Playlist= ");
             writeBtln(romGetPlaylist());
-            writeBt("Orden de reproduccion= ");
+            writeBt("Reproduction mode= ");
             writeBtln(String(romGetOrderMode()));
             writeBt("Intermediate calibration= ");
-            if (romGetIntermediateCalibration){
+            if (romGetIntermediateCalibration()){
                 writeBtln(String("enabled"));
             }
             else{
                 writeBtln(String("disabled"));
             }
-            
+            writeBt("Position in Playlist= ");
+            writeBtln(String(romGetPositionList()));
+            writeBt("leds direction= ");
+            if (romGetLedsDirection()){
+                writeBtln(String("CW"));
+            }
+            else{
+                writeBtln(String("CCW"));
+            }
+
+            writeBtln("ok");
             return 120;
         }
         else if (line.indexOf("code13") >= 0)
@@ -1029,7 +1042,7 @@ static unsigned *MD5Hash(uint8_t *msg, int mlen)
 String Bluetooth::GetMD5String(uint8_t *msg, int mlen)
 {
     String str;
-    int j, k;
+    int j;
     unsigned *d = MD5Hash(msg, mlen);
     MD5union u;
     for (j = 0; j < 4; j++)

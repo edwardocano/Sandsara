@@ -2,13 +2,15 @@
 #include "AccelStepper.h"
 #include "MultiStepper.h"
 #include "Bluetooth.h"
-
+#include "Calibration.h"
 unsigned long timeMotor = 0;
 
 double m[no_picos * 2], b[no_picos * 2];
 extern bool productType;
 extern bool pauseModeGlobal;
-
+//====Extern varibales====
+extern TMC2209Stepper driver;
+extern TMC2209Stepper driver2;
 //====Function prototypes====
 double dkX(double , double );
 double dkY(double , double );
@@ -75,17 +77,30 @@ void Motors::moveSteps(long q1_steps, long q2_steps, double distance)
         q1DirectionNew = false;
     }
     if (q1DirectionNew ^ q1DirectionOld){
-        delay(15);
+        //theese 2 instructions cost about 17 millis
+        driver.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
+        //driver2.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
+        //delay(DELAY_IN_ABRUPTMOVEMENTS);
     }
-    else if (q2DirectionNew ^ q2DirectionOld){
-        delay(15);
+    if (q2DirectionNew ^ q2DirectionOld){
+        //driver.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
+        driver2.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
+        //delay(DELAY_IN_ABRUPTMOVEMENTS);
     }
-    q1DirectionOld = q1DirectionNew;
-    q2DirectionOld = q2DirectionNew;
     #ifndef DISABLE_MOTORS
         steppers.moveTo(positions);
         steppers.runSpeedToPosition();
     #endif
+    if (q1DirectionNew ^ q1DirectionOld){
+        driver.rms_current(NORMAL_CURRENT);
+        //driver2.rms_current(NORMAL_CURRENT);
+    }
+    if (q2DirectionNew ^ q2DirectionOld){
+        //driver.rms_current(NORMAL_CURRENT);
+        driver2.rms_current(NORMAL_CURRENT);
+    }
+    q1DirectionOld = q1DirectionNew;
+    q2DirectionOld = q2DirectionNew;
     q1_current += degrees_per_step * q1_steps;
     q2_current += degrees_per_step * q2_steps;
     q1_current = normalizeAngle(q1_current);
