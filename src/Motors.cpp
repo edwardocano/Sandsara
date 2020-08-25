@@ -77,7 +77,7 @@ void Motors::moveSteps(long q1_steps, long q2_steps, double distance)
         q1DirectionNew = false;
     }
     if (q1DirectionNew ^ q1DirectionOld){
-        //theese 2 instructions cost about 17 millis
+        //theese 2 instructions cost about 17 millis or 12 with 240kHz
         driver.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
         //driver2.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
         //delay(DELAY_IN_ABRUPTMOVEMENTS);
@@ -87,6 +87,7 @@ void Motors::moveSteps(long q1_steps, long q2_steps, double distance)
         driver2.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
         //delay(DELAY_IN_ABRUPTMOVEMENTS);
     }
+    
     #ifndef DISABLE_MOTORS
         steppers.moveTo(positions);
         steppers.runSpeedToPosition();
