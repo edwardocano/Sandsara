@@ -870,11 +870,17 @@ int SdFiles::creatListOfFiles(String fileName)
 int SdFiles::numberOfLines(String dir){
     File f;
     int character, count = 1;
+    while (readingSDFile){
+        delay(1);
+    }
+    readingSDFile = true;
     f = SD.open(dir);
     if (!f){
+        readingSDFile = false;
         return 0;
     }
     if (f.isDirectory()){
+        readingSDFile = false;
         return 0;
     }
     while(true)
@@ -887,6 +893,7 @@ int SdFiles::numberOfLines(String dir){
             break;
         }
     }
+    readingSDFile = false;
     return count;
 }
 
