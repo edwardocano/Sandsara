@@ -23,6 +23,10 @@ SdFiles::SdFiles(String nameF, int directionMode)
     Serial.print("Se abrira el archivo: ");
     Serial.println(fileName);
 #endif
+    while (readingSDFile){
+        delay(1);
+    }
+    readingSDFile = true;
     file = SD.open(fileName);
     if (directionMode == 1)
     {
@@ -54,6 +58,7 @@ SdFiles::SdFiles(String nameF, int directionMode)
     {
         dataBufferBin = (uint8_t *)calloc(charsToRead + 1, 1);
     }
+    readingSDFile = false;
 }
 
 /**
@@ -503,7 +508,12 @@ double SdFiles::getFinalPoint(int component, int ignoreZero)
     long stackPFile = pFile;
     directionMode = 0;
     double component1, component2;
+    while (readingSDFile){
+        delay(1);
+    }
+    readingSDFile = true;
     pFile = file.size();
+    readingSDFile = false;
     pFileBin = 0;
     if (ignoreZero == 1 && fileType != 2)
     {
@@ -825,6 +835,10 @@ int SdFiles::getLineNumber(int lineNumber, String dirFile, String &lineText)
  */
 int SdFiles::creatListOfFiles(String fileName)
 {
+    while (readingSDFile){
+        delay(1);
+    }
+    readingSDFile = true;
     File file, root, fileObj;
     int numberOfFiles = 0;
     root = SD.open("/");
@@ -832,6 +846,7 @@ int SdFiles::creatListOfFiles(String fileName)
     file = SD.open(fileName, FILE_WRITE);
     if (!file)
     {
+        readingSDFile = false;
         return -1; ///file coudn't be created.
     }
     fileName.toLowerCase();
@@ -843,6 +858,7 @@ int SdFiles::creatListOfFiles(String fileName)
             fileObj.close();
             file.close();
             root.close();
+            readingSDFile = false;
             return numberOfFiles;
         }
         if (!fileObj.isDirectory())
@@ -860,6 +876,7 @@ int SdFiles::creatListOfFiles(String fileName)
             numberOfFiles += 1;
         }
     }
+    readingSDFile = false;
 }
 
 /**

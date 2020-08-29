@@ -489,6 +489,10 @@ int run_sandsara(String playList, int orderMode)
             delay(1000);
             break;
         }
+        while (readingSDFile){
+            delay(1);
+        }
+        readingSDFile = true;
         File current_file = SD.open("/" + fileName);
         if (!current_file)
         {
@@ -506,6 +510,7 @@ int run_sandsara(String playList, int orderMode)
         current_file.getName(nameF,NAME_LENGTH);
         fileName = nameF;
         current_file.close();
+        readingSDFile = false;
         //====run program====
         errorCode = runFile(fileName);
         //====
@@ -631,7 +636,7 @@ int runFile(String fileName){
         Sandsara.setZCurrent(component_1);
         Sandsara.setThetaCurrent(component_2 - couplingAngle);
     }
-
+    
     //the next while is stopped until file is finished or is interrupted.
     while (true)
     {
