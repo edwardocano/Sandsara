@@ -30,11 +30,11 @@ class Motors {
         double y_current;
         double q1_current;
         double q2_current;
+        static AccelStepper stepper1;
+        static AccelStepper stepper2;
+        static MultiStepper steppers;
 
     private:
-        AccelStepper stepper1;
-        AccelStepper stepper2;
-        MultiStepper steppers;
         double zCurrent;
         double thetaCurrent;
         long maxSpeed;        

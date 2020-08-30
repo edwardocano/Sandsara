@@ -53,6 +53,7 @@ bool    turnOnLeds = false;
 bool    ledsDirection;
 bool    pauseModeGlobal = false;
 bool    suspensionModeGlobal = false;
+bool    startMovement = false;
 //====
 //====Pallete Color Variables====
 CRGBPalette16   NO_SD_PALLETE;
@@ -122,6 +123,8 @@ void    goCenterSpiral(bool);
 void    goEdgeSpiral(bool);
 void    spiralGoTo(float , float );
 
+void moveSteps(void* );
+
 //====
 //====Led Variables====
 #define LED_PIN     32
@@ -141,6 +144,7 @@ bool productType;
 //====Thred====
 TaskHandle_t Task1;
 TaskHandle_t Task2;
+TaskHandle_t motorsTasks;
 //====
 //====Calibration====
 Calibration haloCalib;
@@ -253,6 +257,17 @@ void setup()
                     NULL,
                     4,
                     &Task2,
+                    0);
+    delay(500); 
+    //====
+    //====new task for leds====
+    xTaskCreatePinnedToCore(
+                    moveSteps,   
+                    "motorsTasks",     
+                    5000,
+                    NULL,
+                    4,
+                    &motorTask,
                     0);
     delay(500); 
     //====
@@ -1702,59 +1717,61 @@ int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matrix){
  * @param distance es la distancia que va a recorrer entre el punto actual y el punto despues del movimiento.
  * @note La distancia se mide en milimetros 
  */
-void Motors::moveSteps(long q1_steps, long q2_steps, double distance)
+void moveSteps(void* pvParameters)
 { 
+    long q1_steps, long q2_steps, double distance
     long positions[2];
-    if (abs(q1_steps) > abs(q2_steps + q1_steps)) 
-        maxSpeed = abs(q1_steps) * 1L;
-    else
-        maxSpeed = abs(q2_steps + q1_steps) * 1L;
-    maxSpeed = (maxSpeed / distance) * millimeterSpeed;
-    if (maxSpeed > MAX_STEPS_PER_SECOND * microstepping)
-        maxSpeed = MAX_STEPS_PER_SECOND * microstepping;
-    if (constantMotorSpeed) 
-        maxSpeed = 50 * microstepping;
-#ifdef PROCESSING_SIMULATOR
-    Serial.print(q1_steps);
-    Serial.print(",");
-    Serial.print(q2_steps + q1_steps);
-    Serial.print(",");
-    Serial.println(maxSpeed);
-#endif
-    stepper1.setMaxSpeed(maxSpeed);
-    stepper2.setMaxSpeed(maxSpeed);
-    positions[0] = stepper1.currentPosition() + q1_steps;
-    positions[1] = stepper2.currentPosition() + q2_steps + q1_steps;
-    if (q2_steps + q1_steps > 0){
-        q2DirectionNew = true;
+    for (;;){
+        if (startMovement){
+            if (abs(q1_steps) > abs(q2_steps + q1_steps))
+                maxSpeed = abs(q1_steps) * 1L;
+            else
+                maxSpeed = abs(q2_steps + q1_steps) * 1L;
+            maxSpeed = (maxSpeed / distance) * millimeterSpeed;
+            if (maxSpeed > MAX_STEPS_PER_SECOND * microstepping)
+                maxSpeed = MAX_STEPS_PER_SECOND * microstepping;
+            if (constantMotorSpeed) 
+                maxSpeed = 50 * microstepping;
+            #ifdef PROCESSING_SIMULATOR
+                Serial.print(q1_steps);
+                Serial.print(",");
+                Serial.print(q2_steps + q1_steps);
+                Serial.print(",");
+                Serial.println(maxSpeed);
+            #endif
+            Motors::stepper1.setMaxSpeed(maxSpeed);
+            Motors::stepper2.setMaxSpeed(maxSpeed);
+            positions[0] = Motors::stepper1.currentPosition() + q1_steps;
+            positions[1] = Motors::stepper2.currentPosition() + q2_steps + q1_steps;
+            if (q2_steps + q1_steps > 0){
+                q2DirectionNew = true;
+            }
+            else if (q2_steps + q1_steps < 0){
+                q2DirectionNew = false;
+            }
+            if (q1_steps > 0){
+                q1DirectionNew = true;
+            }
+            else if (q1_steps < 0){
+                q1DirectionNew = false;
+            }
+            if ((q1DirectionNew ^ q1DirectionOld) || (q2DirectionNew ^ q2DirectionOld)){
+                Motors::driver.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
+                Motors::driver2.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
+            }
+            #ifndef DISABLE_MOTORS
+                Motors::steppers.moveTo(positions);
+                Motors::steppers.runSpeedToPosition();
+            #endif
+            if ((q1DirectionNew ^ q1DirectionOld) || (q2DirectionNew ^ q2DirectionOld)){
+                Motors::driver.rms_current(NORMAL_CURRENT);
+                Motors::driver2.rms_current(NORMAL_CURRENT);
+            }
+            q1DirectionOld = q1DirectionNew;
+            q2DirectionOld = q2DirectionNew;
+        }
+        vTaskSuspend(motorsTask);
     }
-    else if (q2_steps + q1_steps < 0){
-        q2DirectionNew = false;
-    }
-    if (q1_steps > 0){
-        q1DirectionNew = true;
-    }
-    else if (q1_steps < 0){
-        q1DirectionNew = false;
-    }
-    if ((q1DirectionNew ^ q1DirectionOld) || (q2DirectionNew ^ q2DirectionOld)){
-        driver.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
-        driver2.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
-    }
-    #ifndef DISABLE_MOTORS
-        steppers.moveTo(positions);
-        steppers.runSpeedToPosition();
-    #endif
-    if ((q1DirectionNew ^ q1DirectionOld) || (q2DirectionNew ^ q2DirectionOld)){
-        driver.rms_current(NORMAL_CURRENT);
-        driver2.rms_current(NORMAL_CURRENT);
-    }
-    q1DirectionOld = q1DirectionNew;
-    q2DirectionOld = q2DirectionNew;
-    q1_current += degrees_per_step * q1_steps;
-    q2_current += degrees_per_step * q2_steps;
-    q1_current = normalizeAngle(q1_current);
-    q2_current = normalizeAngle(q2_current);
-    x_current = dkX(q1_current, q2_current);
-    y_current = dkY(q1_current, q2_current);
+    
+    
 }

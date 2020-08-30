@@ -6,11 +6,13 @@
 unsigned long timeMotor = 0;
 
 double m[no_picos * 2], b[no_picos * 2];
-extern bool productType;
-extern bool pauseModeGlobal;
+extern bool     productType;
+extern bool     pauseModeGlobal;
+extern bool     startMovement = false;
 //====Extern varibales====
-extern TMC2209Stepper driver;
-extern TMC2209Stepper driver2;
+extern TMC2209Stepper  driver;
+extern TMC2209Stepper  driver2;
+extern TaskHandle_t    motorsTasks;
 //====Function prototypes====
 double dkX(double , double );
 double dkY(double , double );
@@ -66,7 +68,20 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             ik(x, y, &q1, &q2);
             steps_of_q1 = calculate_steps(q1_current, q1);
             steps_of_q2 = calculate_steps(q2_current, q2);
-            moveSteps(steps_of_q1, steps_of_q2, distance);
+            q1StepsGlobal = steps_of_q1;
+            q2StepsGlobal = steps_of_q2;
+            distanceGlobal = distance;
+            while (eTaskGetState(motorsTask) != 3){
+                continue;
+            }
+            startMovement = true;
+            vTaskResume(motorsTask);
+            q1_current += degrees_per_step * steps_of_q1;
+            q2_current += degrees_per_step * steps_of_q2;
+            q1_current = normalizeAngle(q1_current);
+            q2_current = normalizeAngle(q2_current);
+            x_current = dkX(q1_current, q2_current);
+            y_current = dkY(q1_current, q2_current);
         }
     }
 }
