@@ -87,7 +87,7 @@ void Motors::moveSteps(long q1_steps, long q2_steps, double distance)
         driver2.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
         //delay(DELAY_IN_ABRUPTMOVEMENTS);
     }
-    double factor, p[2];
+    /*double factor, p[2];
     long pL[2];
     double delta1 = q1_steps;
     double delta2 = q2_steps + q1_steps;
@@ -103,16 +103,16 @@ void Motors::moveSteps(long q1_steps, long q2_steps, double distance)
         factor = 1;
     }
     delta1 = delta1/factor;
-    delta2 = delta2/factor;
+    delta2 = delta2/factor;*/
     #ifndef DISABLE_MOTORS
-        for(int i=0; i < int(factor); i++){
+        /*for(int i=0; i < int(factor); i++){
             p[0] += delta1;
             p[1] += delta2;
             pL[0] = p[0];
             pL[1] = p[1];
             steppers.moveTo(pL);
             steppers.runSpeedToPosition();
-        }
+        }*/
         steppers.moveTo(positions);
         steppers.runSpeedToPosition();
     #endif
@@ -124,7 +124,7 @@ void Motors::moveSteps(long q1_steps, long q2_steps, double distance)
         //driver.rms_current(NORMAL_CURRENT);
         driver2.rms_current(NORMAL_CURRENT);
     }
-    //delay(3000);
+    delay(3000);
     q1DirectionOld = q1DirectionNew;
     q2DirectionOld = q2DirectionNew;
     q1_current += degrees_per_step * q1_steps;
