@@ -30,9 +30,10 @@ class Motors {
         double y_current;
         double q1_current;
         double q2_current;
-        static AccelStepper stepper1;
-        static AccelStepper stepper2;
-        static MultiStepper steppers;
+        AccelStepper stepper1;
+        AccelStepper stepper2;
+        MultiStepper steppers;
+        int millimeterSpeed = 15;
 
     private:
         double zCurrent;
@@ -41,8 +42,7 @@ class Motors {
         double x_home;
         double y_home;
         bool constantMotorSpeed = false;
-        int millimeterSpeed = 15;
-
+        
     public:
         Motors();
         void moveTo(double x, double y, bool = false);

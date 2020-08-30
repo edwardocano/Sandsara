@@ -8,11 +8,13 @@ unsigned long timeMotor = 0;
 double m[no_picos * 2], b[no_picos * 2];
 extern bool     productType;
 extern bool     pauseModeGlobal;
-extern bool     startMovement = false;
+extern bool     startMovement;
+extern long     q1StepsGlobal, q2StepsGlobal;
+extern double   distanceGlobal;
 //====Extern varibales====
 extern TMC2209Stepper  driver;
 extern TMC2209Stepper  driver2;
-extern TaskHandle_t    motorsTasks;
+extern TaskHandle_t    motorsTask;
 //====Function prototypes====
 double dkX(double , double );
 double dkY(double , double );

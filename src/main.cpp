@@ -54,6 +54,8 @@ bool    ledsDirection;
 bool    pauseModeGlobal = false;
 bool    suspensionModeGlobal = false;
 bool    startMovement = false;
+long    q1StepsGlobal, q2StepsGlobal;
+double  distanceGlobal;
 //====
 //====Pallete Color Variables====
 CRGBPalette16   NO_SD_PALLETE;
@@ -144,7 +146,7 @@ bool productType;
 //====Thred====
 TaskHandle_t Task1;
 TaskHandle_t Task2;
-TaskHandle_t motorsTasks;
+TaskHandle_t motorsTask;
 //====
 //====Calibration====
 Calibration haloCalib;
@@ -267,7 +269,7 @@ void setup()
                     5000,
                     NULL,
                     4,
-                    &motorTask,
+                    &motorsTask,
                     0);
     delay(500); 
     //====
@@ -1719,53 +1721,59 @@ int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matrix){
  */
 void moveSteps(void* pvParameters)
 { 
-    long q1_steps, long q2_steps, double distance
     long positions[2];
+    bool q2DirectionNew = false, q1DirectionNew = false;
+    bool q2DirectionOld = false, q1DirectionOld = false;
+    float maxSpeed;
     for (;;){
         if (startMovement){
-            if (abs(q1_steps) > abs(q2_steps + q1_steps))
-                maxSpeed = abs(q1_steps) * 1L;
-            else
-                maxSpeed = abs(q2_steps + q1_steps) * 1L;
-            maxSpeed = (maxSpeed / distance) * millimeterSpeed;
-            if (maxSpeed > MAX_STEPS_PER_SECOND * microstepping)
-                maxSpeed = MAX_STEPS_PER_SECOND * microstepping;
-            if (constantMotorSpeed) 
-                maxSpeed = 50 * microstepping;
+
+            if (abs(q1StepsGlobal) > abs(q2StepsGlobal + q1StepsGlobal)){
+                maxSpeed = abs(q1StepsGlobal) * 1L;
+            }
+            else{
+                maxSpeed = abs(q2StepsGlobal + q1StepsGlobal) * 1L;
+            }  
+            maxSpeed = (maxSpeed / distanceGlobal) * Sandsara.millimeterSpeed;
+
+            if (maxSpeed > MAX_STEPS_PER_SECOND * Sandsara.microstepping)
+                maxSpeed = MAX_STEPS_PER_SECOND * Sandsara.microstepping;
+
             #ifdef PROCESSING_SIMULATOR
-                Serial.print(q1_steps);
+                Serial.print(q1StepsGlobal);
                 Serial.print(",");
-                Serial.print(q2_steps + q1_steps);
+                Serial.print(q2StepsGlobal + q1StepsGlobal);
                 Serial.print(",");
                 Serial.println(maxSpeed);
             #endif
-            Motors::stepper1.setMaxSpeed(maxSpeed);
-            Motors::stepper2.setMaxSpeed(maxSpeed);
-            positions[0] = Motors::stepper1.currentPosition() + q1_steps;
-            positions[1] = Motors::stepper2.currentPosition() + q2_steps + q1_steps;
-            if (q2_steps + q1_steps > 0){
+
+            Sandsara.stepper1.setMaxSpeed(maxSpeed);
+            Sandsara.stepper2.setMaxSpeed(maxSpeed);
+            positions[0] = Sandsara.stepper1.currentPosition() + q1StepsGlobal;
+            positions[1] = Sandsara.stepper2.currentPosition() + q2StepsGlobal + q1StepsGlobal;
+            if (q2StepsGlobal + q1StepsGlobal > 0){
                 q2DirectionNew = true;
             }
-            else if (q2_steps + q1_steps < 0){
+            else if (q2StepsGlobal + q1StepsGlobal < 0){
                 q2DirectionNew = false;
             }
-            if (q1_steps > 0){
+            if (q1StepsGlobal > 0){
                 q1DirectionNew = true;
             }
-            else if (q1_steps < 0){
+            else if (q1StepsGlobal < 0){
                 q1DirectionNew = false;
             }
             if ((q1DirectionNew ^ q1DirectionOld) || (q2DirectionNew ^ q2DirectionOld)){
-                Motors::driver.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
-                Motors::driver2.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
+                driver.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
+                driver2.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
             }
             #ifndef DISABLE_MOTORS
-                Motors::steppers.moveTo(positions);
-                Motors::steppers.runSpeedToPosition();
+                Sandsara.steppers.moveTo(positions);
+                Sandsara.steppers.runSpeedToPosition();
             #endif
             if ((q1DirectionNew ^ q1DirectionOld) || (q2DirectionNew ^ q2DirectionOld)){
-                Motors::driver.rms_current(NORMAL_CURRENT);
-                Motors::driver2.rms_current(NORMAL_CURRENT);
+                driver.rms_current(NORMAL_CURRENT);
+                driver2.rms_current(NORMAL_CURRENT);
             }
             q1DirectionOld = q1DirectionNew;
             q2DirectionOld = q2DirectionNew;
