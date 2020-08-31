@@ -1725,42 +1725,47 @@ void moveSteps(void* pvParameters)
     bool q2DirectionNew = false, q1DirectionNew = false;
     bool q2DirectionOld = false, q1DirectionOld = false;
     float maxSpeed;
+    long q1Steps, q2Steps;
+    double distance;
     for (;;){
         if (startMovement){
-
-            if (abs(q1StepsGlobal) > abs(q2StepsGlobal + q1StepsGlobal)){
-                maxSpeed = abs(q1StepsGlobal) * 1L;
+            startMovement = false;
+            q1Steps = q1StepsGlobal;
+            q2Steps = q2StepsGlobal;
+            distance = distanceGlobal;
+            if (abs(q1Steps) > abs(q2Steps + q1Steps)){
+                maxSpeed = abs(q1Steps) * 1L;
             }
             else{
-                maxSpeed = abs(q2StepsGlobal + q1StepsGlobal) * 1L;
+                maxSpeed = abs(q2Steps + q1Steps) * 1L;
             }  
-            maxSpeed = (maxSpeed / distanceGlobal) * Sandsara.millimeterSpeed;
+            maxSpeed = (maxSpeed / distance) * Sandsara.millimeterSpeed;
 
             if (maxSpeed > MAX_STEPS_PER_SECOND * Sandsara.microstepping)
                 maxSpeed = MAX_STEPS_PER_SECOND * Sandsara.microstepping;
 
             #ifdef PROCESSING_SIMULATOR
-                Serial.print(q1StepsGlobal);
+                Serial.print(q1Steps);
                 Serial.print(",");
-                Serial.print(q2StepsGlobal + q1StepsGlobal);
+                Serial.print(q2Steps + q1Steps);
                 Serial.print(",");
                 Serial.println(maxSpeed);
             #endif
 
             Sandsara.stepper1.setMaxSpeed(maxSpeed);
             Sandsara.stepper2.setMaxSpeed(maxSpeed);
-            positions[0] = Sandsara.stepper1.currentPosition() + q1StepsGlobal;
-            positions[1] = Sandsara.stepper2.currentPosition() + q2StepsGlobal + q1StepsGlobal;
-            if (q2StepsGlobal + q1StepsGlobal > 0){
+            positions[0] = Sandsara.stepper1.currentPosition() + q1Steps;
+            positions[1] = Sandsara.stepper2.currentPosition() + q2Steps + q1Steps;
+            if (q2Steps + q1Steps > 0){
                 q2DirectionNew = true;
             }
-            else if (q2StepsGlobal + q1StepsGlobal < 0){
+            else if (q2Steps + q1Steps < 0){
                 q2DirectionNew = false;
             }
-            if (q1StepsGlobal > 0){
+            if (q1Steps > 0){
                 q1DirectionNew = true;
             }
-            else if (q1StepsGlobal < 0){
+            else if (q1Steps < 0){
                 q1DirectionNew = false;
             }
             if ((q1DirectionNew ^ q1DirectionOld) || (q2DirectionNew ^ q2DirectionOld)){
