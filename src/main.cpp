@@ -1727,6 +1727,11 @@ void moveSteps(void* pvParameters)
     float maxSpeed;
     long q1Steps, q2Steps;
     double distance;
+    double factor, deltaQ1, deltaQ2;
+    int factorInt;
+    double posConstrained[2];
+    long posLong[2];
+    
     for (;;){
         if (startMovement){
             startMovement = false;
@@ -1756,6 +1761,8 @@ void moveSteps(void* pvParameters)
             Sandsara.stepper2.setMaxSpeed(maxSpeed);
             positions[0] = Sandsara.stepper1.currentPosition() + q1Steps;
             positions[1] = Sandsara.stepper2.currentPosition() + q2Steps + q1Steps;
+            posConstrained[0] = Sandsara.stepper1.currentPosition();
+            posConstrained[1] = Sandsara.stepper2.currentPosition();
             if (q2Steps + q1Steps > 0){
                 q2DirectionNew = true;
             }
@@ -1772,6 +1779,29 @@ void moveSteps(void* pvParameters)
                 driver.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
                 driver2.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
             }
+            if(q2Steps + q1Steps > q1Steps){
+                factor = fabs((q2Steps + q1Steps)/50);
+            }
+            else{
+                factor = fabs(q1Steps/50);
+            }
+            
+            if (factor < 1.0){
+                factor = 1.0;
+            }
+            deltaQ1 = (q1Steps)/factor;
+            deltaQ2 = (q2Steps + q1Steps)/factor;
+            factorInt = int(factor);
+            for (int i=0; i < factorInt - 1; i++){
+                posConstrained[0] += deltaQ1;
+                posConstrained[1] += deltaQ2;
+                posLong[0] = long(posConstrained[0]);
+                posLong[1] = long(posConstrained[1]);
+                Sandsara.steppers.moveTo(posLong);
+                Sandsara.steppers.runSpeedToPosition();
+            }
+            Sandsara.steppers.moveTo(positions);
+            Sandsara.steppers.runSpeedToPosition();
             #ifndef DISABLE_MOTORS
                 Sandsara.steppers.moveTo(positions);
                 Sandsara.steppers.runSpeedToPosition();
