@@ -1780,10 +1780,10 @@ void moveSteps(void* pvParameters)
                 driver2.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
             }
             if(q2Steps + q1Steps > q1Steps){
-                factor = fabs((q2Steps + q1Steps)/50);
+                factor = fabs((q2Steps + q1Steps)/50.0);
             }
             else{
-                factor = fabs(q1Steps/50);
+                factor = fabs(q1Steps/50.0);
             }
             
             if (factor < 1.0){
