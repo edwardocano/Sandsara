@@ -1775,10 +1775,10 @@ void moveSteps(void* pvParameters)
             else if (q1Steps < 0){
                 q1DirectionNew = false;
             }
-            if ((q1DirectionNew ^ q1DirectionOld) || (q2DirectionNew ^ q2DirectionOld)){
+            /*if ((q1DirectionNew ^ q1DirectionOld) || (q2DirectionNew ^ q2DirectionOld)){
                 driver.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
                 driver2.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
-            }
+            }*/
             if(q2Steps + q1Steps > q1Steps){
                 factor = fabs((q2Steps + q1Steps)/50.0);
             }
@@ -1806,10 +1806,10 @@ void moveSteps(void* pvParameters)
                 Sandsara.steppers.moveTo(positions);
                 Sandsara.steppers.runSpeedToPosition();
             #endif
-            if ((q1DirectionNew ^ q1DirectionOld) || (q2DirectionNew ^ q2DirectionOld)){
+            /*if ((q1DirectionNew ^ q1DirectionOld) || (q2DirectionNew ^ q2DirectionOld)){
                 driver.rms_current(NORMAL_CURRENT);
                 driver2.rms_current(NORMAL_CURRENT);
-            }
+            }*/
             q1DirectionOld = q1DirectionNew;
             q2DirectionOld = q2DirectionNew;
         }
