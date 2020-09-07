@@ -356,7 +356,7 @@ void setup()
     }
     //=====
     
-    //goEdgeSpiral(false);
+    goEdgeSpiral(false);
     firstExecution = true;
 }
 
