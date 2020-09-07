@@ -99,6 +99,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * code20, means that you want to change the intermediateCalibration Variable.
  * code21, means that you want to rewind the playlist.
  * code22, means that you want to change the direction of leds.
+ * code23, means that you want to delete a file from SD card.
  * code66, actualizar firmware
  * code80, Reiniciar Sandsara
  * 
