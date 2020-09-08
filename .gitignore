@@ -4,6 +4,7 @@
 .vscode/launch.json
 .vscode/ipch
 .vscode/
+test/
 Simulador/withoutMotors/*.jpg
 Simulador/withoutMotors/*.png
 Simulador/withoutMotors/*.txt
