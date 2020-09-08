@@ -1,4 +1,4 @@
-/*Para poder usar el simulador se deben modificar las primeras lineas del archivo MoveSara.h como se muestra a continuacion.
+/*Para poder usar el simulador se deben modificar las primeras lineas del archivo config.h como se muestra a continuacion.
 
 #define PROCESSING_SIMULATOR
 //#define DEBUGGING_DATA
