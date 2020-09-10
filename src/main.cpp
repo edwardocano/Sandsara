@@ -159,6 +159,9 @@ void setup()
     delay(3000); // power-up safety delay
     //====Serial configuration====
     Serial.begin(115200);
+    long a;
+    Serial.print("tamano de long");
+    Serial.print(sizeof(a));
     //====
     //====Palletes initialization====
     NO_SD_PALLETE= breathRed;
@@ -358,6 +361,7 @@ void setup()
     
     //goEdgeSpiral(false);
     firstExecution = true;
+    
 }
 
 void loop()

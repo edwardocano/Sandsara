@@ -97,7 +97,11 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             q1StepsP[pointer] = steps_of_q1;
             q2StepsP[pointer] = steps_of_q2;
             distanceP[pointer] = distance;
-            
+            Serial.print("1=");
+            Serial.println(q1StepsP[pointer]);
+            Serial.print("c=");
+            Serial.println(pointer);
+
             positions[0] = steps_of_q1;
             positions[1] = steps_of_q2 + steps_of_q1;
 
@@ -134,6 +138,9 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             if ((fabs(currentSpeed1 - oldSpeed1) > MaxAccel) || (fabs(currentSpeed2 - oldSpeed2) > MaxAccel)){
                 problemPointer[pointer] = true;
                 int i=pointer-1;
+                if (i < 0){
+                    i = samples - 1;
+                }
                 timeSum = 0;
                 if (pointer != currentPointer)
                 {
@@ -175,7 +182,6 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             //incrementar pointer donde se esta guardando el dato
             pointer += 1;
             if (pointer >= samples - 1){
-                pointer = 0;
                 /*Serial.println("problem\t\tincrement\t\ttime");
                 for (int i = 0; i < samples; i++)
                 {
@@ -192,16 +198,26 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 //delay(10000);
                 starts = true;
             }
+            if (pointer >= samples){
+                pointer = 0;
+            }
             //incrementa numero de posiciones guardadas
             positionSteps += 1;
 
             if (starts){
-                q2StepsGlobal = q1StepsP[currentPointer];
+                q1StepsGlobal = q1StepsP[currentPointer];
                 q2StepsGlobal = q2StepsP[currentPointer];
                 distanceGlobal = distanceP[currentPointer];
+                Serial.print("1=");
+                Serial.println(q1StepsP[currentPointer]);
+                Serial.print("c=");
+                Serial.print(currentPointer);
+                Serial.print("\tp=");
+                Serial.println(pointer);
                 while (eTaskGetState(motorsTask) != 3){
                     continue;
                 }
+                //delay(600000);
                 startMovement = true;
                 vTaskResume(motorsTask);
                 currentPointer += 1;
