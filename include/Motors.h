@@ -32,6 +32,8 @@ class Motors {
         double q2_current;
         AccelStepper stepper1;
         AccelStepper stepper2;
+        AccelStepper stepper1Aux;
+        AccelStepper stepper2Aux;
         MultiStepper steppers;
         MultiStepper stepps;
         int millimeterSpeed = 15;

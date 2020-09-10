@@ -1765,6 +1765,7 @@ void moveSteps(void* pvParameters)
             positions[1] = Sandsara.stepper2.currentPosition() + q2Steps + q1Steps;
             posConstrained[0] = Sandsara.stepper1.currentPosition();
             posConstrained[1] = Sandsara.stepper2.currentPosition();
+            
             if (q2Steps + q1Steps > 0){
                 q2DirectionNew = true;
             }

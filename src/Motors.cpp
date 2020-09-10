@@ -49,6 +49,9 @@ Motors::Motors()
 double speedPointer[samples];
 bool problemPointer[samples];
 bool increment[samples];
+long q1StepsP[samples];
+long q2StepsP[samples];
+double distanceP[samples];
 double time1;
 double time2;
 double times[samples];
@@ -86,13 +89,22 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             ik(x, y, &q1, &q2);
             steps_of_q1 = calculate_steps(q1_current, q1);
             steps_of_q2 = calculate_steps(q2_current, q2);
-            q1StepsGlobal = steps_of_q1;
+            /*q1StepsGlobal = steps_of_q1;
             q2StepsGlobal = steps_of_q2;
-            distanceGlobal = distance;
+            distanceGlobal = distance;*/
+
+            //guardar los datos en arrays.
+            q1StepsP[pointer] = steps_of_q1;
+            q2StepsP[pointer] = steps_of_q2;
+            distanceP[pointer] = distance;
+            
             positions[0] = steps_of_q1;
             positions[1] = steps_of_q2 + steps_of_q1;
-            stepper1.setCurrentPosition(0);
-            stepper2.setCurrentPosition(0);
+
+
+            stepper1Aux.setCurrentPosition(0);
+            stepper2Aux.setCurrentPosition(0);
+            
             //calcular velocidades del siguiente paso.
             if (abs(steps_of_q1) > abs(steps_of_q1 + steps_of_q2)){
                 maxSpeed = abs(steps_of_q1);
@@ -103,11 +115,11 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             maxSpeed = (maxSpeed / distance) * millimeterSpeed;
             if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
                 maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;
-            stepper1.setMaxSpeed(maxSpeed);
-            stepper2.setMaxSpeed(maxSpeed);
+            stepper1Aux.setMaxSpeed(maxSpeed);
+            stepper2Aux.setMaxSpeed(maxSpeed);
             stepps.moveTo(positions);
-            currentSpeed1 = stepper1.speed();
-            currentSpeed2 = stepper2.speed();
+            currentSpeed1 = stepper1Aux.speed();
+            currentSpeed2 = stepper2Aux.speed();
             time1 = steps_of_q1/currentSpeed1;
             time2 = (steps_of_q2 + steps_of_q1)/currentSpeed2;
             if (time1 > time2){
@@ -162,9 +174,9 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             oldSpeed2 = currentSpeed2;
             //incrementar pointer donde se esta guardando el dato
             pointer += 1;
-            if (pointer >= samples){
+            if (pointer >= samples - 1){
                 pointer = 0;
-                Serial.println("problem\t\tincrement\t\ttime");
+                /*Serial.println("problem\t\tincrement\t\ttime");
                 for (int i = 0; i < samples; i++)
                 {
                     Serial.print(problemPointer[i]);
@@ -176,25 +188,28 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 while (true)
                 {
                     delay(10000);
-                }
-                delay(10000);
+                }*/
+                //delay(10000);
                 starts = true;
             }
             //incrementa numero de posiciones guardadas
             positionSteps += 1;
 
-
-            /*while (eTaskGetState(motorsTask) != 3){
-                continue;
-            }
-            startMovement = true;
-            vTaskResume(motorsTask);*/
-            if(starts){
+            if (starts){
+                q2StepsGlobal = q1StepsP[currentPointer];
+                q2StepsGlobal = q2StepsP[currentPointer];
+                distanceGlobal = distanceP[currentPointer];
+                while (eTaskGetState(motorsTask) != 3){
+                    continue;
+                }
+                startMovement = true;
+                vTaskResume(motorsTask);
                 currentPointer += 1;
                 if (currentPointer >= samples){
                     currentPointer = 0;
                 }
             }
+
             q1_current += degrees_per_step * steps_of_q1;
             q2_current += degrees_per_step * steps_of_q2;
             q1_current = normalizeAngle(q1_current);
@@ -342,8 +357,8 @@ void Motors::init(double xInit, double yInit)
     stepper2.setCurrentPosition(0);
     steppers.addStepper(stepper1);
     steppers.addStepper(stepper2);
-    stepps.addStepper(stepper1);
-    stepps.addStepper(stepper2);
+    stepps.addStepper(stepper1Aux);
+    stepps.addStepper(stepper2Aux);
     ik(xInit, yInit, &q1, &q2);
     q1_current = q1;
     q2_current = q2;
