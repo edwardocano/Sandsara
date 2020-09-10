@@ -45,6 +45,22 @@ Motors::Motors()
  * @param y es la coordenada en el eje y, medida en milimetros, hacia donde se desea avanzar.
  * @param littleMovement es una variable que si su valor es false entonces no se movera a menos que la distancia minima sea 0.5 mm y true para que se mueva en cualquier caso.
  */
+#define samples 150
+double speedPointer[samples];
+bool problemPointer[samples];
+bool increment[samples];
+double time1;
+double time2;
+double times[samples];
+int pointer = 0;
+long positions[2];
+double MaxAccel = 250;
+double currentSpeed1, currentSpeed2;
+double oldSpeed1, oldSpeed2;
+int positionSteps = 0;
+int currentPointer = 0;
+double timeSum;
+bool starts = false;
 void Motors::moveTo(double x, double y, bool littleMovement)
 {
     double q1, q2, distance;
@@ -73,17 +89,119 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             q1StepsGlobal = steps_of_q1;
             q2StepsGlobal = steps_of_q2;
             distanceGlobal = distance;
-            while (eTaskGetState(motorsTask) != 3){
+            positions[0] = steps_of_q1;
+            positions[1] = steps_of_q2 + steps_of_q1;
+            stepper1.setCurrentPosition(0);
+            stepper2.setCurrentPosition(0);
+            //calcular velocidades del siguiente paso.
+            if (abs(steps_of_q1) > abs(steps_of_q1 + steps_of_q2)){
+                maxSpeed = abs(steps_of_q1);
+            }
+            else{
+                maxSpeed = abs(steps_of_q2 + steps_of_q1);
+            }
+            maxSpeed = (maxSpeed / distance) * millimeterSpeed;
+            if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
+                maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;
+            stepper1.setMaxSpeed(maxSpeed);
+            stepper2.setMaxSpeed(maxSpeed);
+            stepps.moveTo(positions);
+            currentSpeed1 = stepper1.speed();
+            currentSpeed2 = stepper2.speed();
+            time1 = steps_of_q1/currentSpeed1;
+            time2 = (steps_of_q2 + steps_of_q1)/currentSpeed2;
+            if (time1 > time2){
+                times[pointer] = time1;
+            }
+            else
+            {
+                times[pointer] = time2;
+            }
+            
+            //revisar si hay problema con el movimiento brusco
+            if ((fabs(currentSpeed1 - oldSpeed1) > MaxAccel) || (fabs(currentSpeed2 - oldSpeed2) > MaxAccel)){
+                problemPointer[pointer] = true;
+                int i=pointer-1;
+                timeSum = 0;
+                if (pointer != currentPointer)
+                {
+                    //Serial.println("problem\t\tincrement\t\ttime");
+                    while (true)
+                    {
+                        increment[i] = false;
+                        /*Serial.print(problemPointer[i]);
+                        Serial.print("\t\t");
+                        Serial.print(increment[i]);
+                        Serial.print("\t\t");
+                        Serial.println(times[i]);*/
+                        if (i == currentPointer){
+                            break;
+                        }
+                        if (problemPointer[i]){
+                            break;
+                        }
+                        i -= 1;
+                        if (i < 0){
+                            i = samples - 1;
+                        }
+                        timeSum += times[i];
+                        if (timeSum > 0.5){
+                            break;
+                        }
+                    }
+                    //delay(5000);
+                }
+            }
+            else{
+                problemPointer[pointer] = false;
+                increment[pointer] = true;
+            }
+
+            //acturalizar variables viejas
+            oldSpeed1 = currentSpeed1;
+            oldSpeed2 = currentSpeed2;
+            //incrementar pointer donde se esta guardando el dato
+            pointer += 1;
+            if (pointer >= samples){
+                pointer = 0;
+                Serial.println("problem\t\tincrement\t\ttime");
+                for (int i = 0; i < samples; i++)
+                {
+                    Serial.print(problemPointer[i]);
+                    Serial.print("\t\t");
+                    Serial.print(increment[i]);
+                    Serial.print("\t\t");
+                    Serial.println(times[i]);
+                }
+                while (true)
+                {
+                    delay(10000);
+                }
+                delay(10000);
+                starts = true;
+            }
+            //incrementa numero de posiciones guardadas
+            positionSteps += 1;
+
+
+            /*while (eTaskGetState(motorsTask) != 3){
                 continue;
             }
             startMovement = true;
-            vTaskResume(motorsTask);
+            vTaskResume(motorsTask);*/
+            if(starts){
+                currentPointer += 1;
+                if (currentPointer >= samples){
+                    currentPointer = 0;
+                }
+            }
             q1_current += degrees_per_step * steps_of_q1;
             q2_current += degrees_per_step * steps_of_q2;
             q1_current = normalizeAngle(q1_current);
             q2_current = normalizeAngle(q2_current);
             x_current = dkX(q1_current, q2_current);
             y_current = dkY(q1_current, q2_current);
+            
         }
     }
 }
@@ -224,6 +342,8 @@ void Motors::init(double xInit, double yInit)
     stepper2.setCurrentPosition(0);
     steppers.addStepper(stepper1);
     steppers.addStepper(stepper2);
+    stepps.addStepper(stepper1);
+    stepps.addStepper(stepper2);
     ik(xInit, yInit, &q1, &q2);
     q1_current = q1;
     q2_current = q2;

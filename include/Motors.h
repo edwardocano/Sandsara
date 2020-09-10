@@ -33,6 +33,7 @@ class Motors {
         AccelStepper stepper1;
         AccelStepper stepper2;
         MultiStepper steppers;
+        MultiStepper stepps;
         int millimeterSpeed = 15;
 
     private:

@@ -356,7 +356,7 @@ void setup()
     }
     //=====
     
-    goEdgeSpiral(false);
+    //goEdgeSpiral(false);
     firstExecution = true;
 }
 
@@ -598,6 +598,8 @@ int runFile(String fileName){
         Serial.print("fileName: ");
         Serial.println(fileName);
     #endif
+    Serial.print("fileName: ");
+    Serial.println(fileName);
     startFileAngle = file.getStartAngle();
     startFileAngle = Motors::normalizeAngle(startFileAngle);
     endFileAngle = file.getFinalAngle();
@@ -1407,7 +1409,7 @@ int romGetPositionList(){
     if (pList > MAX_POSITIONLIST){
         pList = 1;
     }
-    return pList;
+    return 28;
 }
 
 /**
@@ -1756,7 +1758,7 @@ void moveSteps(void* pvParameters)
                 Serial.print(",");
                 Serial.println(maxSpeed);
             #endif
-
+            
             Sandsara.stepper1.setMaxSpeed(maxSpeed);
             Sandsara.stepper2.setMaxSpeed(maxSpeed);
             positions[0] = Sandsara.stepper1.currentPosition() + q1Steps;
@@ -1815,6 +1817,4 @@ void moveSteps(void* pvParameters)
         }
         vTaskSuspend(motorsTask);
     }
-    
-    
 }
