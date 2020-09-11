@@ -162,9 +162,6 @@ void setup()
     delay(3000); // power-up safety delay
     //====Serial configuration====
     Serial.begin(115200);
-    long a;
-    Serial.print("tamano de long");
-    Serial.print(sizeof(a));
     //====
     //====Palletes initialization====
     NO_SD_PALLETE= breathRed;
@@ -666,6 +663,7 @@ int runFile(String fileName){
     //the next while is stopped until file is finished or is interrupted.
     while (true)
     {
+        Serial.println("ejecutara nueva posicion");
         //====check if you want to change the path====
         if (changePositionList){
             changePositionList = false;
@@ -720,6 +718,7 @@ int runFile(String fileName){
         }
         //====
         //====Get new components of the next point to go====
+        //Serial.println("antes de next components");
         working_status = file.getNextComponents(&component_1, &component_2);                
         if (working_status == 3)
         {
@@ -757,7 +756,9 @@ int runFile(String fileName){
         {
             break;
         }
+        //Serial.println("saliendo de mover");
     }
+    
     //====update z and theta current====
     Sandsara.setZCurrent(Sandsara.getCurrentModule());
     if (Sandsara.getCurrentAngle() > PI){
@@ -907,6 +908,7 @@ int moveInterpolateTo(double x, double y, double distance)
  * 2, se cambio el orderMode
  */
 int movePolarTo(double component_1, double component_2, double couplingAngle, bool littleMovement){
+    //Serial.println("dentro de movePolar");
     double zNext = component_1;
     double thetaNext = component_2 - couplingAngle;
     double thetaCurrent = Sandsara.getThetaCurrent();
@@ -1416,7 +1418,7 @@ int romGetPositionList(){
     if (pList > MAX_POSITIONLIST){
         pList = 1;
     }
-    return 28;
+    return 27;
 }
 
 /**
@@ -1769,9 +1771,9 @@ void moveSteps(void* pvParameters)
                 }
             }
             /*Serial.print("time: ");
-            Serial.println(timeG);
-            Serial.print("speed: ");
-            Serial.println(Sandsara.millimeterSpeed);*/
+            Serial.println(timeG);*/
+            //Serial.print("speed: ");
+            //Serial.println(Sandsara.millimeterSpeed);
 
             if (abs(q1Steps) > abs(q2Steps + q1Steps)){
                 maxSpeed = abs(q1Steps) * 1L;
@@ -1828,6 +1830,7 @@ void moveSteps(void* pvParameters)
             deltaQ1 = (q1Steps)/factor;
             deltaQ2 = (q2Steps + q1Steps)/factor;
             factorInt = int(factor);
+            //Serial.println("antes de mover los motres");
             for (int i=0; i < factorInt - 1; i++){
                 posConstrained[0] += deltaQ1;
                 posConstrained[1] += deltaQ2;
@@ -1848,6 +1851,7 @@ void moveSteps(void* pvParameters)
             }*/
             q1DirectionOld = q1DirectionNew;
             q2DirectionOld = q2DirectionNew;
+            Serial.println("saliendo del movimiento");
         }
         vTaskSuspend(motorsTask);
     }

@@ -58,7 +58,7 @@ double time2;
 double times[samples];
 int pointer = 0;
 long positions[2];
-double MaxAccel = 500;
+double MaxAccel = 1000;
 double currentSpeed1, currentSpeed2;
 double oldSpeed1, oldSpeed2;
 int positionSteps = 0;
@@ -88,11 +88,12 @@ void Motors::moveTo(double x, double y, bool littleMovement)
     }
     else if (distance > 0.5 || littleMovement)
     {
-        if (true)//!(x == 0 && y == 0) || littleMovement)
+        ik(x, y, &q1, &q2);
+        steps_of_q1 = calculate_steps(q1_current, q1);
+        steps_of_q2 = calculate_steps(q2_current, q2);
+        if (!(steps_of_q1 == 0 && steps_of_q2 == 0))// || littleMovement)
         {
-            ik(x, y, &q1, &q2);
-            steps_of_q1 = calculate_steps(q1_current, q1);
-            steps_of_q2 = calculate_steps(q2_current, q2);
+            
             /*q1StepsGlobal = steps_of_q1;
             q2StepsGlobal = steps_of_q2;
             distanceGlobal = distance;*/
@@ -220,7 +221,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             }
             //incrementa numero de posiciones guardadas
             positionSteps += 1;
-
+            
             if (starts){
                 while (startMovement)
                 {
@@ -238,9 +239,12 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 Serial.print(currentPointer);
                 Serial.print("\tp=");
                 Serial.println(pointer);*/
+                Serial.println("eTaskGet");
                 while (eTaskGetState(motorsTask) != 3){
+                    Serial.println("...");
                     continue;
                 }
+                Serial.println("salir");
                 //delay(600000);
                 startMovement = true;
                 vTaskResume(motorsTask);
@@ -256,7 +260,6 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             q2_current = normalizeAngle(q2_current);
             x_current = dkX(q1_current, q2_current);
             y_current = dkY(q1_current, q2_current);
-            
         }
     }
 }
