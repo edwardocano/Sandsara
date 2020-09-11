@@ -663,7 +663,7 @@ int runFile(String fileName){
     //the next while is stopped until file is finished or is interrupted.
     while (true)
     {
-        Serial.println("ejecutara nueva posicion");
+        //Serial.println("ejecutara nueva posicion");
         //====check if you want to change the path====
         if (changePositionList){
             changePositionList = false;
@@ -1851,7 +1851,7 @@ void moveSteps(void* pvParameters)
             }*/
             q1DirectionOld = q1DirectionNew;
             q2DirectionOld = q2DirectionNew;
-            Serial.println("saliendo del movimiento");
+            //Serial.println("saliendo del movimiento");
         }
         vTaskSuspend(motorsTask);
     }

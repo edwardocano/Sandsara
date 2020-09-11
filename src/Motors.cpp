@@ -46,7 +46,7 @@ Motors::Motors()
  * @param y es la coordenada en el eje y, medida en milimetros, hacia donde se desea avanzar.
  * @param littleMovement es una variable que si su valor es false entonces no se movera a menos que la distancia minima sea 0.5 mm y true para que se mueva en cualquier caso.
  */
-#define samples 500
+#define samples 200
 double speedPointer[samples];
 bool problemPointer[samples];
 bool increment[samples];
