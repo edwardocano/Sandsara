@@ -67,6 +67,7 @@ double timeSum;
 bool starts = false;
 bool incrementGlobal = false;
 int pointerGlobal;
+double timeGlobal;
 void Motors::moveTo(double x, double y, bool littleMovement)
 {
     double q1, q2, distance;
@@ -125,8 +126,16 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             currentSpeed2 = stepper2Aux.speed();
             
             
-            time1 = steps_of_q1/currentSpeed1;
-            time2 = (steps_of_q2 + steps_of_q1)/currentSpeed2;
+            
+            
+            if (currentSpeed1 != 0){
+                time1 = steps_of_q1/currentSpeed1;
+            }else{time1 = 0;}
+            if (currentSpeed2 != 0){
+                time2 = (steps_of_q2 + steps_of_q1)/currentSpeed2;
+            }else{time2 = 0;}
+
+
             if (time1 > time2){
                 times[pointer] = time1;
             }
@@ -165,7 +174,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                             i = samples - 1;
                         }
                         timeSum += times[i];
-                        if (timeSum > 0.1){
+                        if (timeSum > 0.15){
                             break;
                         }
                     }
@@ -176,14 +185,14 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 problemPointer[pointer] = false;
                 increment[pointer] = true;
             }
-            Serial.print("1:");
+            /*Serial.print("1:");
             Serial.print(currentSpeed1);
             Serial.print(",");
             Serial.println(problemPointer[pointer]);
             Serial.print("2:");
             Serial.print(currentSpeed2);
             Serial.print(",");
-            Serial.println(problemPointer[pointer]);
+            Serial.println(problemPointer[pointer]);*/
             //acturalizar variables viejas
             oldSpeed1 = currentSpeed1;
             oldSpeed2 = currentSpeed2;
@@ -213,11 +222,16 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             positionSteps += 1;
 
             if (starts){
+                while (startMovement)
+                {
+                    continue;
+                }
                 q1StepsGlobal = q1StepsP[currentPointer];
                 q2StepsGlobal = q2StepsP[currentPointer];
                 distanceGlobal = distanceP[currentPointer];
                 incrementGlobal = increment[currentPointer];
                 pointerGlobal = currentPointer;
+                timeGlobal = times[currentPointer];
                 /*Serial.print("1=");
                 Serial.println(q1StepsP[currentPointer]);
                 Serial.print("c=");

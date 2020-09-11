@@ -1728,7 +1728,8 @@ int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matrix){
  * @param distance es la distancia que va a recorrer entre el punto actual y el punto despues del movimiento.
  * @note La distancia se mide en milimetros 
  */
-#define ACCELERATION 50
+#define ACCELERATION 833
+extern double timeGlobal;
 void moveSteps(void* pvParameters)
 { 
     long positions[2];
@@ -1742,28 +1743,36 @@ void moveSteps(void* pvParameters)
     double posConstrained[2];
     long posLong[2];
     bool increment;
+    double timeG;
     //double milimiterSpeed = romGetSpeedMotor();
     for (;;){
         if (startMovement){
-            startMovement = false;
+            
             q1Steps = q1StepsGlobal;
             q2Steps = q2StepsGlobal;
             distance = distanceGlobal;
             increment = incrementGlobal;
+            timeG = timeGlobal;
+            startMovement = false;
+
             if (increment){
-                Sandsara.millimeterSpeed = ACCELERATION*times[pointerGlobal] + Sandsara.millimeterSpeed;
+                Sandsara.millimeterSpeed = double(ACCELERATION)*timeG + Sandsara.millimeterSpeed;
                 if (Sandsara.millimeterSpeed > romGetSpeedMotor()){
                     Sandsara.millimeterSpeed = romGetSpeedMotor();
                 }
             }
             else
             {
-                Sandsara.millimeterSpeed = -ACCELERATION*times[pointerGlobal] + Sandsara.millimeterSpeed;
-                if (Sandsara.millimeterSpeed < 50){
-                    Sandsara.millimeterSpeed = 50;
+                Sandsara.millimeterSpeed = double(-ACCELERATION)*timeG + Sandsara.millimeterSpeed;
+                if (Sandsara.millimeterSpeed < 25){
+                    Sandsara.millimeterSpeed = 25;
                 }
             }
-            
+            /*Serial.print("time: ");
+            Serial.println(timeG);
+            Serial.print("speed: ");
+            Serial.println(Sandsara.millimeterSpeed);*/
+
             if (abs(q1Steps) > abs(q2Steps + q1Steps)){
                 maxSpeed = abs(q1Steps) * 1L;
             }
