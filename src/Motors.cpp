@@ -223,8 +223,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             positionSteps += 1;
             
             if (starts){
-                while (startMovement)
-                {
+                while (eTaskGetState(motorsTask) != 3){
                     continue;
                 }
                 q1StepsGlobal = q1StepsP[currentPointer];
@@ -233,20 +232,8 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 incrementGlobal = increment[currentPointer];
                 pointerGlobal = currentPointer;
                 timeGlobal = times[currentPointer];
-                /*Serial.print("1=");
-                Serial.println(q1StepsP[currentPointer]);
-                Serial.print("c=");
-                Serial.print(currentPointer);
-                Serial.print("\tp=");
-                Serial.println(pointer);*/
-                Serial.println("eTaskGet");
-                while (eTaskGetState(motorsTask) != 3){
-                    Serial.println("...");
-                    continue;
-                }
-                Serial.println("salir");
-                //delay(600000);
                 startMovement = true;
+                
                 vTaskResume(motorsTask);
                 currentPointer += 1;
                 if (currentPointer >= samples){
