@@ -11,6 +11,7 @@ extern bool     pauseModeGlobal;
 extern bool     startMovement;
 extern long     q1StepsGlobal, q2StepsGlobal;
 extern double   distanceGlobal;
+extern int      romGetSpeedMotor();
 //====Extern varibales====
 extern TMC2209Stepper  driver;
 extern TMC2209Stepper  driver2;
@@ -45,7 +46,7 @@ Motors::Motors()
  * @param y es la coordenada en el eje y, medida en milimetros, hacia donde se desea avanzar.
  * @param littleMovement es una variable que si su valor es false entonces no se movera a menos que la distancia minima sea 0.5 mm y true para que se mueva en cualquier caso.
  */
-#define samples 150
+#define samples 500
 double speedPointer[samples];
 bool problemPointer[samples];
 bool increment[samples];
@@ -57,13 +58,15 @@ double time2;
 double times[samples];
 int pointer = 0;
 long positions[2];
-double MaxAccel = 250;
+double MaxAccel = 500;
 double currentSpeed1, currentSpeed2;
 double oldSpeed1, oldSpeed2;
 int positionSteps = 0;
 int currentPointer = 0;
 double timeSum;
 bool starts = false;
+bool incrementGlobal = false;
+int pointerGlobal;
 void Motors::moveTo(double x, double y, bool littleMovement)
 {
     double q1, q2, distance;
@@ -97,10 +100,6 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             q1StepsP[pointer] = steps_of_q1;
             q2StepsP[pointer] = steps_of_q2;
             distanceP[pointer] = distance;
-            Serial.print("1=");
-            Serial.println(q1StepsP[pointer]);
-            Serial.print("c=");
-            Serial.println(pointer);
 
             positions[0] = steps_of_q1;
             positions[1] = steps_of_q2 + steps_of_q1;
@@ -116,7 +115,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             else{
                 maxSpeed = abs(steps_of_q2 + steps_of_q1);
             }
-            maxSpeed = (maxSpeed / distance) * millimeterSpeed;
+            maxSpeed = (maxSpeed / distance) * romGetSpeedMotor();
             if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
                 maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;
             stepper1Aux.setMaxSpeed(maxSpeed);
@@ -124,6 +123,8 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             stepps.moveTo(positions);
             currentSpeed1 = stepper1Aux.speed();
             currentSpeed2 = stepper2Aux.speed();
+            
+            
             time1 = steps_of_q1/currentSpeed1;
             time2 = (steps_of_q2 + steps_of_q1)/currentSpeed2;
             if (time1 > time2){
@@ -164,7 +165,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                             i = samples - 1;
                         }
                         timeSum += times[i];
-                        if (timeSum > 0.5){
+                        if (timeSum > 0.1){
                             break;
                         }
                     }
@@ -175,7 +176,14 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 problemPointer[pointer] = false;
                 increment[pointer] = true;
             }
-
+            Serial.print("1:");
+            Serial.print(currentSpeed1);
+            Serial.print(",");
+            Serial.println(problemPointer[pointer]);
+            Serial.print("2:");
+            Serial.print(currentSpeed2);
+            Serial.print(",");
+            Serial.println(problemPointer[pointer]);
             //acturalizar variables viejas
             oldSpeed1 = currentSpeed1;
             oldSpeed2 = currentSpeed2;
@@ -208,12 +216,14 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 q1StepsGlobal = q1StepsP[currentPointer];
                 q2StepsGlobal = q2StepsP[currentPointer];
                 distanceGlobal = distanceP[currentPointer];
-                Serial.print("1=");
+                incrementGlobal = increment[currentPointer];
+                pointerGlobal = currentPointer;
+                /*Serial.print("1=");
                 Serial.println(q1StepsP[currentPointer]);
                 Serial.print("c=");
                 Serial.print(currentPointer);
                 Serial.print("\tp=");
-                Serial.println(pointer);
+                Serial.println(pointer);*/
                 while (eTaskGetState(motorsTask) != 3){
                     continue;
                 }
