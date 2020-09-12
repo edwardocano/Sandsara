@@ -6,13 +6,38 @@
 unsigned long timeMotor = 0;
 
 double m[no_picos * 2], b[no_picos * 2];
+#ifdef IMPLEMENT_ACCELERATION
+    #define samples 200
+    #define MaxAccel 1000.0
+    double  speedPointer[samples];
+    bool    problemPointer[samples];
+    bool    increment[samples];
+    long    q1StepsP[samples];
+    long    q2StepsP[samples];
+    double  distanceP[samples];
+    int     pathSpeed[samples];
+    double  time1;
+    double  time2;
+    double  times[samples];
+    int     pointer = 0;
+    long    positions[2];
+    double  currentSpeed1, currentSpeed2;
+    double  oldSpeed1, oldSpeed2;
+    int     positionSteps = 0;
+    int     currentPointer = 0;
+    bool    starts = false;
+    bool    incrementGlobal = false;
+    int     pointerGlobal;
+    double  timeGlobal;
+    int     maxPathSpeedGlobal;
+#endif
+//====Extern varibales====
 extern bool     productType;
 extern bool     pauseModeGlobal;
 extern bool     startMovement;
 extern long     q1StepsGlobal, q2StepsGlobal;
 extern double   distanceGlobal;
 extern int      romGetSpeedMotor();
-//====Extern varibales====
 extern TMC2209Stepper  driver;
 extern TMC2209Stepper  driver2;
 extern TaskHandle_t    motorsTask;
@@ -46,28 +71,6 @@ Motors::Motors()
  * @param y es la coordenada en el eje y, medida en milimetros, hacia donde se desea avanzar.
  * @param littleMovement es una variable que si su valor es false entonces no se movera a menos que la distancia minima sea 0.5 mm y true para que se mueva en cualquier caso.
  */
-#define samples 200
-double speedPointer[samples];
-bool problemPointer[samples];
-bool increment[samples];
-long q1StepsP[samples];
-long q2StepsP[samples];
-double distanceP[samples];
-double time1;
-double time2;
-double times[samples];
-int pointer = 0;
-long positions[2];
-double MaxAccel = 1000;
-double currentSpeed1, currentSpeed2;
-double oldSpeed1, oldSpeed2;
-int positionSteps = 0;
-int currentPointer = 0;
-double timeSum;
-bool starts = false;
-bool incrementGlobal = false;
-int pointerGlobal;
-double timeGlobal;
 void Motors::moveTo(double x, double y, bool littleMovement)
 {
     double q1, q2, distance;
@@ -92,16 +95,13 @@ void Motors::moveTo(double x, double y, bool littleMovement)
         steps_of_q1 = calculate_steps(q1_current, q1);
         steps_of_q2 = calculate_steps(q2_current, q2);
         if (!(steps_of_q1 == 0 && steps_of_q2 == 0))// || littleMovement)
-        {
-            
-            /*q1StepsGlobal = steps_of_q1;
-            q2StepsGlobal = steps_of_q2;
-            distanceGlobal = distance;*/
-
+        { 
+#ifdef IMPLEMENT_ACCELERATION
             //guardar los datos en arrays.
             q1StepsP[pointer] = steps_of_q1;
             q2StepsP[pointer] = steps_of_q2;
             distanceP[pointer] = distance;
+            pathSpeed[pointer] = millimeterSpeed;
 
             positions[0] = steps_of_q1;
             positions[1] = steps_of_q2 + steps_of_q1;
@@ -117,7 +117,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             else{
                 maxSpeed = abs(steps_of_q2 + steps_of_q1);
             }
-            maxSpeed = (maxSpeed / distance) * romGetSpeedMotor();
+            maxSpeed = (maxSpeed / distance) * millimeterSpeed;
             if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
                 maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;
             stepper1Aux.setMaxSpeed(maxSpeed);
@@ -125,9 +125,6 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             stepps.moveTo(positions);
             currentSpeed1 = stepper1Aux.speed();
             currentSpeed2 = stepper2Aux.speed();
-            
-            
-            
             
             if (currentSpeed1 != 0){
                 time1 = steps_of_q1/currentSpeed1;
@@ -147,23 +144,17 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             
             //revisar si hay problema con el movimiento brusco
             if ((fabs(currentSpeed1 - oldSpeed1) > MaxAccel) || (fabs(currentSpeed2 - oldSpeed2) > MaxAccel)){
+                double timeSum = 0;
                 problemPointer[pointer] = true;
                 int i=pointer-1;
                 if (i < 0){
                     i = samples - 1;
                 }
-                timeSum = 0;
                 if (pointer != currentPointer)
                 {
-                    //Serial.println("problem\t\tincrement\t\ttime");
                     while (true)
                     {
                         increment[i] = false;
-                        /*Serial.print(problemPointer[i]);
-                        Serial.print("\t\t");
-                        Serial.print(increment[i]);
-                        Serial.print("\t\t");
-                        Serial.println(times[i]);*/
                         if (i == currentPointer){
                             break;
                         }
@@ -175,52 +166,27 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                             i = samples - 1;
                         }
                         timeSum += times[i];
-                        if (timeSum > 0.15){
+                        if (timeSum > TIME_FOR_DESELERATION){
                             break;
                         }
                     }
-                    //delay(5000);
                 }
             }
             else{
                 problemPointer[pointer] = false;
                 increment[pointer] = true;
             }
-            /*Serial.print("1:");
-            Serial.print(currentSpeed1);
-            Serial.print(",");
-            Serial.println(problemPointer[pointer]);
-            Serial.print("2:");
-            Serial.print(currentSpeed2);
-            Serial.print(",");
-            Serial.println(problemPointer[pointer]);*/
             //acturalizar variables viejas
             oldSpeed1 = currentSpeed1;
             oldSpeed2 = currentSpeed2;
             //incrementar pointer donde se esta guardando el dato
             pointer += 1;
             if (pointer >= samples - 1){
-                /*Serial.println("problem\t\tincrement\t\ttime");
-                for (int i = 0; i < samples; i++)
-                {
-                    Serial.print(problemPointer[i]);
-                    Serial.print("\t\t");
-                    Serial.print(increment[i]);
-                    Serial.print("\t\t");
-                    Serial.println(times[i]);
-                }
-                while (true)
-                {
-                    delay(10000);
-                }*/
-                //delay(10000);
                 starts = true;
             }
             if (pointer >= samples){
                 pointer = 0;
             }
-            //incrementa numero de posiciones guardadas
-            positionSteps += 1;
             
             if (starts){
                 while (eTaskGetState(motorsTask) != 3){
@@ -232,6 +198,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 incrementGlobal = increment[currentPointer];
                 pointerGlobal = currentPointer;
                 timeGlobal = times[currentPointer];
+                maxPathSpeedGlobal = pathSpeed[currentPointer];
                 startMovement = true;
                 
                 vTaskResume(motorsTask);
@@ -240,7 +207,18 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                     currentPointer = 0;
                 }
             }
+#endif
+#ifndef IMPLEMENT_ACCELERATION
+            while (eTaskGetState(motorsTask) != 3){
+                continue;
+            }
+            q1StepsGlobal = steps_of_q1;
+            q2StepsGlobal = steps_of_q2;
+            distanceGlobal = distance;
 
+            startMovement = true;
+            vTaskResume(motorsTask);
+#endif
             q1_current += degrees_per_step * steps_of_q1;
             q2_current += degrees_per_step * steps_of_q2;
             q1_current = normalizeAngle(q1_current);

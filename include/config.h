@@ -69,11 +69,12 @@
  * si DEBUGGING_DETAIL se define se mostraran mensajes por serial que ayudan a debuguear el codigo
  * si DISABLE_MOTORS se define, los motores no se moveran a la hora de dibujar los archivos.
  */
-//#define PROCESSING_SIMULATOR
+#define PROCESSING_SIMULATOR
 //#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
 //#define DISABLE_MOTORS
 //#define DEBUGGIN_LED2
+#define IMPLEMENT_ACCELERATION
 
 /**
  * encoder es el pin para la senal del encoder
@@ -151,7 +152,8 @@
 #define CURRENT_IN_CALIBRATION 600
 #define CURRENT_IN_ABRUPTMOVEMENTS 800
 #define DELAY_IN_ABRUPTMOVEMENTS 6
-
+#define TIME_FOR_DESELERATION 0.15
+#define SAFE_SPEED 30
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0
 

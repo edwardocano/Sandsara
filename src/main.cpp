@@ -602,8 +602,8 @@ int runFile(String fileName){
         Serial.print("fileName: ");
         Serial.println(fileName);
     #endif
-    Serial.print("fileName: ");
-    Serial.println(fileName);
+    /*Serial.print("fileName: ");
+    Serial.println(fileName);*/
     startFileAngle = file.getStartAngle();
     startFileAngle = Motors::normalizeAngle(startFileAngle);
     endFileAngle = file.getFinalAngle();
@@ -802,6 +802,7 @@ int runFile(String fileName){
     #ifdef PROCESSING_SIMULATOR
         Serial.println("finished");
     #endif
+    delay(1000);
     return 10;
 }
 
@@ -1732,6 +1733,7 @@ int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matrix){
  */
 #define ACCELERATION 833
 extern double timeGlobal;
+extern int maxPathSpeedGlobal;
 void moveSteps(void* pvParameters)
 { 
     long positions[2];
@@ -1746,6 +1748,8 @@ void moveSteps(void* pvParameters)
     long posLong[2];
     bool increment;
     double timeG;
+    int maxPathSpeed;
+    int speedWithDelay = romGetSpeedMotor();
     //double milimiterSpeed = romGetSpeedMotor();
     for (;;){
         if (startMovement){
@@ -1753,36 +1757,43 @@ void moveSteps(void* pvParameters)
             q1Steps = q1StepsGlobal;
             q2Steps = q2StepsGlobal;
             distance = distanceGlobal;
-            increment = incrementGlobal;
-            timeG = timeGlobal;
+            #ifdef IMPLEMENT_ACCELERATION
+                increment = incrementGlobal;
+                timeG = timeGlobal;
+                maxPathSpeed = maxPathSpeedGlobal;
+            #endif
             startMovement = false;
-
-            if (increment){
-                Sandsara.millimeterSpeed = double(ACCELERATION)*timeG + Sandsara.millimeterSpeed;
-                if (Sandsara.millimeterSpeed > romGetSpeedMotor()){
-                    Sandsara.millimeterSpeed = romGetSpeedMotor();
+            
+            #ifdef IMPLEMENT_ACCELERATION
+                if (increment){
+                    speedWithDelay = double(ACCELERATION)*timeG + speedWithDelay;
+                    if (speedWithDelay > maxPathSpeed){
+                        speedWithDelay = maxPathSpeed;
+                    }
                 }
-            }
-            else
-            {
-                Sandsara.millimeterSpeed = double(-ACCELERATION)*timeG + Sandsara.millimeterSpeed;
-                if (Sandsara.millimeterSpeed < 25){
-                    Sandsara.millimeterSpeed = 25;
+                else
+                {
+                    speedWithDelay = double(-ACCELERATION)*timeG + speedWithDelay;
+                    if (speedWithDelay < SAFE_SPEED){
+                        speedWithDelay = SAFE_SPEED;
+                    }
                 }
-            }
-            /*Serial.print("time: ");
-            Serial.println(timeG);*/
-            //Serial.print("speed: ");
-            //Serial.println(Sandsara.millimeterSpeed);
+            #endif
 
             if (abs(q1Steps) > abs(q2Steps + q1Steps)){
-                maxSpeed = abs(q1Steps) * 1L;
+                maxSpeed = abs(q1Steps);
             }
             else{
-                maxSpeed = abs(q2Steps + q1Steps) * 1L;
-            }  
-            maxSpeed = (maxSpeed / distance) * Sandsara.millimeterSpeed;
+                maxSpeed = abs(q2Steps + q1Steps);
+            }
 
+            #ifdef IMPLEMENT_ACCELERATION
+                maxSpeed = (maxSpeed / distance) * speedWithDelay;
+            #endif
+            #ifndef IMPLEMENT_ACCELERATION
+                maxSpeed = (maxSpeed / distance) * Sandsara.millimeterSpeed;
+            #endif
+            
             if (maxSpeed > MAX_STEPS_PER_SECOND * Sandsara.microstepping)
                 maxSpeed = MAX_STEPS_PER_SECOND * Sandsara.microstepping;
 
@@ -1791,7 +1802,7 @@ void moveSteps(void* pvParameters)
                 Serial.print(",");
                 Serial.print(q2Steps + q1Steps);
                 Serial.print(",");
-                Serial.println(maxSpeed);
+                Serial.println(int(maxSpeed));
             #endif
             
             Sandsara.stepper1.setMaxSpeed(maxSpeed);
@@ -1813,10 +1824,6 @@ void moveSteps(void* pvParameters)
             else if (q1Steps < 0){
                 q1DirectionNew = false;
             }
-            /*if ((q1DirectionNew ^ q1DirectionOld) || (q2DirectionNew ^ q2DirectionOld)){
-                driver.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
-                driver2.rms_current(CURRENT_IN_ABRUPTMOVEMENTS);
-            }*/
             if(q2Steps + q1Steps > q1Steps){
                 factor = fabs((q2Steps + q1Steps)/50.0);
             }
@@ -1830,28 +1837,20 @@ void moveSteps(void* pvParameters)
             deltaQ1 = (q1Steps)/factor;
             deltaQ2 = (q2Steps + q1Steps)/factor;
             factorInt = int(factor);
-            //Serial.println("antes de mover los motres");
-            for (int i=0; i < factorInt - 1; i++){
-                posConstrained[0] += deltaQ1;
-                posConstrained[1] += deltaQ2;
-                posLong[0] = long(posConstrained[0]);
-                posLong[1] = long(posConstrained[1]);
-                Sandsara.steppers.moveTo(posLong);
-                Sandsara.steppers.runSpeedToPosition();
-            }
-            Sandsara.steppers.moveTo(positions);
-            Sandsara.steppers.runSpeedToPosition();
             #ifndef DISABLE_MOTORS
+                for (int i=0; i < factorInt - 1; i++){
+                    posConstrained[0] += deltaQ1;
+                    posConstrained[1] += deltaQ2;
+                    posLong[0] = long(posConstrained[0]);
+                    posLong[1] = long(posConstrained[1]);
+                    Sandsara.steppers.moveTo(posLong);
+                    Sandsara.steppers.runSpeedToPosition();
+                }
                 Sandsara.steppers.moveTo(positions);
                 Sandsara.steppers.runSpeedToPosition();
             #endif
-            /*if ((q1DirectionNew ^ q1DirectionOld) || (q2DirectionNew ^ q2DirectionOld)){
-                driver.rms_current(NORMAL_CURRENT);
-                driver2.rms_current(NORMAL_CURRENT);
-            }*/
             q1DirectionOld = q1DirectionNew;
             q2DirectionOld = q2DirectionNew;
-            //Serial.println("saliendo del movimiento");
         }
         vTaskSuspend(motorsTask);
     }
