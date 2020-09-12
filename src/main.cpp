@@ -1731,7 +1731,7 @@ int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matrix){
  * @param distance es la distancia que va a recorrer entre el punto actual y el punto despues del movimiento.
  * @note La distancia se mide en milimetros 
  */
-#define ACCELERATION 833
+
 extern double timeGlobal;
 extern int maxPathSpeedGlobal;
 void moveSteps(void* pvParameters)

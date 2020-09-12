@@ -8,7 +8,6 @@ unsigned long timeMotor = 0;
 double m[no_picos * 2], b[no_picos * 2];
 #ifdef IMPLEMENT_ACCELERATION
     #define samples 200
-    #define MaxAccel 1000.0
     double  speedPointer[samples];
     bool    problemPointer[samples];
     bool    increment[samples];
