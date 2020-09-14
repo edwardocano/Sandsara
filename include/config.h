@@ -69,7 +69,7 @@
  * si DEBUGGING_DETAIL se define se mostraran mensajes por serial que ayudan a debuguear el codigo
  * si DISABLE_MOTORS se define, los motores no se moveran a la hora de dibujar los archivos.
  */
-#define PROCESSING_SIMULATOR
+//#define PROCESSING_SIMULATOR
 //#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
 //#define DISABLE_MOTORS
@@ -131,31 +131,31 @@
 /**
  * Restricciones
  */
-#define MAX_CHARS_PLAYLIST 40
-#define MAX_SPEED_MOTOR 150
-#define MIN_SPEED_MOTOR 1
-#define MAX_PERIOD_LED 500
-#define MIN_PERIOD_LED 10
-#define MAX_PALLETE 30
-#define MIN_PALLETE 0
-#define MAX_CHARACTERS_BTNAME 30
-#define MIN_REPRODUCTION_MODE 1
-#define MAX_REPRODUCTION_MODE 4
-#define MAX_POSITIONLIST 1000
-#define MAX_NUMBERLEDS 100
-#define LEDS_OF_HALO 60
-#define LEDS_OF_STELLE 36
-#define MAX_STEPS_PER_SECOND 150
-#define MAX_CHARACTER_PER_LINE 1000
-#define OUTOFTIME_BLUETOOTH 20000
-#define NORMAL_CURRENT 600
-#define CURRENT_IN_CALIBRATION 600
+#define MAX_CHARS_PLAYLIST      40
+#define MAX_SPEED_MOTOR         150
+#define MIN_SPEED_MOTOR         1
+#define MAX_PERIOD_LED          500
+#define MIN_PERIOD_LED          10
+#define MAX_PALLETE             30
+#define MIN_PALLETE             0
+#define MAX_CHARACTERS_BTNAME   30
+#define MIN_REPRODUCTION_MODE   1
+#define MAX_REPRODUCTION_MODE   4
+#define MAX_POSITIONLIST        1000
+#define MAX_NUMBERLEDS          100
+#define LEDS_OF_HALO            60
+#define LEDS_OF_STELLE          36
+#define MAX_STEPS_PER_SECOND    150
+#define MAX_CHARACTER_PER_LINE  1000
+#define OUTOFTIME_BLUETOOTH     20000
+#define NORMAL_CURRENT          600
+#define CURRENT_IN_CALIBRATION  600
 #define CURRENT_IN_ABRUPTMOVEMENTS 800
-#define DELAY_IN_ABRUPTMOVEMENTS 6
-#define TIME_FOR_DESELERATION 0.08
-#define ACCELERATION 1500
-#define MaxAccel 1500.0
-#define SAFE_SPEED 30
+#define DELAY_IN_ABRUPTMOVEMENTS    6
+#define TIME_FOR_DESELERATION   0.15
+#define ACCELERATION            600.0
+#define ACCEL_THRESHOLD         1200.0
+#define SAFE_SPEED              30
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0
 

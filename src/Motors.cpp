@@ -7,7 +7,7 @@ unsigned long timeMotor = 0;
 
 double m[no_picos * 2], b[no_picos * 2];
 #ifdef IMPLEMENT_ACCELERATION
-    #define samples 200
+    #define samples 150
     double  speedPointer[samples];
     bool    problemPointer[samples];
     bool    increment[samples];
@@ -100,11 +100,10 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             q1StepsP[pointer] = steps_of_q1;
             q2StepsP[pointer] = steps_of_q2;
             distanceP[pointer] = distance;
-            pathSpeed[pointer] = millimeterSpeed;
+            
 
             positions[0] = steps_of_q1;
             positions[1] = steps_of_q2 + steps_of_q1;
-
 
             stepper1Aux.setCurrentPosition(0);
             stepper2Aux.setCurrentPosition(0);
@@ -140,19 +139,38 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             {
                 times[pointer] = time2;
             }
-            
+            millimeterSpeed = ACCELERATION * times[pointer] + millimeterSpeed;
+            if (millimeterSpeed > romGetSpeedMotor()){
+                millimeterSpeed = romGetSpeedMotor();
+            }
+            pathSpeed[pointer] = millimeterSpeed;
+
             //revisar si hay problema con el movimiento brusco
-            if ((fabs(currentSpeed1 - oldSpeed1) > MaxAccel) || (fabs(currentSpeed2 - oldSpeed2) > MaxAccel)){
+            if ((fabs(currentSpeed1 - oldSpeed1) > ACCEL_THRESHOLD) || (fabs(currentSpeed2 - oldSpeed2) > ACCEL_THRESHOLD)){
                 double timeSum = 0;
                 problemPointer[pointer] = true;
-                int i=pointer-1;
+                double timeForDeseleration = fabs(pathSpeed[pointer] - SAFE_SPEED)/ACCELERATION;
+                millimeterSpeed = SAFE_SPEED;
+                pathSpeed[pointer] = SAFE_SPEED;
+                int i=pointer-1; 
                 if (i < 0){
                     i = samples - 1;
                 }
                 if (pointer != currentPointer)
                 {
+                    
+                    double newSpeed = SAFE_SPEED;
                     while (true)
                     {
+                        newSpeed = ACCELERATION*times[i] + newSpeed;
+                        if (newSpeed < pathSpeed[i]){
+                            pathSpeed[i] = newSpeed;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        
                         increment[i] = false;
                         if (i == currentPointer){
                             break;
@@ -160,13 +178,14 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                         if (problemPointer[i]){
                             break;
                         }
+                        
+                        timeSum += times[i];
+                        if (timeSum > timeForDeseleration){
+                            break;
+                        }
                         i -= 1;
                         if (i < 0){
                             i = samples - 1;
-                        }
-                        timeSum += times[i];
-                        if (timeSum > TIME_FOR_DESELERATION){
-                            break;
                         }
                     }
                 }
@@ -175,6 +194,19 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 problemPointer[pointer] = false;
                 increment[pointer] = true;
             }
+            String info1;
+            String info2;
+            /*if (problemPointer[pointer]){
+                info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + ",1";
+            }
+            else{
+                info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + ",0";
+            }
+            
+            info2 = "2:" + String(int(currentSpeed2)) + "," + String(positions[1]);
+            Serial.println(info1);
+            Serial.println(info2);
+            Serial.flush();*/
             //acturalizar variables viejas
             oldSpeed1 = currentSpeed1;
             oldSpeed2 = currentSpeed2;

@@ -395,7 +395,7 @@ void loop()
         SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD);
     }
     firstExecution = false;
-    delay(3000);
+    delay(1000);
     
 }
 
@@ -1760,24 +1760,13 @@ void moveSteps(void* pvParameters)
             #ifdef IMPLEMENT_ACCELERATION
                 increment = incrementGlobal;
                 timeG = timeGlobal;
-                maxPathSpeed = maxPathSpeedGlobal;
+                speedWithDelay = maxPathSpeedGlobal;
             #endif
             startMovement = false;
             
+            Serial.println(speedWithDelay);
             #ifdef IMPLEMENT_ACCELERATION
-                if (increment){
-                    speedWithDelay = double(ACCELERATION)*timeG + speedWithDelay;
-                    if (speedWithDelay > maxPathSpeed){
-                        speedWithDelay = maxPathSpeed;
-                    }
-                }
-                else
-                {
-                    speedWithDelay = double(-ACCELERATION)*timeG + speedWithDelay;
-                    if (speedWithDelay < SAFE_SPEED){
-                        speedWithDelay = SAFE_SPEED;
-                    }
-                }
+                //speedWithDelay
             #endif
 
             if (abs(q1Steps) > abs(q2Steps + q1Steps)){
@@ -1794,8 +1783,8 @@ void moveSteps(void* pvParameters)
                 maxSpeed = (maxSpeed / distance) * Sandsara.millimeterSpeed;
             #endif
             
-            if (maxSpeed > MAX_STEPS_PER_SECOND * Sandsara.microstepping)
-                maxSpeed = MAX_STEPS_PER_SECOND * Sandsara.microstepping;
+            if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
+                maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;
 
             #ifdef PROCESSING_SIMULATOR
                 Serial.print(q1Steps);
