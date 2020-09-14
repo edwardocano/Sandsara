@@ -150,12 +150,10 @@
 #define OUTOFTIME_BLUETOOTH     20000
 #define NORMAL_CURRENT          600
 #define CURRENT_IN_CALIBRATION  600
-#define CURRENT_IN_ABRUPTMOVEMENTS 800
-#define DELAY_IN_ABRUPTMOVEMENTS    6
-#define TIME_FOR_DESELERATION   0.15
-#define ACCELERATION            600.0
-#define ACCEL_THRESHOLD         1200.0
-#define SAFE_SPEED              30
+#define ACCELERATION            400.0
+#define ACCEL_THRESHOLD         1500.0
+#define SAFE_SPEED              40
+
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0
 
