@@ -117,8 +117,8 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 maxSpeed = abs(steps_of_q2 + steps_of_q1);
             }
             maxSpeed = (maxSpeed / distance) * millimeterSpeed;
-            if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
-                maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;
+            /*if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
+                maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;*/
             stepper1Aux.setMaxSpeed(maxSpeed);
             stepper2Aux.setMaxSpeed(maxSpeed);
             stepps.moveTo(positions);
@@ -140,6 +140,9 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             {
                 times[pointer] = time2;
             }
+            if (times[pointer] > 0.03){
+                times[pointer] = 0.03;
+            }
             millimeterSpeed = ACCELERATION * times[pointer] + millimeterSpeed;
             if (millimeterSpeed > romGetSpeedMotor()){
                 millimeterSpeed = romGetSpeedMotor();
@@ -147,12 +150,24 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             pathSpeed[pointer] = millimeterSpeed;
 
             //revisar si hay problema con el movimiento brusco
-            if ((fabs(currentSpeed1 - oldSpeed1) > ACCEL_THRESHOLD) || (fabs(currentSpeed2 - oldSpeed2) > ACCEL_THRESHOLD)){
-                double timeSum = 0;
+            double accel1 = fabs(currentSpeed1 - oldSpeed1);
+            double accel2 = fabs(currentSpeed2 - oldSpeed2);
+            if ((accel1 > ACCEL_THRESHOLD) || (accel2 > ACCEL_THRESHOLD)){
+                double timeSum = 0, maxAccel;
+                if (accel1 > accel2){
+                    maxAccel = accel1;
+                }
+                else{
+                    maxAccel = accel2;
+                }
+                double safeSpeed = double(millimeterSpeed) / (maxAccel/double(ACCEL_THRESHOLD));
+                if (safeSpeed < 1.0){
+                    safeSpeed = 1.0;
+                }
                 problemPointer[pointer] = true;
-                double timeForDeseleration = fabs(pathSpeed[pointer] - SAFE_SPEED)/ACCELERATION;
-                millimeterSpeed = SAFE_SPEED;
-                pathSpeed[pointer] = SAFE_SPEED;
+                double timeForDeseleration = fabs(pathSpeed[pointer] - safeSpeed)/ACCELERATION;
+                millimeterSpeed = safeSpeed;
+                pathSpeed[pointer] = safeSpeed;
                 int i=pointer-1; 
                 if (i < 0){
                     i = samples - 1;
@@ -160,7 +175,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 if (pointer != currentPointer)
                 {
                     
-                    double newSpeed = SAFE_SPEED;
+                    double newSpeed = safeSpeed;
                     while (true)
                     {
                         newSpeed = ACCELERATION*times[i] + newSpeed;
@@ -192,7 +207,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 problemPointer[pointer] = false;
                 increment[pointer] = true;
             }
-            String info1;
+            /*String info1;
             String info2;
             if (problemPointer[pointer]){
                 info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + ",1";
@@ -204,7 +219,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             info2 = "2:" + String(int(currentSpeed2)) + "," + String(positions[1]);
             Serial.println(info1);
             Serial.println(info2);
-            Serial.flush();
+            Serial.flush();*/
             //acturalizar variables viejas
 
             oldSpeed1 = currentSpeed1;
