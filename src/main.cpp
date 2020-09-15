@@ -782,6 +782,8 @@ int runFile(String fileName){
         return -10;
     }
     //====
+    Sandsara.completePath();
+    //====
     posisionCase = Sandsara.position();
     if (posisionCase == 2){
         movePolarTo(DISTANCIA_MAX, 0, 0, true);
@@ -811,7 +813,7 @@ int runFile(String fileName){
  * 
  */
 void goHomeSpiral(){
-    delay(200);
+    //delay(200);
     float currentModule = Sandsara.getCurrentModule();
     availableDeceleration = true;
     if (currentModule < DISTANCIA_MAX / sqrt(2)){
@@ -822,7 +824,8 @@ void goHomeSpiral(){
         goEdgeSpiral(false);
     }
     availableDeceleration = false;
-    delay(500); 
+    Sandsara.completePath();
+    delay(1000); 
 }
 
 /**
@@ -1732,8 +1735,9 @@ int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matrix){
  * @note La distancia se mide en milimetros 
  */
 
-extern double timeGlobal;
-extern int maxPathSpeedGlobal;
+extern double   timeGlobal;
+extern int      maxPathSpeedGlobal;
+extern int      positionCount;
 void moveSteps(void* pvParameters)
 { 
     long positions[2];
@@ -1840,6 +1844,7 @@ void moveSteps(void* pvParameters)
             #endif
             q1DirectionOld = q1DirectionNew;
             q2DirectionOld = q2DirectionNew;
+            positionCount -= 1;
         }
         vTaskSuspend(motorsTask);
     }

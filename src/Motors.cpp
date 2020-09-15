@@ -29,6 +29,7 @@ double m[no_picos * 2], b[no_picos * 2];
     int     pointerGlobal;
     double  timeGlobal;
     int     maxPathSpeedGlobal;
+    int     positionCount= 0;
 #endif
 //====Extern varibales====
 extern bool     productType;
@@ -100,7 +101,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             q1StepsP[pointer] = steps_of_q1;
             q2StepsP[pointer] = steps_of_q2;
             distanceP[pointer] = distance;
-            
+            positionCount += 1;
 
             positions[0] = steps_of_q1;
             positions[1] = steps_of_q2 + steps_of_q1;
@@ -166,12 +167,9 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                         if (newSpeed < pathSpeed[i]){
                             pathSpeed[i] = newSpeed;
                         }
-                        else
-                        {
+                        else{
                             break;
                         }
-                        
-                        increment[i] = false;
                         if (i == currentPointer){
                             break;
                         }
@@ -208,6 +206,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             Serial.println(info2);
             Serial.flush();*/
             //acturalizar variables viejas
+
             oldSpeed1 = currentSpeed1;
             oldSpeed2 = currentSpeed2;
             //incrementar pointer donde se esta guardando el dato
@@ -260,6 +259,37 @@ void Motors::moveTo(double x, double y, bool littleMovement)
     }
 }
 
+/**
+ * @brief execute the remaining steps
+ */
+void Motors::completePath(){
+    while (true)
+    {
+        while (eTaskGetState(motorsTask) != 3){
+            continue;
+        }
+        if (currentPointer == pointer){
+            break;
+        }
+        q1StepsGlobal = q1StepsP[currentPointer];
+        q2StepsGlobal = q2StepsP[currentPointer];
+        distanceGlobal = distanceP[currentPointer];
+        incrementGlobal = increment[currentPointer];
+        pointerGlobal = currentPointer;
+        timeGlobal = times[currentPointer];
+        maxPathSpeedGlobal = pathSpeed[currentPointer];
+        startMovement = true;
+        
+        vTaskResume(motorsTask);
+        currentPointer += 1;
+        if (currentPointer >= samples){
+            currentPointer = 0;
+        }
+    }
+    starts = false;
+    currentPointer = 0;
+    pointer = 0;
+}
 /**
  * @brief Se usa esta funcion para avanzar de la posicion actual a un punto nuevo en linea recta por medio de puntos equidistantes a un 1 mm.
  * 

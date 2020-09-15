@@ -69,6 +69,7 @@ class Motors {
         static double arcLength(double ,double , double);
         double module(double , double , double , double );
         int position();
+        void completePath();
         
     private:
         void moveInterpolateTo(double ,double ,double ,bool );
