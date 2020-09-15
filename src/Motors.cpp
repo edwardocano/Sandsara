@@ -194,7 +194,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             }
             String info1;
             String info2;
-            /*if (problemPointer[pointer]){
+            if (problemPointer[pointer]){
                 info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + ",1";
             }
             else{
@@ -204,7 +204,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             info2 = "2:" + String(int(currentSpeed2)) + "," + String(positions[1]);
             Serial.println(info1);
             Serial.println(info2);
-            Serial.flush();*/
+            Serial.flush();
             //acturalizar variables viejas
 
             oldSpeed1 = currentSpeed1;

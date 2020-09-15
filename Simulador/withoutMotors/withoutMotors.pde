@@ -82,7 +82,7 @@ void setup() {
   steps_of_q[2] = 3200;
   frameRate(60);
   printArray(Serial.list());
-  mySerial = new Serial(this, "COM13", 115200);
+  mySerial = new Serial(this, "COM10", 115200);
   values = new long[3];
   
 }
