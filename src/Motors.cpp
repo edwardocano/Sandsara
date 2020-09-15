@@ -97,161 +97,190 @@ void Motors::moveTo(double x, double y, bool littleMovement)
         if (!(steps_of_q1 == 0 && steps_of_q2 == 0))// || littleMovement)
         { 
 #ifdef IMPLEMENT_ACCELERATION
+            long posLong[2];
+            double posConstrained[2];
+            posLong[0] = 0;
+            posLong[1] = 0;
+            posConstrained[0] = 0;
+            posConstrained[1] = 0;
             //guardar los datos en arrays.
-            q1StepsP[pointer] = steps_of_q1;
-            q2StepsP[pointer] = steps_of_q2;
-            distanceP[pointer] = distance;
-            positionCount += 1;
-
-            positions[0] = steps_of_q1;
-            positions[1] = steps_of_q2 + steps_of_q1;
-
-            stepper1Aux.setCurrentPosition(0);
-            stepper2Aux.setCurrentPosition(0);
-            
-            //calcular velocidades del siguiente paso.
-            if (abs(steps_of_q1) > abs(steps_of_q1 + steps_of_q2)){
-                maxSpeed = abs(steps_of_q1);
+            double factor, deltaQ1, deltaQ2;
+            int factorInt;
+            if(abs(steps_of_q2) > abs(steps_of_q1)){
+                factor = fabs((steps_of_q2)/20.0);
             }
             else{
-                maxSpeed = abs(steps_of_q2 + steps_of_q1);
+                factor = fabs(steps_of_q1/20.0);
             }
-            maxSpeed = (maxSpeed / distance) * millimeterSpeed;
-            /*if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
-                maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;*/
-            stepper1Aux.setMaxSpeed(maxSpeed);
-            stepper2Aux.setMaxSpeed(maxSpeed);
-            stepps.moveTo(positions);
-            currentSpeed1 = stepper1Aux.speed();
-            currentSpeed2 = stepper2Aux.speed();
             
-            if (currentSpeed1 != 0){
-                time1 = steps_of_q1/currentSpeed1;
-            }else{time1 = 0;}
-            if (currentSpeed2 != 0){
-                time2 = (steps_of_q2 + steps_of_q1)/currentSpeed2;
-            }else{time2 = 0;}
+            if (factor < 1.0){
+                factor = 1.0;
+            }
+            deltaQ1 = (steps_of_q1)/factor;
+            deltaQ2 = (steps_of_q2)/factor;
+            factorInt = int(factor);
+            for (int k=0; k < factorInt; k++){
+                posConstrained[0] += deltaQ1;
+                posConstrained[1] += deltaQ2;
+                steps_of_q1 = long(posConstrained[0]) - posLong[0];
+                steps_of_q2 = long(posConstrained[1]) - posLong[1];
+                posLong[0] = long(posConstrained[0]);
+                posLong[1] = long(posConstrained[1]);
 
+                q1StepsP[pointer] = steps_of_q1;
+                q2StepsP[pointer] = steps_of_q2;
+                distanceP[pointer] = distance;
+                positionCount += 1;
 
-            if (time1 > time2){
-                times[pointer] = time1;
-            }
-            else
-            {
-                times[pointer] = time2;
-            }
-            if (times[pointer] > 0.03){
-                times[pointer] = 0.03;
-            }
-            millimeterSpeed = ACCELERATION * times[pointer] + millimeterSpeed;
-            if (millimeterSpeed > romGetSpeedMotor()){
-                millimeterSpeed = romGetSpeedMotor();
-            }
-            pathSpeed[pointer] = millimeterSpeed;
+                positions[0] = steps_of_q1;
+                positions[1] = steps_of_q2 + steps_of_q1;
 
-            //revisar si hay problema con el movimiento brusco
-            double accel1 = fabs(currentSpeed1 - oldSpeed1);
-            double accel2 = fabs(currentSpeed2 - oldSpeed2);
-            if ((accel1 > ACCEL_THRESHOLD) || (accel2 > ACCEL_THRESHOLD)){
-                double timeSum = 0, maxAccel;
-                if (accel1 > accel2){
-                    maxAccel = accel1;
+                stepper1Aux.setCurrentPosition(0);
+                stepper2Aux.setCurrentPosition(0);
+                
+                //calcular velocidades del siguiente paso.
+                if (abs(steps_of_q1) > abs(steps_of_q1 + steps_of_q2)){
+                    maxSpeed = abs(steps_of_q1);
                 }
                 else{
-                    maxAccel = accel2;
+                    maxSpeed = abs(steps_of_q2 + steps_of_q1);
                 }
-                double safeSpeed = double(millimeterSpeed) / (maxAccel/double(ACCEL_THRESHOLD));
-                if (safeSpeed < 1.0){
-                    safeSpeed = 1.0;
+                maxSpeed = (maxSpeed / distance) * millimeterSpeed;
+                /*if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
+                    maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;*/
+                stepper1Aux.setMaxSpeed(maxSpeed);
+                stepper2Aux.setMaxSpeed(maxSpeed);
+                stepps.moveTo(positions);
+                currentSpeed1 = stepper1Aux.speed();
+                currentSpeed2 = stepper2Aux.speed();
+                
+                if (currentSpeed1 != 0){
+                    time1 = steps_of_q1/currentSpeed1;
+                }else{time1 = 0;}
+                if (currentSpeed2 != 0){
+                    time2 = (steps_of_q2 + steps_of_q1)/currentSpeed2;
+                }else{time2 = 0;}
+
+
+                if (time1 > time2){
+                    times[pointer] = time1;
                 }
-                problemPointer[pointer] = true;
-                double timeForDeseleration = fabs(pathSpeed[pointer] - safeSpeed)/ACCELERATION;
-                millimeterSpeed = safeSpeed;
-                pathSpeed[pointer] = safeSpeed;
-                int i=pointer-1; 
-                if (i < 0){
-                    i = samples - 1;
-                }
-                if (pointer != currentPointer)
+                else
                 {
-                    
-                    double newSpeed = safeSpeed;
-                    while (true)
+                    times[pointer] = time2;
+                }
+                if (times[pointer] > 0.03){
+                    times[pointer] = 0.03;
+                }
+                millimeterSpeed = ACCELERATION * times[pointer] + millimeterSpeed;
+                if (millimeterSpeed > romGetSpeedMotor()){
+                    millimeterSpeed = romGetSpeedMotor();
+                }
+                pathSpeed[pointer] = millimeterSpeed;
+
+                //revisar si hay problema con el movimiento brusco
+                double accel1 = fabs(currentSpeed1 - oldSpeed1);
+                double accel2 = fabs(currentSpeed2 - oldSpeed2);
+                if ((accel1 > ACCEL_THRESHOLD) || (accel2 > ACCEL_THRESHOLD)){
+                    double timeSum = 0, maxAccel;
+                    if (accel1 > accel2){
+                        maxAccel = accel1;
+                    }
+                    else{
+                        maxAccel = accel2;
+                    }
+                    double safeSpeed = double(millimeterSpeed) / (maxAccel/double(ACCEL_THRESHOLD));
+                    if (safeSpeed < SAFE_SPEED){
+                        safeSpeed = SAFE_SPEED;
+                    }
+                    problemPointer[pointer] = true;
+                    double timeForDeseleration = fabs(pathSpeed[pointer] - safeSpeed)/ACCELERATION;
+                    millimeterSpeed = safeSpeed;
+                    pathSpeed[pointer] = safeSpeed;
+                    int i=pointer-1; 
+                    if (i < 0){
+                        i = samples - 1;
+                    }
+                    if (pointer != currentPointer)
                     {
-                        newSpeed = ACCELERATION*times[i] + newSpeed;
-                        if (newSpeed < pathSpeed[i]){
-                            pathSpeed[i] = newSpeed;
-                        }
-                        else{
-                            break;
-                        }
-                        if (i == currentPointer){
-                            break;
-                        }
-                        if (problemPointer[i]){
-                            break;
-                        }
                         
-                        timeSum += times[i];
-                        if (timeSum > timeForDeseleration){
-                            break;
-                        }
-                        i -= 1;
-                        if (i < 0){
-                            i = samples - 1;
+                        double newSpeed = safeSpeed;
+                        while (true)
+                        {
+                            newSpeed = ACCELERATION*times[i] + newSpeed;
+                            if (newSpeed < pathSpeed[i]){
+                                pathSpeed[i] = newSpeed;
+                            }
+                            else{
+                                break;
+                            }
+                            if (i == currentPointer){
+                                break;
+                            }
+                            if (problemPointer[i]){
+                                break;
+                            }
+                            
+                            timeSum += times[i];
+                            if (timeSum > timeForDeseleration){
+                                break;
+                            }
+                            i -= 1;
+                            if (i < 0){
+                                i = samples - 1;
+                            }
                         }
                     }
                 }
-            }
-            else{
-                problemPointer[pointer] = false;
-                increment[pointer] = true;
-            }
-            /*String info1;
-            String info2;
-            if (problemPointer[pointer]){
-                info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + ",1";
-            }
-            else{
-                info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + ",0";
-            }
-            
-            info2 = "2:" + String(int(currentSpeed2)) + "," + String(positions[1]);
-            Serial.println(info1);
-            Serial.println(info2);
-            Serial.flush();*/
-            //acturalizar variables viejas
-
-            oldSpeed1 = currentSpeed1;
-            oldSpeed2 = currentSpeed2;
-            //incrementar pointer donde se esta guardando el dato
-            pointer += 1;
-            if (pointer >= samples - 1){
-                starts = true;
-            }
-            if (pointer >= samples){
-                pointer = 0;
-            }
-            
-            if (starts){
-                while (eTaskGetState(motorsTask) != 3){
-                    continue;
+                else{
+                    problemPointer[pointer] = false;
+                    increment[pointer] = true;
                 }
-                q1StepsGlobal = q1StepsP[currentPointer];
-                q2StepsGlobal = q2StepsP[currentPointer];
-                distanceGlobal = distanceP[currentPointer];
-                incrementGlobal = increment[currentPointer];
-                pointerGlobal = currentPointer;
-                timeGlobal = times[currentPointer];
-                maxPathSpeedGlobal = pathSpeed[currentPointer];
-                startMovement = true;
+                /*String info1;
+                String info2;
+                if (problemPointer[pointer]){
+                    info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + ",1";
+                }
+                else{
+                    info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + ",0";
+                }
                 
-                vTaskResume(motorsTask);
-                currentPointer += 1;
-                if (currentPointer >= samples){
-                    currentPointer = 0;
+                info2 = "2:" + String(int(currentSpeed2)) + "," + String(positions[1]);
+                Serial.println(info1);
+                Serial.println(info2);
+                Serial.flush();*/
+                //acturalizar variables viejas
+
+                oldSpeed1 = currentSpeed1;
+                oldSpeed2 = currentSpeed2;
+                //incrementar pointer donde se esta guardando el dato
+                pointer += 1;
+                if (pointer >= samples - 1){
+                    starts = true;
                 }
-            }
+                if (pointer >= samples){
+                    pointer = 0;
+                }
+                
+                if (starts){
+                    while (eTaskGetState(motorsTask) != 3){
+                        continue;
+                    }
+                    q1StepsGlobal = q1StepsP[currentPointer];
+                    q2StepsGlobal = q2StepsP[currentPointer];
+                    distanceGlobal = distanceP[currentPointer];
+                    incrementGlobal = increment[currentPointer];
+                    pointerGlobal = currentPointer;
+                    timeGlobal = times[currentPointer];
+                    maxPathSpeedGlobal = pathSpeed[currentPointer];
+                    startMovement = true;
+                    
+                    vTaskResume(motorsTask);
+                    currentPointer += 1;
+                    if (currentPointer >= samples){
+                        currentPointer = 0;
+                    }
+                }
 #endif
 #ifndef IMPLEMENT_ACCELERATION
             while (eTaskGetState(motorsTask) != 3){
@@ -264,12 +293,14 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             startMovement = true;
             vTaskResume(motorsTask);
 #endif
-            q1_current += degrees_per_step * steps_of_q1;
-            q2_current += degrees_per_step * steps_of_q2;
-            q1_current = normalizeAngle(q1_current);
-            q2_current = normalizeAngle(q2_current);
-            x_current = dkX(q1_current, q2_current);
-            y_current = dkY(q1_current, q2_current);
+                q1_current += degrees_per_step * steps_of_q1;
+                q2_current += degrees_per_step * steps_of_q2;
+                q1_current = normalizeAngle(q1_current);
+                q2_current = normalizeAngle(q2_current);
+                x_current = dkX(q1_current, q2_current);
+                y_current = dkY(q1_current, q2_current);
+            }
+            
         }
     }
 }

@@ -1754,10 +1754,11 @@ void moveSteps(void* pvParameters)
     double timeG;
     int maxPathSpeed;
     int speedWithDelay = romGetSpeedMotor();
+    unsigned long t;
     //double milimiterSpeed = romGetSpeedMotor();
     for (;;){
         if (startMovement){
-            
+            Serial.println(millis() - t);
             q1Steps = q1StepsGlobal;
             q2Steps = q2StepsGlobal;
             distance = distanceGlobal;
@@ -1817,7 +1818,7 @@ void moveSteps(void* pvParameters)
             else if (q1Steps < 0){
                 q1DirectionNew = false;
             }
-            if(q2Steps + q1Steps > q1Steps){
+            if(abs(q2Steps + q1Steps) > abs(q1Steps)){
                 factor = fabs((q2Steps + q1Steps)/50.0);
             }
             else{
@@ -1840,9 +1841,9 @@ void moveSteps(void* pvParameters)
                     Sandsara.steppers.runSpeedToPosition();
                 }
                 Sandsara.steppers.moveTo(positions);
-                String info1;
+                /*String info1;
                 String info2;
-                /*info1 = "1:" + String(int(Sandsara.stepper1.speed())) + "," + String(q1Steps) + ",1";
+                info1 = "1:" + String(int(Sandsara.stepper1.speed())) + "," + String(q1Steps) + ",1";
                 info2 = "2:" + String(int(Sandsara.stepper2.speed())) + "," + String(q2Steps);
                 Serial.println(info1);
                 Serial.println(info2);
@@ -1852,6 +1853,7 @@ void moveSteps(void* pvParameters)
             q1DirectionOld = q1DirectionNew;
             q2DirectionOld = q2DirectionNew;
             positionCount -= 1;
+            t = millis();
         }
         vTaskSuspend(motorsTask);
     }

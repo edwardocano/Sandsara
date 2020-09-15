@@ -151,8 +151,8 @@
 #define NORMAL_CURRENT          600
 #define CURRENT_IN_CALIBRATION  600
 #define ACCELERATION            400.0
-#define ACCEL_THRESHOLD         1000.0
-#define SAFE_SPEED              40
+#define ACCEL_THRESHOLD         500.0
+#define SAFE_SPEED              30.0
 
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0
