@@ -89,7 +89,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
     {
         moveInterpolateTo(x, y, distance, littleMovement);
     }
-    else if (distance > 0.5 || littleMovement)
+    else if (distance > 0.5 || (x == 0 && y == 0))
     {
         ik(x, y, &q1, &q2);
         steps_of_q1 = calculate_steps(q1_current, q1);
@@ -97,6 +97,9 @@ void Motors::moveTo(double x, double y, bool littleMovement)
         if (!(steps_of_q1 == 0 && steps_of_q2 == 0))// || littleMovement)
         { 
 #ifdef IMPLEMENT_ACCELERATION
+            if (distance < 0.5){
+                distance = 0.5;
+            }
             long posLong[2];
             double posConstrained[2];
             posLong[0] = 0;
@@ -146,8 +149,8 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                     maxSpeed = abs(steps_of_q2 + steps_of_q1);
                 }
                 maxSpeed = (maxSpeed / distance) * millimeterSpeed;
-                /*if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
-                    maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;*/
+                if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
+                    maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;
                 stepper1Aux.setMaxSpeed(maxSpeed);
                 stepper2Aux.setMaxSpeed(maxSpeed);
                 stepps.moveTo(positions);
@@ -236,6 +239,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                     problemPointer[pointer] = false;
                     increment[pointer] = true;
                 }
+                
                 /*String info1;
                 String info2;
                 if (problemPointer[pointer]){
@@ -245,7 +249,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                     info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + ",0";
                 }
                 
-                info2 = "2:" + String(int(currentSpeed2)) + "," + String(positions[1]);
+                info2 = "2:" + String(int(currentSpeed2)) + "," + String(positions[1]) + "," + String(pathSpeed[pointer]);
                 Serial.println(info1);
                 Serial.println(info2);
                 Serial.flush();*/

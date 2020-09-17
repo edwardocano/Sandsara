@@ -1758,7 +1758,7 @@ void moveSteps(void* pvParameters)
     //double milimiterSpeed = romGetSpeedMotor();
     for (;;){
         if (startMovement){
-            Serial.println(millis() - t);
+            //Serial.println(millis() - t);
             q1Steps = q1StepsGlobal;
             q2Steps = q2StepsGlobal;
             distance = distanceGlobal;
@@ -1769,7 +1769,7 @@ void moveSteps(void* pvParameters)
             #endif
             startMovement = false;
             
-            Serial.println(speedWithDelay);
+            //Serial.println(speedWithDelay);
             #ifdef IMPLEMENT_ACCELERATION
                 //speedWithDelay
             #endif
@@ -1844,10 +1844,10 @@ void moveSteps(void* pvParameters)
                 /*String info1;
                 String info2;
                 info1 = "1:" + String(int(Sandsara.stepper1.speed())) + "," + String(q1Steps) + ",1";
-                info2 = "2:" + String(int(Sandsara.stepper2.speed())) + "," + String(q2Steps);
+                info2 = "2:" + String(int(Sandsara.stepper2.speed())) + "," + String(q2Steps) + "," + String(speedWithDelay);
                 Serial.println(info1);
-                Serial.println(info2);
-                Serial.flush();*/
+                Serial.println(info2);*/
+                //Serial.flush();
                 Sandsara.steppers.runSpeedToPosition();
             #endif
             q1DirectionOld = q1DirectionNew;
