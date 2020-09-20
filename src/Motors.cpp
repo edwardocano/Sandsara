@@ -122,6 +122,9 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             deltaQ1 = (steps_of_q1)/factor;
             deltaQ2 = (steps_of_q2)/factor;
             factorInt = int(factor);
+            if (factorInt < 5){
+                distance = distance/ factorInt;
+            }
             for (int k=0; k < factorInt; k++){
                 posConstrained[0] += deltaQ1;
                 posConstrained[1] += deltaQ2;
@@ -206,7 +209,6 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                     }
                     if (pointer != currentPointer)
                     {
-                        
                         double newSpeed = safeSpeed;
                         while (true)
                         {
@@ -220,14 +222,14 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                             if (i == currentPointer){
                                 break;
                             }
-                            if (problemPointer[i]){
+                            /*if (problemPointer[i]){
                                 break;
-                            }
+                            }*/
                             
-                            timeSum += times[i];
+                            /*timeSum += times[i];
                             if (timeSum > timeForDeseleration){
                                 break;
-                            }
+                            }*/
                             i -= 1;
                             if (i < 0){
                                 i = samples - 1;
@@ -251,8 +253,8 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 
                 info2 = "2:" + String(int(currentSpeed2)) + "," + String(positions[1]) + "," + String(pathSpeed[pointer]);
                 Serial.println(info1);
-                Serial.println(info2);
-                Serial.flush();*/
+                Serial.println(info2);*/
+                //Serial.flush();
                 //acturalizar variables viejas
 
                 oldSpeed1 = currentSpeed1;

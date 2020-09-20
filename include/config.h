@@ -145,14 +145,14 @@
 #define MAX_NUMBERLEDS          100
 #define LEDS_OF_HALO            60
 #define LEDS_OF_STELLE          36
-#define MAX_STEPS_PER_SECOND    150
+#define MAX_STEPS_PER_SECOND    190
 #define MAX_CHARACTER_PER_LINE  1000
 #define OUTOFTIME_BLUETOOTH     20000
 #define NORMAL_CURRENT          600
 #define CURRENT_IN_CALIBRATION  600
 #define ACCELERATION            400.0
 #define ACCEL_THRESHOLD         500.0
-#define SAFE_SPEED              30.0
+#define SAFE_SPEED              1.0
 
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0
