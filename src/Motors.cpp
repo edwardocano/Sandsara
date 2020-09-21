@@ -21,7 +21,7 @@ double m[no_picos * 2], b[no_picos * 2];
     int     pointer = 0;
     long    positions[2];
     double  currentSpeed1, currentSpeed2;
-    double  oldSpeed1, oldSpeed2;
+    double  oldSpeed1 = 0, oldSpeed2 = 0;
     int     positionSteps = 0;
     int     currentPointer = 0;
     bool    starts = false;
@@ -143,6 +143,71 @@ void Motors::moveTo(double x, double y, bool littleMovement)
 
                 stepper1Aux.setCurrentPosition(0);
                 stepper2Aux.setCurrentPosition(0);
+                if (abs(steps_of_q1) > abs(steps_of_q1 + steps_of_q2)){
+                    maxSpeed = abs(steps_of_q1);
+                }
+                else{
+                    maxSpeed = abs(steps_of_q2 + steps_of_q1);
+                }
+                maxSpeed = (maxSpeed / distance) * millimeterSpeed;
+                if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
+                    maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;
+                stepper1Aux.setMaxSpeed(maxSpeed);
+                stepper2Aux.setMaxSpeed(maxSpeed);
+                stepps.moveTo(positions);
+                currentSpeed1 = stepper1Aux.speed();
+                currentSpeed2 = stepper2Aux.speed();
+
+                //revisar si hay problema con el movimiento brusco
+                double accel1 = fabs(currentSpeed1 - oldSpeed1);
+                double accel2 = fabs(currentSpeed2 - oldSpeed2);
+                if ((accel1 > ACCEL_THRESHOLD) || (accel2 > ACCEL_THRESHOLD)){
+                    double timeSum = 0, maxAccel;
+                    if (accel1 > accel2){
+                        maxAccel = accel1;
+                    }
+                    else{
+                        maxAccel = accel2;
+                    }
+                    double safeSpeed = millimeterSpeed / (maxAccel/double(ACCEL_THRESHOLD));
+                    if (safeSpeed < SAFE_SPEED){
+                        safeSpeed = SAFE_SPEED;
+                    }
+                    problemPointer[pointer] = true;
+                    double timeForDeseleration = fabs(millimeterSpeed - safeSpeed)/ACCELERATION;
+                    millimeterSpeed = safeSpeed;
+                    //pathSpeed[pointer] = safeSpeed;
+                    int i=pointer-1; 
+                    if (i < 0){
+                        i = samples - 1;
+                    }
+                    if (pointer != currentPointer)
+                    {
+                        double newSpeed = safeSpeed;
+                        while (true)
+                        {
+                            newSpeed = ACCELERATION*times[i] + newSpeed;
+                            if (newSpeed < pathSpeed[i]){
+                                pathSpeed[i] = newSpeed;
+                            }
+                            else{
+                                break;
+                            }
+                            if (i == currentPointer){
+                                break;
+                            }
+                            i -= 1;
+                            if (i < 0){
+                                i = samples - 1;
+                            }
+                        }
+                    }
+                }
+                else{
+                    problemPointer[pointer] = false;
+                    increment[pointer] = true;
+                }
+                pathSpeed[pointer] = millimeterSpeed;
                 
                 //calcular velocidades del siguiente paso.
                 if (abs(steps_of_q1) > abs(steps_of_q1 + steps_of_q2)){
@@ -182,66 +247,6 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 if (millimeterSpeed > romGetSpeedMotor()){
                     millimeterSpeed = romGetSpeedMotor();
                 }
-                pathSpeed[pointer] = millimeterSpeed;
-
-                //revisar si hay problema con el movimiento brusco
-                double accel1 = fabs(currentSpeed1 - oldSpeed1);
-                double accel2 = fabs(currentSpeed2 - oldSpeed2);
-                if ((accel1 > ACCEL_THRESHOLD) || (accel2 > ACCEL_THRESHOLD)){
-                    double timeSum = 0, maxAccel;
-                    if (accel1 > accel2){
-                        maxAccel = accel1;
-                    }
-                    else{
-                        maxAccel = accel2;
-                    }
-                    double safeSpeed = double(millimeterSpeed) / (maxAccel/double(ACCEL_THRESHOLD));
-                    if (safeSpeed < SAFE_SPEED){
-                        safeSpeed = SAFE_SPEED;
-                    }
-                    problemPointer[pointer] = true;
-                    double timeForDeseleration = fabs(pathSpeed[pointer] - safeSpeed)/ACCELERATION;
-                    millimeterSpeed = safeSpeed;
-                    pathSpeed[pointer] = safeSpeed;
-                    int i=pointer-1; 
-                    if (i < 0){
-                        i = samples - 1;
-                    }
-                    if (pointer != currentPointer)
-                    {
-                        double newSpeed = safeSpeed;
-                        while (true)
-                        {
-                            newSpeed = ACCELERATION*times[i] + newSpeed;
-                            if (newSpeed < pathSpeed[i]){
-                                pathSpeed[i] = newSpeed;
-                            }
-                            else{
-                                break;
-                            }
-                            if (i == currentPointer){
-                                break;
-                            }
-                            /*if (problemPointer[i]){
-                                break;
-                            }*/
-                            
-                            /*timeSum += times[i];
-                            if (timeSum > timeForDeseleration){
-                                break;
-                            }*/
-                            i -= 1;
-                            if (i < 0){
-                                i = samples - 1;
-                            }
-                        }
-                    }
-                }
-                else{
-                    problemPointer[pointer] = false;
-                    increment[pointer] = true;
-                }
-                
                 /*String info1;
                 String info2;
                 if (problemPointer[pointer]){
@@ -431,7 +436,7 @@ double Motors::getThetaCurrent(){
  * @brief obtiene el valor de la velocidad actual de Sandsara en milimetros por segundo
  * @return la variable miembro millimeterSpeed.
  */
-int Motors::getSpeed(){
+double Motors::getSpeed(){
     return millimeterSpeed;
 }
 

@@ -36,7 +36,7 @@ class Motors {
         AccelStepper stepper2Aux;
         MultiStepper steppers;
         MultiStepper stepps;
-        int millimeterSpeed = 15;
+        double millimeterSpeed = 15;
 
     private:
         double zCurrent;
@@ -59,7 +59,7 @@ class Motors {
         void setZCurrent(double );
         void setThetaCurrent(double );
         void setSpeed(int );
-        int getSpeed();
+        double getSpeed();
         double getZCurrent();
         double getThetaCurrent();
         static void rotate(double& ,double& ,double );
