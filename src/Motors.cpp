@@ -97,9 +97,9 @@ void Motors::moveTo(double x, double y, bool littleMovement)
         if (!(steps_of_q1 == 0 && steps_of_q2 == 0))// || littleMovement)
         { 
 #ifdef IMPLEMENT_ACCELERATION
-            if (distance < 0.5){
+            /*if (distance < 0.5){
                 distance = 0.5;
-            }
+            }*/
             long posLong[2];
             double posConstrained[2];
             posLong[0] = 0;
@@ -109,6 +109,21 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             //guardar los datos en arrays.
             double factor, deltaQ1, deltaQ2;
             int factorInt;
+            int maxSteps;
+            long stepsQ1Og = steps_of_q1;
+            long stepsQ2Og = steps_of_q2;
+            double momentaryPathSpeed = romGetSpeedMotor();
+            if (abs(steps_of_q1) > abs(steps_of_q1 + steps_of_q2)){
+                maxSteps = abs(steps_of_q1);
+            }
+            else{
+                maxSteps = abs(steps_of_q2 + steps_of_q1);
+            }
+            maxSpeed = (maxSteps / distance) * momentaryPathSpeed;
+            if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING){
+                distance = maxSteps/double(MAX_STEPS_PER_SECOND * MICROSTEPPING)*momentaryPathSpeed;
+            }
+
             if(abs(steps_of_q2) > abs(steps_of_q1)){
                 factor = fabs((steps_of_q2)/20.0);
             }
@@ -122,16 +137,32 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             deltaQ1 = (steps_of_q1)/factor;
             deltaQ2 = (steps_of_q2)/factor;
             factorInt = int(factor);
-            if (factorInt < 5){
-                distance = distance/ factorInt;
-            }
-            for (int k=0; k < factorInt; k++){
+            double distanceOg = distance;
+            //if (factorInt < 5){
+                distance = distance/ factor;
+            //}
+            for (int k=0; k <= factorInt; k++){
                 posConstrained[0] += deltaQ1;
                 posConstrained[1] += deltaQ2;
+                if (k == factorInt){
+                    posConstrained[0] = stepsQ1Og;
+                    posConstrained[1] = stepsQ2Og;
+                }
                 steps_of_q1 = long(posConstrained[0]) - posLong[0];
                 steps_of_q2 = long(posConstrained[1]) - posLong[1];
                 posLong[0] = long(posConstrained[0]);
                 posLong[1] = long(posConstrained[1]);
+                if ((steps_of_q1 == 0 && steps_of_q2 ==0)){
+                    continue;
+                }
+                if (k == factorInt){
+                    if (abs(steps_of_q1) > abs(steps_of_q1 + steps_of_q2)){
+                        distance = distanceOg/double(maxSteps)*fabs(steps_of_q1);
+                    }
+                    else{
+                        distance = distanceOg/double(maxSteps)*fabs(steps_of_q2 + steps_of_q1);
+                    }
+                }
 
                 q1StepsP[pointer] = steps_of_q1;
                 q2StepsP[pointer] = steps_of_q2;
@@ -157,10 +188,24 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 stepps.moveTo(positions);
                 currentSpeed1 = stepper1Aux.speed();
                 currentSpeed2 = stepper2Aux.speed();
-
+                
                 //revisar si hay problema con el movimiento brusco
                 double accel1 = fabs(currentSpeed1 - oldSpeed1);
                 double accel2 = fabs(currentSpeed2 - oldSpeed2);
+
+                String info1;
+                String info2;
+                if ((accel1 > ACCEL_THRESHOLD) || (accel2 > ACCEL_THRESHOLD)){
+                    info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + ",1";
+                }
+                else{
+                    info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + ",0";
+                }
+                
+                info2 = "2:" + String(int(currentSpeed2)) + "," + String(positions[1]) + "," + String(int(millimeterSpeed));
+                Serial.println(info1);
+                Serial.println(info2);
+
                 if ((accel1 > ACCEL_THRESHOLD) || (accel2 > ACCEL_THRESHOLD)){
                     double timeSum = 0, maxAccel;
                     if (accel1 > accel2){
@@ -247,18 +292,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 if (millimeterSpeed > romGetSpeedMotor()){
                     millimeterSpeed = romGetSpeedMotor();
                 }
-                /*String info1;
-                String info2;
-                if (problemPointer[pointer]){
-                    info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + ",1";
-                }
-                else{
-                    info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + ",0";
-                }
                 
-                info2 = "2:" + String(int(currentSpeed2)) + "," + String(positions[1]) + "," + String(pathSpeed[pointer]);
-                Serial.println(info1);
-                Serial.println(info2);*/
                 //Serial.flush();
                 //acturalizar variables viejas
 

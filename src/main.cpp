@@ -1841,12 +1841,12 @@ void moveSteps(void* pvParameters)
                     Sandsara.steppers.runSpeedToPosition();
                 }
                 Sandsara.steppers.moveTo(positions);
-                String info1;
+                /*String info1;
                 String info2;
                 info1 = "1:" + String(int(Sandsara.stepper1.speed())) + "," + String(q1Steps) + ",1";
                 info2 = "2:" + String(int(Sandsara.stepper2.speed())) + "," + String(q2Steps) + "," + String(speedWithDelay);
                 Serial.println(info1);
-                Serial.println(info2);
+                Serial.println(info2);*/
                 //Serial.flush();
                 Sandsara.steppers.runSpeedToPosition();
             #endif
