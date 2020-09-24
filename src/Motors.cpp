@@ -188,7 +188,12 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 stepps.moveTo(positions);
                 currentSpeed1 = stepper1Aux.speed();
                 currentSpeed2 = stepper2Aux.speed();
-                
+                if (currentSpeed1 == 0){
+                    currentSpeed1 = oldSpeed1;
+                }
+                if (currentSpeed2 == 0){
+                    currentSpeed2 = oldSpeed2;
+                }
                 //revisar si hay problema con el movimiento brusco
                 double accel1 = fabs(currentSpeed1 - oldSpeed1);
                 double accel2 = fabs(currentSpeed2 - oldSpeed2);
@@ -207,7 +212,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 Serial.println(info2);
 
                 if ((accel1 > ACCEL_THRESHOLD) || (accel2 > ACCEL_THRESHOLD)){
-                    double timeSum = 0, maxAccel;
+                    double maxAccel;
                     if (accel1 > accel2){
                         maxAccel = accel1;
                     }
@@ -219,7 +224,6 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                         safeSpeed = SAFE_SPEED;
                     }
                     problemPointer[pointer] = true;
-                    double timeForDeseleration = fabs(millimeterSpeed - safeSpeed)/ACCELERATION;
                     millimeterSpeed = safeSpeed;
                     //pathSpeed[pointer] = safeSpeed;
                     int i=pointer-1; 
@@ -248,10 +252,10 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                         }
                     }
                 }
-                else{
+                /*else{
                     problemPointer[pointer] = false;
                     increment[pointer] = true;
-                }
+                }*/
                 pathSpeed[pointer] = millimeterSpeed;
                 
                 //calcular velocidades del siguiente paso.
@@ -295,9 +299,13 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 
                 //Serial.flush();
                 //acturalizar variables viejas
+                if (currentSpeed1 != 0){
+                    oldSpeed1 = currentSpeed1;
+                }
+                if (currentSpeed2 != 0){
+                    oldSpeed2 = currentSpeed2;
+                }
 
-                oldSpeed1 = currentSpeed1;
-                oldSpeed2 = currentSpeed2;
                 //incrementar pointer donde se esta guardando el dato
                 pointer += 1;
                 if (pointer >= samples - 1){
@@ -380,6 +388,12 @@ void Motors::completePath(){
     starts = false;
     currentPointer = 0;
     pointer = 0;
+    Serial.print("q1: ");
+    Serial.println(q1_current);
+    Serial.print("q2: ");
+    Serial.println(q2_current);
+    oldSpeed1 = 0;
+    oldSpeed2 = 0;
 }
 /**
  * @brief Se usa esta funcion para avanzar de la posicion actual a un punto nuevo en linea recta por medio de puntos equidistantes a un 1 mm.
