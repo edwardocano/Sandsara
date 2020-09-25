@@ -955,6 +955,13 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     }
     xAux = zNext * cos(thetaNext);
     yAux = zNext * sin(thetaNext);
+    if (xAux == 0  && yAux ==0){
+        Serial.print("xAux");
+        Serial.println(xAux, 20);
+        Serial.print("yAux");
+        Serial.println(yAux, 20);
+    }
+
     Sandsara.moveTo(xAux, yAux, littleMovement);
     Sandsara.setThetaCurrent(thetaNext);
     Sandsara.setZCurrent(zNext);
@@ -1738,6 +1745,8 @@ int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matrix){
 extern double   timeGlobal;
 extern int      maxPathSpeedGlobal;
 extern int      positionCount;
+extern double maxMotorSpeed;
+extern long maxStepsGlobal;
 void moveSteps(void* pvParameters)
 { 
     long positions[2];
@@ -1755,6 +1764,8 @@ void moveSteps(void* pvParameters)
     int maxPathSpeed;
     int speedWithDelay = romGetSpeedMotor();
     unsigned long t;
+    double maxMSpeed;
+    long maxSteps;
     //double milimiterSpeed = romGetSpeedMotor();
     for (;;){
         if (startMovement){
@@ -1766,6 +1777,8 @@ void moveSteps(void* pvParameters)
                 increment = incrementGlobal;
                 timeG = timeGlobal;
                 speedWithDelay = maxPathSpeedGlobal;
+                maxMSpeed = maxMotorSpeed;
+                maxSteps = maxStepsGlobal;
             #endif
             startMovement = false;
             
@@ -1773,21 +1786,18 @@ void moveSteps(void* pvParameters)
             #ifdef IMPLEMENT_ACCELERATION
                 //speedWithDelay
             #endif
-
-            if (abs(q1Steps) > abs(q2Steps + q1Steps)){
-                maxSpeed = abs(q1Steps);
-            }
-            else{
-                maxSpeed = abs(q2Steps + q1Steps);
-            }
-
-            #ifdef IMPLEMENT_ACCELERATION
-                maxSpeed = (maxSpeed / distance) * speedWithDelay;
-            #endif
             #ifndef IMPLEMENT_ACCELERATION
+                if (abs(q1Steps) > abs(q2Steps + q1Steps)){
+                    maxSpeed = abs(q1Steps);
+                }
+                else{
+                    maxSpeed = abs(q2Steps + q1Steps);
+                }
                 maxSpeed = (maxSpeed / distance) * Sandsara.millimeterSpeed;
             #endif
-            
+             #ifdef IMPLEMENT_ACCELERATION
+                maxSpeed = (maxSteps / distance) * speedWithDelay;
+            #endif
             if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
                 maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;
 
