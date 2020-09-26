@@ -1742,42 +1742,24 @@ int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matrix){
  * @note La distancia se mide en milimetros 
  */
 
-extern double   timeGlobal;
 extern int      maxPathSpeedGlobal;
-extern int      positionCount;
-extern double maxMotorSpeed;
-extern long maxStepsGlobal;
+extern long     maxStepsGlobal;
 void moveSteps(void* pvParameters)
 { 
     long positions[2];
-    bool q2DirectionNew = false, q1DirectionNew = false;
-    bool q2DirectionOld = false, q1DirectionOld = false;
     float maxSpeed;
     long q1Steps, q2Steps;
     double distance;
-    double factor, deltaQ1, deltaQ2;
-    int factorInt;
-    double posConstrained[2];
-    long posLong[2];
-    bool increment;
-    double timeG;
-    int maxPathSpeed;
     int speedWithDelay = romGetSpeedMotor();
-    unsigned long t;
-    double maxMSpeed;
     long maxSteps;
     //double milimiterSpeed = romGetSpeedMotor();
     for (;;){
         if (startMovement){
-            //Serial.println(millis() - t);
             q1Steps = q1StepsGlobal;
             q2Steps = q2StepsGlobal;
             distance = distanceGlobal;
             #ifdef IMPLEMENT_ACCELERATION
-                increment = incrementGlobal;
-                timeG = timeGlobal;
                 speedWithDelay = maxPathSpeedGlobal;
-                maxMSpeed = maxMotorSpeed;
                 maxSteps = maxStepsGlobal;
             #endif
             startMovement = false;
@@ -1813,43 +1795,7 @@ void moveSteps(void* pvParameters)
             Sandsara.stepper2.setMaxSpeed(maxSpeed);
             positions[0] = Sandsara.stepper1.currentPosition() + q1Steps;
             positions[1] = Sandsara.stepper2.currentPosition() + q2Steps + q1Steps;
-            posConstrained[0] = Sandsara.stepper1.currentPosition();
-            posConstrained[1] = Sandsara.stepper2.currentPosition();
-            
-            if (q2Steps + q1Steps > 0){
-                q2DirectionNew = true;
-            }
-            else if (q2Steps + q1Steps < 0){
-                q2DirectionNew = false;
-            }
-            if (q1Steps > 0){
-                q1DirectionNew = true;
-            }
-            else if (q1Steps < 0){
-                q1DirectionNew = false;
-            }
-            if(abs(q2Steps + q1Steps) > abs(q1Steps)){
-                factor = fabs((q2Steps + q1Steps)/50.0);
-            }
-            else{
-                factor = fabs(q1Steps/50.0);
-            }
-            
-            if (factor < 1.0){
-                factor = 1.0;
-            }
-            deltaQ1 = (q1Steps)/factor;
-            deltaQ2 = (q2Steps + q1Steps)/factor;
-            factorInt = int(factor);
             #ifndef DISABLE_MOTORS
-                for (int i=0; i < factorInt - 1; i++){
-                    posConstrained[0] += deltaQ1;
-                    posConstrained[1] += deltaQ2;
-                    posLong[0] = long(posConstrained[0]);
-                    posLong[1] = long(posConstrained[1]);
-                    Sandsara.steppers.moveTo(posLong);
-                    Sandsara.steppers.runSpeedToPosition();
-                }
                 Sandsara.steppers.moveTo(positions);
                 /*String info1;
                 String info2;
@@ -1860,10 +1806,6 @@ void moveSteps(void* pvParameters)
                 //Serial.flush();
                 Sandsara.steppers.runSpeedToPosition();
             #endif
-            q1DirectionOld = q1DirectionNew;
-            q2DirectionOld = q2DirectionNew;
-            positionCount -= 1;
-            t = millis();
         }
         vTaskSuspend(motorsTask);
     }

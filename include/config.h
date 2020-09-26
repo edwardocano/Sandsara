@@ -153,6 +153,7 @@
 #define ACCELERATION            400.0
 #define ACCEL_THRESHOLD         500.0
 #define SAFE_SPEED              1.0
+#define MAX_STEPS_PER_INSTRUCTION 100.0
 
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0
