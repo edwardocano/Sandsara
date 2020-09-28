@@ -248,9 +248,10 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 else{
                     times[pointer] = time2;
                 }
-                /*if (times[pointer] > 0.03){
+                //in order to evoid abrupt increses of acceleration, we limit the time to 30 milliseconds
+                if (times[pointer] > 0.03){
                     times[pointer] = 0.03;
-                }*/
+                }
                 millimeterSpeed = ACCELERATION * times[pointer] + millimeterSpeed;
                 if (millimeterSpeed > romGetSpeedMotor()){
                     millimeterSpeed = romGetSpeedMotor();
