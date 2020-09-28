@@ -25,6 +25,8 @@ double m[no_picos * 2], b[no_picos * 2];
     double  oldSpeed1 = 0, oldSpeed2 = 0;
     bool    starts = false;
     long    maxStepsGlobal;
+    void updateVariablesToMovingThread();
+    double greaterValue(double , double );
     
 #endif
 //====Extern varibales====
@@ -194,14 +196,9 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 Serial.println(info2);*/
 
                 if ((accel1 > ACCEL_THRESHOLD) || (accel2 > ACCEL_THRESHOLD)){
-                    double maxAccel;
-                    if (accel1 > accel2){
-                        maxAccel = accel1;
-                    }
-                    else{
-                        maxAccel = accel2;
-                    }
-                    double safeSpeed = millimeterSpeed / (maxAccel/double(ACCEL_THRESHOLD));
+                    double maxAccel, safeSpeed;
+                    maxAccel = greaterValue(accel1, accel2);
+                    safeSpeed = millimeterSpeed / (maxAccel/double(ACCEL_THRESHOLD));
                     if (safeSpeed < SAFE_SPEED){
                         safeSpeed = SAFE_SPEED;
                     }
@@ -224,10 +221,6 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                         }
                     }
                 }
-                /*else{
-                    problemPointer[pointer] = false;
-                    increment[pointer] = true;
-                }*/
                 pathSpeed[pointer] = millimeterSpeed;
                 
                 //calcular velocidades del siguiente paso.
@@ -239,7 +232,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 stepps.moveTo(positions);
                 currentSpeed1 = stepper1Aux.speed();
                 currentSpeed2 = stepper2Aux.speed();
-                maxMSpeed[pointer] = maxSpeed;
+                //maxMSpeed[pointer] = maxSpeed;
                 
                 if (currentSpeed1 != 0){
                     time1 = steps_of_q1/currentSpeed1;
@@ -252,13 +245,12 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 if (time1 > time2){
                     times[pointer] = time1;
                 }
-                else
-                {
+                else{
                     times[pointer] = time2;
                 }
-                if (times[pointer] > 0.03){
+                /*if (times[pointer] > 0.03){
                     times[pointer] = 0.03;
-                }
+                }*/
                 millimeterSpeed = ACCELERATION * times[pointer] + millimeterSpeed;
                 if (millimeterSpeed > romGetSpeedMotor()){
                     millimeterSpeed = romGetSpeedMotor();
@@ -287,11 +279,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                     while (eTaskGetState(motorsTask) != 3){
                         continue;
                     }
-                    q1StepsGlobal = q1StepsP[currentPointer];
-                    q2StepsGlobal = q2StepsP[currentPointer];
-                    distanceGlobal = distanceP[currentPointer];
-                    maxStepsGlobal = maxStepsArray[currentPointer];
-                    maxPathSpeedGlobal = pathSpeed[currentPointer];
+                    updateVariablesToMovingThread();
                     startMovement = true;
                     
                     vTaskResume(motorsTask);
@@ -336,11 +324,8 @@ void Motors::completePath(){
         if (currentPointer == pointer){
             break;
         }
-        q1StepsGlobal = q1StepsP[currentPointer];
-        q2StepsGlobal = q2StepsP[currentPointer];
-        distanceGlobal = distanceP[currentPointer];
-        maxStepsGlobal = maxStepsArray[currentPointer];
-        maxPathSpeedGlobal = pathSpeed[currentPointer];
+        updateVariablesToMovingThread();
+        
         startMovement = true;
         
         vTaskResume(motorsTask);
@@ -358,6 +343,21 @@ void Motors::completePath(){
     Serial.println(q2_current);
     oldSpeed1 = 0;
     oldSpeed2 = 0;
+}
+
+void updateVariablesToMovingThread(){
+    q1StepsGlobal = q1StepsP[currentPointer];
+    q2StepsGlobal = q2StepsP[currentPointer];
+    distanceGlobal = distanceP[currentPointer];
+    maxStepsGlobal = maxStepsArray[currentPointer];
+    maxPathSpeedGlobal = pathSpeed[currentPointer];
+}
+
+double greaterValue(double a, double b){
+    if (a > b){
+        return a;
+    }
+    return b;
 }
 /**
  * @brief Se usa esta funcion para avanzar de la posicion actual a un punto nuevo en linea recta por medio de puntos equidistantes a un 1 mm.
