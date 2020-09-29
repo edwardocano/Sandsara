@@ -37,6 +37,7 @@ class Motors {
         MultiStepper steppers;
         MultiStepper stepps;
         double millimeterSpeed = 15;
+        double _pathSpeed;
 
     private:
         double zCurrent;
@@ -45,6 +46,9 @@ class Motors {
         double x_home;
         double y_home;
         bool constantMotorSpeed = false;
+        double realSpeed1,realSpeed2;
+        double realQ1, realQ2;
+        bool speedChanging = false;
         
     public:
         Motors();
@@ -70,7 +74,14 @@ class Motors {
         double module(double , double , double , double );
         int position();
         void completePath();
-        
+        void setRealQ1(double );
+        void setRealQ2(double );
+        double getRealQ1();
+        double getRealQ2();
+        void stopAndResetPositions();
+        void setRealSpeed1(double );
+        void setRealSpeed2(double ); 
+
     private:
         void moveInterpolateTo(double ,double ,double ,bool );
         void moveSteps(long, long, double);

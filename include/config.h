@@ -150,7 +150,7 @@
 #define OUTOFTIME_BLUETOOTH     20000
 #define NORMAL_CURRENT          600
 #define CURRENT_IN_CALIBRATION  600
-#define ACCELERATION            400.0
+//#define ACCELERATION            400.0
 #define ACCEL_THRESHOLD         500.0
 #define SAFE_SPEED              1.0
 #define MAX_STEPS_PER_INSTRUCTION 100.0

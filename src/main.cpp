@@ -814,8 +814,10 @@ int runFile(String fileName){
  */
 void goHomeSpiral(){
     //delay(200);
+    Sandsara.stopAndResetPositions();
     float currentModule = Sandsara.getCurrentModule();
     availableDeceleration = true;
+    Sandsara.setSpeed(SPEED_TO_CENTER);
     if (currentModule < DISTANCIA_MAX / sqrt(2)){
         goCenterSpiral(false);
     }
@@ -833,7 +835,6 @@ void goHomeSpiral(){
  * 
  */
 void goCenterSpiral(bool stop){
-    Sandsara.setSpeed(SPEED_TO_CENTER);
     stopProgramChangeGlobal = stop;
     spiralGoTo(0,PI/2);
     stopProgramChangeGlobal = true;
@@ -845,7 +846,6 @@ void goCenterSpiral(bool stop){
  * 
  */
 void goEdgeSpiral(bool stop){
-    Sandsara.setSpeed(SPEED_TO_CENTER);
     stopProgramChangeGlobal = stop;
     spiralGoTo(DISTANCIA_MAX,0);
     stopProgramChangeGlobal = true;
@@ -955,12 +955,6 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     }
     xAux = zNext * cos(thetaNext);
     yAux = zNext * sin(thetaNext);
-    if (xAux == 0  && yAux ==0){
-        Serial.print("xAux");
-        Serial.println(xAux, 20);
-        Serial.print("yAux");
-        Serial.println(yAux, 20);
-    }
 
     Sandsara.moveTo(xAux, yAux, littleMovement);
     Sandsara.setThetaCurrent(thetaNext);
@@ -1057,10 +1051,12 @@ void executeCode(int errorCode){
     else if (errorCode == 160){
         changePositionList = true;
         changeProgram = false;
+        
     }
     else if (errorCode == 170){
         changeProgram = true;
         changePositionList = false;
+        
     }
     else if (errorCode == 190){
         incrementIndexGlobal = romGetIncrementIndexPallete();
@@ -1742,7 +1738,7 @@ int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matrix){
  * @note La distancia se mide en milimetros 
  */
 
-extern int      maxPathSpeedGlobal;
+extern double      maxPathSpeedGlobal;
 extern long     maxStepsGlobal;
 void moveSteps(void* pvParameters)
 { 
@@ -1750,8 +1746,12 @@ void moveSteps(void* pvParameters)
     float maxSpeed;
     long q1Steps, q2Steps;
     double distance;
-    int speedWithDelay = romGetSpeedMotor();
+    double pathSpeed = romGetSpeedMotor();
     long maxSteps;
+    //this initialization has to be performed after Sandsara.init() 
+    double q1Current = Sandsara.q1_current, q2Current = Sandsara.q2_current;
+    Sandsara.setRealQ1(q1Current);
+    Sandsara.setRealQ2(q2Current);
     //double milimiterSpeed = romGetSpeedMotor();
     for (;;){
         if (startMovement){
@@ -1759,14 +1759,14 @@ void moveSteps(void* pvParameters)
             q2Steps = q2StepsGlobal;
             distance = distanceGlobal;
             #ifdef IMPLEMENT_ACCELERATION
-                speedWithDelay = maxPathSpeedGlobal;
+                pathSpeed = maxPathSpeedGlobal;
                 maxSteps = maxStepsGlobal;
             #endif
             startMovement = false;
             
-            //Serial.println(speedWithDelay);
+            //Serial.println(pathSpeed);
             #ifdef IMPLEMENT_ACCELERATION
-                //speedWithDelay
+                //pathSpeed
             #endif
             #ifndef IMPLEMENT_ACCELERATION
                 if (abs(q1Steps) > abs(q2Steps + q1Steps)){
@@ -1778,7 +1778,7 @@ void moveSteps(void* pvParameters)
                 maxSpeed = (maxSpeed / distance) * Sandsara.millimeterSpeed;
             #endif
              #ifdef IMPLEMENT_ACCELERATION
-                maxSpeed = (maxSteps / distance) * speedWithDelay;
+                maxSpeed = (maxSteps / distance) * pathSpeed;
             #endif
             if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
                 maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;
@@ -1797,15 +1797,23 @@ void moveSteps(void* pvParameters)
             positions[1] = Sandsara.stepper2.currentPosition() + q2Steps + q1Steps;
             #ifndef DISABLE_MOTORS
                 Sandsara.steppers.moveTo(positions);
-                /*String info1;
+                String info1;
                 String info2;
                 info1 = "1:" + String(int(Sandsara.stepper1.speed())) + "," + String(q1Steps) + ",1";
-                info2 = "2:" + String(int(Sandsara.stepper2.speed())) + "," + String(q2Steps) + "," + String(speedWithDelay);
+                info2 = "2:" + String(int(Sandsara.stepper2.speed())) + "," + String(q2Steps) + "," + String(pathSpeed);
                 Serial.println(info1);
-                Serial.println(info2);*/
+                Serial.println(info2);
                 //Serial.flush();
+                Sandsara.setRealSpeed1(Sandsara.stepper1.speed());
+                Sandsara.setRealSpeed2(Sandsara.stepper2.speed());
                 Sandsara.steppers.runSpeedToPosition();
             #endif
+            q1Current += Sandsara.degrees_per_step * q1Steps;
+            q2Current += Sandsara.degrees_per_step * q2Steps;
+            q1Current = Motors::normalizeAngle(q1Current);
+            q2Current = Motors::normalizeAngle(q2Current);
+            Sandsara.setRealQ1(q1Current);
+            Sandsara.setRealQ2(q2Current);
         }
         vTaskSuspend(motorsTask);
     }

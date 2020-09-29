@@ -7,18 +7,18 @@ unsigned long timeMotor = 0;
 
 double m[no_picos * 2], b[no_picos * 2];
 #ifdef IMPLEMENT_ACCELERATION
-    #define SAMPLES 150
+    #define SAMPLES 50
     double  speedPointer[SAMPLES];
     long    q1StepsP[SAMPLES];
     long    q2StepsP[SAMPLES];
     double  distanceP[SAMPLES];
-    int     pathSpeed[SAMPLES];
+    double     pathSpeed[SAMPLES];
     double  times[SAMPLES];
     double  maxMSpeed[SAMPLES];
     long    maxStepsArray[SAMPLES];
     double  time1;
     double  time2;
-    int      maxPathSpeedGlobal;
+    double      maxPathSpeedGlobal;
     int     pointer = 0, currentPointer = 0;
     long    positions[2];
     double  currentSpeed1, currentSpeed2;
@@ -73,6 +73,10 @@ void Motors::moveTo(double x, double y, bool littleMovement)
 {
     double q1, q2, distance;
     long steps_of_q1, steps_of_q2;
+    /*if (speedChanging){
+        stopAndResetPositions();
+        speedChanging = false;
+    }*/
     if (pauseModeGlobal){
         while (pauseModeGlobal)
         {
@@ -101,6 +105,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
 #ifdef IMPLEMENT_ACCELERATION
             long posLong[2];
             double posConstrained[2];
+            double ACCELERATION;
             posLong[0] = 0;
             posLong[1] = 0;
             posConstrained[0] = 0;
@@ -111,7 +116,8 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             int maxSteps;
             long stepsQ1Og = steps_of_q1;
             long stepsQ2Og = steps_of_q2;
-            double momentaryPathSpeed = romGetSpeedMotor();
+            double momentaryPathSpeed = millimeterSpeed;
+            ACCELERATION = momentaryPathSpeed * 2.5;
             if (abs(steps_of_q1) > abs(steps_of_q1 + steps_of_q2)){
                 maxSteps = abs(steps_of_q1);
             }
@@ -122,7 +128,6 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING){
                 distance = maxSteps/double(MAX_STEPS_PER_SECOND * MICROSTEPPING)*momentaryPathSpeed;
             }
-
             if(abs(steps_of_q2) > abs(steps_of_q1)){
                 factor = fabs((steps_of_q2)/MAX_STEPS_PER_INSTRUCTION);
             }
@@ -161,7 +166,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
 
                 stepper1Aux.setCurrentPosition(0);
                 stepper2Aux.setCurrentPosition(0);
-                maxSpeed = (maxSteps / distance) * millimeterSpeed;
+                maxSpeed = (maxSteps / distance) * _pathSpeed;
                 if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
                     maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;
                 stepper1Aux.setMaxSpeed(maxSpeed);
@@ -191,18 +196,18 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                     info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + "," + String(factorInt);//",0";
                 }
                 
-                info2 = "2:" + String(int(currentSpeed2)) + "," + String(positions[1]) + "," + String(int(millimeterSpeed));
+                info2 = "2:" + String(int(currentSpeed2)) + "," + String(positions[1]) + "," + String(int(_pathSpeed));
                 Serial.println(info1);
                 Serial.println(info2);*/
 
                 if ((accel1 > ACCEL_THRESHOLD) || (accel2 > ACCEL_THRESHOLD)){
                     double maxAccel, safeSpeed;
                     maxAccel = greaterValue(accel1, accel2);
-                    safeSpeed = millimeterSpeed / (maxAccel/double(ACCEL_THRESHOLD));
-                    if (safeSpeed < SAFE_SPEED){
+                    safeSpeed = _pathSpeed / (maxAccel/double(ACCEL_THRESHOLD));
+                    /*if (safeSpeed < SAFE_SPEED){
                         safeSpeed = SAFE_SPEED;
-                    }
-                    millimeterSpeed = safeSpeed;
+                    }*/
+                    _pathSpeed = safeSpeed;
                     int i=pointer-1; 
                     if (i < 0){
                         i = SAMPLES - 1;
@@ -221,10 +226,10 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                         }
                     }
                 }
-                pathSpeed[pointer] = millimeterSpeed;
+                pathSpeed[pointer] = _pathSpeed;
                 
                 //calcular velocidades del siguiente paso.
-                maxSpeed = (maxSteps / distance) * millimeterSpeed;
+                maxSpeed = (maxSteps / distance) * _pathSpeed;
                 if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
                     maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;
                 stepper1Aux.setMaxSpeed(maxSpeed);
@@ -252,9 +257,9 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 if (times[pointer] > 0.03){
                     times[pointer] = 0.03;
                 }
-                millimeterSpeed = ACCELERATION * times[pointer] + millimeterSpeed;
-                if (millimeterSpeed > romGetSpeedMotor()){
-                    millimeterSpeed = romGetSpeedMotor();
+                _pathSpeed = ACCELERATION * times[pointer] + _pathSpeed;
+                if (_pathSpeed > millimeterSpeed){
+                    _pathSpeed = millimeterSpeed;
                 }
                 
                 //Serial.flush();
@@ -277,7 +282,12 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 }
                 
                 if (starts){
+                    unsigned long t = millis();
                     while (eTaskGetState(motorsTask) != 3){
+                        //Serial.println("delay de 2 segundos");
+                        if (millis() - t > 500){
+                            delay(1);
+                        }
                         continue;
                     }
                     updateVariablesToMovingThread();
@@ -338,12 +348,32 @@ void Motors::completePath(){
     starts = false;
     currentPointer = 0;
     pointer = 0;
-    Serial.print("q1: ");
-    Serial.println(q1_current);
-    Serial.print("q2: ");
-    Serial.println(q2_current);
     oldSpeed1 = 0;
     oldSpeed2 = 0;
+}
+/**
+ * @brief 
+ */
+void Motors::stopAndResetPositions(){
+    Serial.println("stopAndResetPositions");
+    while (eTaskGetState(motorsTask) != 3){
+        delay(1);
+        continue;
+    }
+    Serial.println("salio de while");    
+    currentPointer = 0;
+    pointer = 0;
+    starts = false;
+    oldSpeed1 = realSpeed1;
+    oldSpeed2 = realSpeed2;
+    q1_current = realQ1;
+    q2_current = realQ2;
+    x_current = dkX(q1_current, q2_current);
+    y_current = dkY(q1_current, q2_current);
+    Serial.print("q1_current");
+    Serial.println(q1_current);
+    Serial.print("q2_current");
+    Serial.println(q2_current);
 }
 
 void updateVariablesToMovingThread(){
@@ -459,6 +489,8 @@ double Motors::getSpeed(){
  */
 void Motors::setSpeed(int speed){
     millimeterSpeed = speed;
+    _pathSpeed = speed;
+    speedChanging = true;
 }
 
 /**
@@ -479,6 +511,54 @@ void Motors::setZCurrent(double z)
 void Motors::setThetaCurrent(double theta)
 {
     thetaCurrent = theta;
+}
+
+/**
+ * @brief moficica el miembro realQ1.
+ * @param q1 es el valor que se le va a asignar a la variable miembro realQ1.
+ */
+void Motors::setRealQ1(double q1){
+    realQ1 = q1;
+}
+
+/**
+ * @brief moficica el miembro realQ2.
+ * @param q2 es el valor que se le va a asignar a la variable miembro realQ1.
+ */
+void Motors::setRealQ2(double q2){
+    realQ2 = q2;
+}
+
+/**
+ * @brief moficica el miembro realQ1.
+ * @return la variable miembro realQ1.
+ */
+double Motors::getRealQ1(){
+    return realQ1;
+}
+
+/**
+ * @brief moficica el miembro realQ1.
+ * @return la variable miembro realQ2.
+ */
+double Motors::getRealQ2(){
+    return realQ2;
+}
+
+/**
+ * @brief moficica el miembro realSpeed1.
+ * @param speed1 es el valor que se le va a asignar a la variable miembro realQ1.
+ */
+void Motors::setRealSpeed1(double speed1){
+    realSpeed1 = speed1;
+}
+
+/**
+ * @brief moficica el miembro realSpeed2.
+ * @param speed2 es el valor que se le va a asignar a la variable miembro realQ1.
+ */
+void Motors::setRealSpeed2(double speed2){
+    realSpeed2 = speed2;
 }
 
 //====Configuration Methods====
