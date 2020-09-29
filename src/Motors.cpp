@@ -16,6 +16,7 @@ double m[no_picos * 2], b[no_picos * 2];
     double  times[SAMPLES];
     double  maxMSpeed[SAMPLES];
     long    maxStepsArray[SAMPLES];
+    bool    speedChanged[SAMPLES];
     double  time1;
     double  time2;
     double      maxPathSpeedGlobal;
@@ -116,6 +117,16 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             int maxSteps;
             long stepsQ1Og = steps_of_q1;
             long stepsQ2Og = steps_of_q2;
+            
+            if (speedChanging){
+                speedChanged[pointer] = true;
+                speedChanging = false;
+            }
+            else
+            {
+                speedChanged[pointer] = false;
+            }
+            
             double momentaryPathSpeed = millimeterSpeed;
             ACCELERATION = momentaryPathSpeed * 2.5;
             if (abs(steps_of_q1) > abs(steps_of_q1 + steps_of_q2)){
@@ -183,7 +194,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 //revisar si hay problema con el movimiento brusco
                 double accel1 = fabs(currentSpeed1 - oldSpeed1);
                 double accel2 = fabs(currentSpeed2 - oldSpeed2);
-                if (k == factorInt){
+                if (k == factorInt || speedChanged[pointer]){
                     accel1 = 0;
                     accel2 = 0;
                 }
@@ -218,6 +229,9 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                         while (true)
                         {
                             newSpeed = ACCELERATION*times[i] + newSpeed;
+                            if (speedChanged[i]){
+                                break;
+                            }
                             if (newSpeed < pathSpeed[i]){ pathSpeed[i] = newSpeed; }
                             else{ break; }
                             if (i == currentPointer){ break; }
