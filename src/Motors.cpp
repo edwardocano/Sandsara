@@ -28,6 +28,9 @@ double m[no_picos * 2], b[no_picos * 2];
     long    maxStepsGlobal;
     void updateVariablesToMovingThread();
     double greaterValue(double , double );
+    double xBuffer[SAMPLES], yBuffer[SAMPLES];
+    int xyPointer = 0, cxyPointer = 0;
+    int xyPointerArray[SAMPLES];
     
 #endif
 //====Extern varibales====
@@ -104,6 +107,10 @@ void Motors::moveTo(double x, double y, bool littleMovement)
         if (!(steps_of_q1 == 0 && steps_of_q2 == 0))// || littleMovement)
         { 
 #ifdef IMPLEMENT_ACCELERATION
+            //save positions in Buffer in case of restoring position
+            xBuffer[xyPointer] = x;
+            yBuffer[xyPointer] = y;
+
             long posLong[2];
             double posConstrained[2];
             double ACCELERATION;
@@ -171,6 +178,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 q2StepsP[pointer] = steps_of_q2;
                 distanceP[pointer] = distance;
                 maxStepsArray[pointer] = maxSteps;
+                xyPointerArray[pointer] = xyPointer;
 
                 positions[0] = steps_of_q1;
                 positions[1] = steps_of_q2 + steps_of_q1;
@@ -194,7 +202,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 //revisar si hay problema con el movimiento brusco
                 double accel1 = fabs(currentSpeed1 - oldSpeed1);
                 double accel2 = fabs(currentSpeed2 - oldSpeed2);
-                if (k == factorInt || speedChanged[pointer]){
+                if (k == factorInt){// || speedChanged[pointer]){
                     accel1 = 0;
                     accel2 = 0;
                 }
@@ -229,9 +237,9 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                         while (true)
                         {
                             newSpeed = ACCELERATION*times[i] + newSpeed;
-                            if (speedChanged[i]){
+                            /*if (speedChanged[i]){
                                 break;
-                            }
+                            }*/
                             if (newSpeed < pathSpeed[i]){ pathSpeed[i] = newSpeed; }
                             else{ break; }
                             if (i == currentPointer){ break; }
@@ -308,6 +316,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                     startMovement = true;
                     
                     vTaskResume(motorsTask);
+                    //
                     currentPointer += 1;
                     if (currentPointer >= SAMPLES){
                         currentPointer = 0;
@@ -333,6 +342,10 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 y_current = dkY(q1_current, q2_current);
             }
             
+            xyPointer += 1;
+            if (xyPointer >= SAMPLES){
+                xyPointer = 0;
+            }
         }
     }
 }
@@ -384,9 +397,9 @@ void Motors::stopAndResetPositions(){
     q2_current = realQ2;
     x_current = dkX(q1_current, q2_current);
     y_current = dkY(q1_current, q2_current);
-    Serial.print("q1_current");
+    Serial.print("q1_current ");
     Serial.println(q1_current);
-    Serial.print("q2_current");
+    Serial.print("q2_current ");
     Serial.println(q2_current);
 }
 
@@ -396,6 +409,46 @@ void updateVariablesToMovingThread(){
     distanceGlobal = distanceP[currentPointer];
     maxStepsGlobal = maxStepsArray[currentPointer];
     maxPathSpeedGlobal = pathSpeed[currentPointer];
+    cxyPointer = xyPointerArray[currentPointer];
+}
+
+void Motors::resetSpeeds(){
+    int cxyPointerAux = cxyPointer;
+    int xyPointerAux = xyPointer;
+
+    double xBufferAux[SAMPLES], yBufferAux[SAMPLES];
+    stopAndResetPositions();
+    Serial.print("xActual: ");
+    Serial.println(x_current);
+    Serial.print("yActual: ");
+    Serial.println(y_current);
+
+    Serial.print("cxyPointer: ");
+    Serial.println(cxyPointer);
+
+    Serial.print("xBuffer: ");
+    Serial.println(xBuffer[cxyPointer]);
+    Serial.print("yBuffer: ");
+    Serial.println(yBuffer[cxyPointer]);
+    cxyPointer = 0;
+    xyPointer = 0;
+    for (int i = 0; i < SAMPLES; i++){
+        xBufferAux[i] = xBuffer[i];
+        yBufferAux[i] = yBuffer[i];
+    }
+    while (true)
+    {
+        cxyPointerAux += 1;
+        if (cxyPointerAux >= SAMPLES){
+            cxyPointerAux = 0;
+        }
+        if (cxyPointerAux == xyPointerAux){
+            break;
+        }
+        moveTo(xBufferAux[cxyPointerAux], yBufferAux[cxyPointerAux]);
+        
+    }
+    Serial.println("Salio de reset");
 }
 
 double greaterValue(double a, double b){

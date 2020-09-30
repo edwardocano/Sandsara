@@ -81,7 +81,8 @@ class Motors {
         void stopAndResetPositions();
         void setRealSpeed1(double );
         void setRealSpeed2(double ); 
-
+        void resetSpeeds();
+        
     private:
         void moveInterpolateTo(double ,double ,double ,bool );
         void moveSteps(long, long, double);

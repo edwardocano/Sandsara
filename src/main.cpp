@@ -59,6 +59,7 @@ bool    suspensionModeGlobal = false;
 bool    startMovement = false;
 long    q1StepsGlobal, q2StepsGlobal;
 double  distanceGlobal;
+bool speedChangedMain = false;
 //====
 //====Pallete Color Variables====
 CRGBPalette16   NO_SD_PALLETE;
@@ -664,6 +665,8 @@ int runFile(String fileName){
     while (true)
     {
         //Serial.println("ejecutara nueva posicion");
+        //====check if speed change====
+        
         //====check if you want to change the path====
         if (changePositionList){
             changePositionList = false;
@@ -731,6 +734,11 @@ int runFile(String fileName){
         //====According to type of file the functions moveTo or movePolarTo will be executed====
         if (file.fileType == 1 || file.fileType == 3)
         {
+            if (speedChangedMain){
+                Serial.println("entro a ese pedo");
+                Sandsara.resetSpeeds();
+                speedChangedMain = false;
+            }
             Motors::rotate(component_1, component_2, -couplingAngle);
             distance = Sandsara.module(component_1, component_2, Sandsara.x_current, Sandsara.y_current);
             if (distance > 1.1)
@@ -885,6 +893,11 @@ int moveInterpolateTo(double x, double y, double distance)
 	
     for (int i = 1; i <= intervals; i++)
     {
+        if (speedChangedMain){
+            Serial.println("entro a ese pedo");
+            Sandsara.resetSpeeds();
+            speedChangedMain = false;
+        }
         //====check if this function has to stop because of program has change, pause or stop. or playlist has changed====
         if ((changePositionList || changeProgram || suspensionModeGlobal || rewindPlaylist) && stopProgramChangeGlobal){
             return 0;
@@ -933,6 +946,11 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     deltaZ = (zNext - zCurrent) / slices;
     for (long i = 0; i < slices; i++)
     {
+        if (speedChangedMain){
+            Serial.println("entro a ese pedo");
+            Sandsara.resetSpeeds();
+            speedChangedMain = false;
+        }
         ///====comprobar si se desea cambiar de archivo o suspender o cambiar playlist u orden====
         if ((changePositionList || changeProgram || suspensionModeGlobal || rewindPlaylist) && stopProgramChangeGlobal){
             return 0;
@@ -990,9 +1008,11 @@ void executeCode(int errorCode){
         romSetPallete(ledModeGlobal);
     }
     else if (errorCode == 50){
+        Serial.println("code 50");
         int speed = SandsaraBt.getSpeed();
         Sandsara.setSpeed(speed);
         romSetSpeedMotor(speed);
+        speedChangedMain = true;
     }
     else if (errorCode == 60){
         int periodLed = SandsaraBt.getPeriodLed();
