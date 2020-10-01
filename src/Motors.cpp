@@ -31,6 +31,7 @@ double m[no_picos * 2], b[no_picos * 2];
     double xBuffer[SAMPLES], yBuffer[SAMPLES];
     int xyPointer = 0, cxyPointer = 0;
     int xyPointerArray[SAMPLES];
+    bool lowerSpeed = false;
     
 #endif
 //====Extern varibales====
@@ -202,9 +203,10 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 //revisar si hay problema con el movimiento brusco
                 double accel1 = fabs(currentSpeed1 - oldSpeed1);
                 double accel2 = fabs(currentSpeed2 - oldSpeed2);
-                if (k == factorInt){// || speedChanged[pointer]){
+                if (k == factorInt || lowerSpeed){// || speedChanged[pointer]){
                     accel1 = 0;
                     accel2 = 0;
+                    lowerSpeed = false;
                 }
                 /*String info1;
                 String info2;
@@ -397,10 +399,10 @@ void Motors::stopAndResetPositions(){
     q2_current = realQ2;
     x_current = dkX(q1_current, q2_current);
     y_current = dkY(q1_current, q2_current);
-    Serial.print("q1_current ");
+    /*Serial.print("q1_current ");
     Serial.println(q1_current);
     Serial.print("q2_current ");
-    Serial.println(q2_current);
+    Serial.println(q2_current);*/
 }
 
 void updateVariablesToMovingThread(){
@@ -418,7 +420,7 @@ void Motors::resetSpeeds(){
 
     double xBufferAux[SAMPLES], yBufferAux[SAMPLES];
     stopAndResetPositions();
-    Serial.print("xActual: ");
+    /*Serial.print("xActual: ");
     Serial.println(x_current);
     Serial.print("yActual: ");
     Serial.println(y_current);
@@ -429,13 +431,14 @@ void Motors::resetSpeeds(){
     Serial.print("xBuffer: ");
     Serial.println(xBuffer[cxyPointer]);
     Serial.print("yBuffer: ");
-    Serial.println(yBuffer[cxyPointer]);
+    Serial.println(yBuffer[cxyPointer]);*/
     cxyPointer = 0;
     xyPointer = 0;
     for (int i = 0; i < SAMPLES; i++){
         xBufferAux[i] = xBuffer[i];
         yBufferAux[i] = yBuffer[i];
     }
+
     while (true)
     {
         cxyPointerAux += 1;
@@ -446,7 +449,7 @@ void Motors::resetSpeeds(){
             break;
         }
         moveTo(xBufferAux[cxyPointerAux], yBufferAux[cxyPointerAux]);
-        
+        lowerSpeed = false;
     }
     Serial.println("Salio de reset");
 }
@@ -555,6 +558,9 @@ double Motors::getSpeed(){
  * @param speed es la nueva valocidad, en milimetros por segundo, que va a tener de SandSara.
  */
 void Motors::setSpeed(int speed){
+    if (millimeterSpeed > speed){
+        lowerSpeed = true;
+    }
     millimeterSpeed = speed;
     _pathSpeed = speed;
     speedChanging = true;
