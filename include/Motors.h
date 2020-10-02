@@ -23,73 +23,84 @@
  */
 class Motors {
     public:
-        int microstepping;
-        double degrees_per_step;
-        double couplingAngle;
-        double x_current;
-        double y_current;
-        double q1_current;
-        double q2_current;
-        AccelStepper stepper1;
-        AccelStepper stepper2;
-        AccelStepper stepper1Aux;
-        AccelStepper stepper2Aux;
-        MultiStepper steppers;
-        MultiStepper stepps;
-        double millimeterSpeed = 15;
-        double _pathSpeed;
-
+        AccelStepper    stepper1;
+        AccelStepper    stepper2;
+        MultiStepper    steppers;
+        int     microstepping;
+        double  degrees_per_step;
+        double  couplingAngle;
+        double  x_current;
+        double  y_current;
+        double  q1_current;
+        double  q2_current;
+        double  millimeterSpeed = 15;
+        double  _pathSpeed;
+        
     private:
-        double zCurrent;
-        double thetaCurrent;
-        long maxSpeed;        
-        double x_home;
-        double y_home;
-        bool constantMotorSpeed = false;
-        double realSpeed1,realSpeed2;
-        double realQ1, realQ2;
-        bool speedChanging = false;
+        double  zCurrent;
+        double  thetaCurrent;
+        long    maxSpeed;        
+        double  x_home;
+        double  y_home;
+        bool    constantMotorSpeed = false;
+        double  realSpeed1,realSpeed2;
+        double  realQ1, realQ2;
+        bool    speedChanging = false;
+        double  oldSpeed1 = 0, oldSpeed2 = 0;
+
+        long    q1StepsBuffer[SAMPLES];
+        long    q2StepsBuffer[SAMPLES];
+        double  distanceBuffer[SAMPLES];
+        double  pathSpeedBuffer[SAMPLES];
+        double  timesBuffer[SAMPLES];
+        long    maxStepsBuffer[SAMPLES];
+        bool    fullBuffer = false;
+
+        double  xBuffer[SAMPLES], yBuffer[SAMPLES];
+        int     pointerBuffer = 0, cPointerBuffer = 0;
+        int     xyPointer = 0, cxyPointer = 0;
+        int     xyPointerBuffer[SAMPLES];
         
     public:
         Motors();
-        void moveTo(double x, double y, bool = false);
-        void movePolarTo(double , double ); //(modulo,angulo)
-        void init(double = 0,double = 0);
-        void goHome();
-        void setHomePosition();
-        void setCouplingAngle(double );
-        double getCurrentModule();
-        double getCurrentAngle();
-        void setZCurrent(double );
-        void setThetaCurrent(double );
-        void setSpeed(int );
-        double getSpeed();
-        double getZCurrent();
-        double getThetaCurrent();
-        static void rotate(double& ,double& ,double );
-        static double zPolar(double , double );
-        static double thetaPolar(double , double );
-        static double normalizeAngle(double );
-        static double arcLength(double ,double , double);
-        double module(double , double , double , double );
-        int position();
-        void completePath();
-        void setRealQ1(double );
-        void setRealQ2(double );
-        double getRealQ1();
-        double getRealQ2();
-        void stopAndResetPositions();
-        void setRealSpeed1(double );
-        void setRealSpeed2(double ); 
-        void resetSpeeds();
+        void    moveTo(double x, double y, bool = false);
+        void    movePolarTo(double , double ); //(modulo,angulo)
+        void    init(double = 0,double = 0);
+        void    goHome();
+        void    setHomePosition();
+        void    setCouplingAngle(double );
+        double  getCurrentModule();
+        double  getCurrentAngle();
+        void    setZCurrent(double );
+        void    setThetaCurrent(double );
+        void    setSpeed(int );
+        double  getSpeed();
+        double  getZCurrent();
+        double  getThetaCurrent();
+        static  void    rotate(double& ,double& ,double );
+        static  double  zPolar(double , double );
+        static  double  thetaPolar(double , double );
+        static  double  normalizeAngle(double );
+        static  double  arcLength(double ,double , double);
+        double  module(double , double , double , double );
+        int     position();
+        void    completePath();
+        void    setRealQ1(double );
+        void    setRealQ2(double );
+        double  getRealQ1();
+        double  getRealQ2();
+        void    stopAndResetPositions();
+        void    setRealSpeed1(double );
+        void    setRealSpeed2(double ); 
+        void    resetSpeeds();
         
     private:
-        void moveInterpolateTo(double ,double ,double ,bool );
-        void moveSteps(long, long, double);
+        void    moveInterpolateTo(double ,double ,double ,bool );
+        void    moveSteps(long, long, double);
         //mathematics methods
-        long calculate_steps(double , double );
-        void calculate_line_equations();
-        double polarModule(double , double , double , double );
-
-        void ik(double , double , double* , double* );
+        long    calculate_steps(double , double );
+        void    calculate_line_equations();
+        double  polarModule(double , double , double , double );
+        void    updateVariablesToMovingThread();
+        void    ik(double , double , double* , double* );
 };

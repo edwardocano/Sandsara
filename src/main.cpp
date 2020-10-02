@@ -1823,7 +1823,6 @@ void moveSteps(void* pvParameters)
                 info2 = "2:" + String(int(Sandsara.stepper2.speed())) + "," + String(q2Steps) + "," + String(pathSpeed);
                 Serial.println(info1);
                 Serial.println(info2);
-                //Serial.flush();
                 Sandsara.setRealSpeed1(Sandsara.stepper1.speed());
                 Sandsara.setRealSpeed2(Sandsara.stepper2.speed());
                 Sandsara.steppers.runSpeedToPosition();

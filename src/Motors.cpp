@@ -7,33 +7,12 @@ unsigned long timeMotor = 0;
 
 double m[no_picos * 2], b[no_picos * 2];
 #ifdef IMPLEMENT_ACCELERATION
-    #define SAMPLES 50
-    double  speedPointer[SAMPLES];
-    long    q1StepsP[SAMPLES];
-    long    q2StepsP[SAMPLES];
-    double  distanceP[SAMPLES];
-    double     pathSpeed[SAMPLES];
-    double  times[SAMPLES];
-    double  maxMSpeed[SAMPLES];
-    long    maxStepsArray[SAMPLES];
-    bool    speedChanged[SAMPLES];
-    double  time1;
-    double  time2;
-    double      maxPathSpeedGlobal;
-    int     pointer = 0, currentPointer = 0;
-    long    positions[2];
-    double  currentSpeed1, currentSpeed2;
-    double  oldSpeed1 = 0, oldSpeed2 = 0;
-    bool    starts = false;
+    double  maxPathSpeedGlobal;
     long    maxStepsGlobal;
-    void updateVariablesToMovingThread();
-    double greaterValue(double , double );
-    double xBuffer[SAMPLES], yBuffer[SAMPLES];
-    int xyPointer = 0, cxyPointer = 0;
-    int xyPointerArray[SAMPLES];
-    bool lowerSpeed = false;
-    
+    double  greaterValue(double , double );
+    bool    lowerSpeed = false;
 #endif
+
 //====Extern varibales====
 extern bool     productType;
 extern bool     pauseModeGlobal;
@@ -41,8 +20,6 @@ extern bool     startMovement;
 extern long     q1StepsGlobal, q2StepsGlobal;
 extern double   distanceGlobal;
 extern int      romGetSpeedMotor();
-extern TMC2209Stepper  driver;
-extern TMC2209Stepper  driver2;
 extern TaskHandle_t    motorsTask;
 //====Function prototypes====
 double dkX(double , double );
@@ -77,11 +54,13 @@ Motors::Motors()
 void Motors::moveTo(double x, double y, bool littleMovement)
 {
     double q1, q2, distance;
-    long steps_of_q1, steps_of_q2;
-    /*if (speedChanging){
-        stopAndResetPositions();
-        speedChanging = false;
-    }*/
+    long steps_of_q1, steps_of_q2, positions[2];
+    double currentSpeed1, currentSpeed2;
+    MultiStepper stepps;
+    AccelStepper stepper1Aux;
+    AccelStepper stepper2Aux;
+    stepps.addStepper(stepper1Aux);
+    stepps.addStepper(stepper2Aux);
     if (pauseModeGlobal){
         while (pauseModeGlobal)
         {
@@ -108,13 +87,14 @@ void Motors::moveTo(double x, double y, bool littleMovement)
         if (!(steps_of_q1 == 0 && steps_of_q2 == 0))// || littleMovement)
         { 
 #ifdef IMPLEMENT_ACCELERATION
-            //save positions in Buffer in case of restoring position
+            //save positions in Buffer in case of restoring position when speed is changed
             xBuffer[xyPointer] = x;
             yBuffer[xyPointer] = y;
 
             long posLong[2];
             double posConstrained[2];
             double ACCELERATION;
+            double time1, time2;
             posLong[0] = 0;
             posLong[1] = 0;
             posConstrained[0] = 0;
@@ -126,14 +106,6 @@ void Motors::moveTo(double x, double y, bool littleMovement)
             long stepsQ1Og = steps_of_q1;
             long stepsQ2Og = steps_of_q2;
             
-            if (speedChanging){
-                speedChanged[pointer] = true;
-                speedChanging = false;
-            }
-            else
-            {
-                speedChanged[pointer] = false;
-            }
             
             double momentaryPathSpeed = millimeterSpeed;
             ACCELERATION = momentaryPathSpeed * 2.5;
@@ -175,11 +147,11 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                     continue;
                 }
 
-                q1StepsP[pointer] = steps_of_q1;
-                q2StepsP[pointer] = steps_of_q2;
-                distanceP[pointer] = distance;
-                maxStepsArray[pointer] = maxSteps;
-                xyPointerArray[pointer] = xyPointer;
+                q1StepsBuffer[pointerBuffer] = steps_of_q1;
+                q2StepsBuffer[pointerBuffer] = steps_of_q2;
+                distanceBuffer[pointerBuffer] = distance;
+                maxStepsBuffer[pointerBuffer] = maxSteps;
+                xyPointerBuffer[pointerBuffer] = xyPointer;
 
                 positions[0] = steps_of_q1;
                 positions[1] = steps_of_q2 + steps_of_q1;
@@ -203,7 +175,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 //revisar si hay problema con el movimiento brusco
                 double accel1 = fabs(currentSpeed1 - oldSpeed1);
                 double accel2 = fabs(currentSpeed2 - oldSpeed2);
-                if (k == factorInt || lowerSpeed){// || speedChanged[pointer]){
+                if (k == factorInt || lowerSpeed){
                     accel1 = 0;
                     accel2 = 0;
                     lowerSpeed = false;
@@ -225,32 +197,26 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                     double maxAccel, safeSpeed;
                     maxAccel = greaterValue(accel1, accel2);
                     safeSpeed = _pathSpeed / (maxAccel/double(ACCEL_THRESHOLD));
-                    /*if (safeSpeed < SAFE_SPEED){
-                        safeSpeed = SAFE_SPEED;
-                    }*/
                     _pathSpeed = safeSpeed;
-                    int i=pointer-1; 
+                    int i=pointerBuffer-1; 
                     if (i < 0){
                         i = SAMPLES - 1;
                     }
-                    if (pointer != currentPointer)
+                    if (pointerBuffer != cPointerBuffer)
                     {
                         double newSpeed = safeSpeed;
                         while (true)
                         {
-                            newSpeed = ACCELERATION*times[i] + newSpeed;
-                            /*if (speedChanged[i]){
-                                break;
-                            }*/
-                            if (newSpeed < pathSpeed[i]){ pathSpeed[i] = newSpeed; }
+                            newSpeed = ACCELERATION*timesBuffer[i] + newSpeed;
+                            if (newSpeed < pathSpeedBuffer[i]){ pathSpeedBuffer[i] = newSpeed; }
                             else{ break; }
-                            if (i == currentPointer){ break; }
+                            if (i == cPointerBuffer){ break; }
                             i -= 1;
                             if (i < 0){ i = SAMPLES - 1; }
                         }
                     }
                 }
-                pathSpeed[pointer] = _pathSpeed;
+                pathSpeedBuffer[pointerBuffer] = _pathSpeed;
                 
                 //calcular velocidades del siguiente paso.
                 maxSpeed = (maxSteps / distance) * _pathSpeed;
@@ -261,7 +227,6 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 stepps.moveTo(positions);
                 currentSpeed1 = stepper1Aux.speed();
                 currentSpeed2 = stepper2Aux.speed();
-                //maxMSpeed[pointer] = maxSpeed;
                 
                 if (currentSpeed1 != 0){
                     time1 = steps_of_q1/currentSpeed1;
@@ -272,16 +237,16 @@ void Motors::moveTo(double x, double y, bool littleMovement)
 
 
                 if (time1 > time2){
-                    times[pointer] = time1;
+                    timesBuffer[pointerBuffer] = time1;
                 }
                 else{
-                    times[pointer] = time2;
+                    timesBuffer[pointerBuffer] = time2;
                 }
                 //in order to evoid abrupt increses of acceleration, we limit the time to 30 milliseconds
-                if (times[pointer] > 0.03){
-                    times[pointer] = 0.03;
+                if (timesBuffer[pointerBuffer] > 0.03){
+                    timesBuffer[pointerBuffer] = 0.03;
                 }
-                _pathSpeed = ACCELERATION * times[pointer] + _pathSpeed;
+                _pathSpeed = ACCELERATION * timesBuffer[pointerBuffer] + _pathSpeed;
                 if (_pathSpeed > millimeterSpeed){
                     _pathSpeed = millimeterSpeed;
                 }
@@ -296,16 +261,16 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                     oldSpeed2 = currentSpeed2;
                 }
 
-                //incrementar pointer donde se esta guardando el dato
-                pointer += 1;
-                if (pointer >= SAMPLES - 1){
-                    starts = true;
+                //incrementar pointerBuffer donde se esta guardando el dato
+                pointerBuffer += 1;
+                if (pointerBuffer >= SAMPLES - 1){
+                    fullBuffer = true;
                 }
-                if (pointer >= SAMPLES){
-                    pointer = 0;
+                if (pointerBuffer >= SAMPLES){
+                    pointerBuffer = 0;
                 }
                 
-                if (starts){
+                if (fullBuffer){
                     unsigned long t = millis();
                     while (eTaskGetState(motorsTask) != 3){
                         //Serial.println("delay de 2 segundos");
@@ -319,9 +284,9 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                     
                     vTaskResume(motorsTask);
                     //
-                    currentPointer += 1;
-                    if (currentPointer >= SAMPLES){
-                        currentPointer = 0;
+                    cPointerBuffer += 1;
+                    if (cPointerBuffer >= SAMPLES){
+                        cPointerBuffer = 0;
                     }
                 }
 #endif
@@ -353,7 +318,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
 }
 
 /**
- * @brief execute the remaining steps
+ * @brief execute the remaining buffered steps. 
  */
 void Motors::completePath(){
     while (true)
@@ -361,7 +326,7 @@ void Motors::completePath(){
         while (eTaskGetState(motorsTask) != 3){
             continue;
         }
-        if (currentPointer == pointer){
+        if (cPointerBuffer == pointerBuffer){
             break;
         }
         updateVariablesToMovingThread();
@@ -369,30 +334,30 @@ void Motors::completePath(){
         startMovement = true;
         
         vTaskResume(motorsTask);
-        currentPointer += 1;
-        if (currentPointer >= SAMPLES){
-            currentPointer = 0;
+        cPointerBuffer += 1;
+        if (cPointerBuffer >= SAMPLES){
+            cPointerBuffer = 0;
         }
     }
-    starts = false;
-    currentPointer = 0;
-    pointer = 0;
+    fullBuffer = false;
+    cPointerBuffer = 0;
+    pointerBuffer = 0;
     oldSpeed1 = 0;
     oldSpeed2 = 0;
 }
 /**
- * @brief 
+ * @brief this function resets some variables and replace the position variables to the real positions of Sandsara.
  */
 void Motors::stopAndResetPositions(){
-    Serial.println("stopAndResetPositions");
+    //Serial.println("stopAndResetPositions");
     while (eTaskGetState(motorsTask) != 3){
         delay(1);
         continue;
     }
-    Serial.println("salio de while");    
-    currentPointer = 0;
-    pointer = 0;
-    starts = false;
+    //Serial.println("salio de while");    
+    cPointerBuffer = 0;
+    pointerBuffer = 0;
+    fullBuffer = false;
     oldSpeed1 = realSpeed1;
     oldSpeed2 = realSpeed2;
     q1_current = realQ1;
@@ -405,13 +370,13 @@ void Motors::stopAndResetPositions(){
     Serial.println(q2_current);*/
 }
 
-void updateVariablesToMovingThread(){
-    q1StepsGlobal = q1StepsP[currentPointer];
-    q2StepsGlobal = q2StepsP[currentPointer];
-    distanceGlobal = distanceP[currentPointer];
-    maxStepsGlobal = maxStepsArray[currentPointer];
-    maxPathSpeedGlobal = pathSpeed[currentPointer];
-    cxyPointer = xyPointerArray[currentPointer];
+void Motors::updateVariablesToMovingThread(){
+    q1StepsGlobal = q1StepsBuffer[cPointerBuffer];
+    q2StepsGlobal = q2StepsBuffer[cPointerBuffer];
+    distanceGlobal = distanceBuffer[cPointerBuffer];
+    maxStepsGlobal = maxStepsBuffer[cPointerBuffer];
+    maxPathSpeedGlobal = pathSpeedBuffer[cPointerBuffer];
+    cxyPointer = xyPointerBuffer[cPointerBuffer];
 }
 
 void Motors::resetSpeeds(){
@@ -563,7 +528,6 @@ void Motors::setSpeed(int speed){
     }
     millimeterSpeed = speed;
     _pathSpeed = speed;
-    speedChanging = true;
 }
 
 /**
@@ -649,8 +613,7 @@ void Motors::init(double xInit, double yInit)
     stepper2.setCurrentPosition(0);
     steppers.addStepper(stepper1);
     steppers.addStepper(stepper2);
-    stepps.addStepper(stepper1Aux);
-    stepps.addStepper(stepper2Aux);
+    
     ik(xInit, yInit, &q1, &q2);
     q1_current = q1;
     q2_current = q2;
