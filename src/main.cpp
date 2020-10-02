@@ -1445,7 +1445,7 @@ int romGetPositionList(){
     if (pList > MAX_POSITIONLIST){
         pList = 1;
     }
-    return 9;
+    return pList;
 }
 
 /**
@@ -1745,6 +1745,8 @@ int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matrix){
     return 0;
 }
 
+extern double   maxPathSpeedGlobal;
+extern long     maxStepsGlobal;
 /**
  * @brief mueve los motores 1 y 2.
  * 
@@ -1757,9 +1759,6 @@ int rgb2Interpolation(CRGBPalette256& pallete,uint8_t* matrix){
  * @param distance es la distancia que va a recorrer entre el punto actual y el punto despues del movimiento.
  * @note La distancia se mide en milimetros 
  */
-
-extern double      maxPathSpeedGlobal;
-extern long     maxStepsGlobal;
 void moveSteps(void* pvParameters)
 { 
     long positions[2];
