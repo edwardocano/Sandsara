@@ -85,15 +85,15 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * code06, significa que se solicita el cambio de velocidad de los leds.
  * code07, significa que se desea cambiar el nombre del bluetooth.
  * code08, significa que se desea entrar en modo de suspencion.
- * code09, significa que se desea pausar el programa.
+ * code09, significa que se desea pausar el path.
  * code10, significa que se desea salir del modo suspencion o pausa.
  * code11, significa que se desea conocer la version del firmware
  * code12, significa que se desea conocer los parametros guardados en ROM.
- * code13, significa que se desea conocer el nombre del programa actual.
- * code14, significa que se desea conocer el nombre del siguiente programa.
+ * code13, significa que se desea conocer el nombre del path actual.
+ * code14, significa que se desea conocer el nombre del siguiente path.
  * code15, significa que se desea conocer la lista de reproduccion actual.
- * code16, significa que se desea cambiar de programa por posicion en la playlist.
- * code17, significa que se desea cambiar de programa por nombre.
+ * code16, significa que se desea cambiar de path por posicion en la playlist.
+ * code17, significa que se desea cambiar de path por nombre.
  * code18, significa que se modifico la paleta de colores custom.
  * code19, means that you want to change indexIncrement Variable.
  * code20, means that you want to change the intermediateCalibration Variable.
@@ -133,6 +133,7 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
  * -7, no coincide checksum.
  * -8, no se pudo crear el archivo.
  * -9, se han leido mas de X numero de caracteres sin encontrar un '\n' en la funcion readLine().
+ * -11, la playlist que se desea cambiar no existe.
  * -21, orderMode no valido.
  * -31, ledMode no valido.
  * -51, es un directorio
@@ -297,7 +298,9 @@ int Bluetooth::checkBlueTooth()
         }
         else if (line.indexOf("code02") >= 0)
         {
-            writeBtln("request-playList");
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-playList");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -306,12 +309,18 @@ int Bluetooth::checkBlueTooth()
                 return codeError;
             }
             playList = line + ".playlist";
+            if (!sdExists(playList)){
+                writeBt("error=-11");
+                return -11;
+            }
             writeBtln("ok");
             return 10;
         }
         else if (line.indexOf("code03") >= 0)
         {
-            writeBtln("request-orderMode");
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-orderMode");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -329,7 +338,9 @@ int Bluetooth::checkBlueTooth()
         }
         else if (line.indexOf("code04") >= 0)
         {
-            writeBtln("request-ledmode");
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-ledmode");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -347,7 +358,9 @@ int Bluetooth::checkBlueTooth()
         }
         else if (line.indexOf("code05") >= 0)
         {
-            writeBtln("request-speedMotor");
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-speedMotor");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -365,7 +378,9 @@ int Bluetooth::checkBlueTooth()
         }
         else if (line.indexOf("code06") >= 0)
         {
-            writeBtln("request-speedLed");
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-speedLed");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -383,7 +398,9 @@ int Bluetooth::checkBlueTooth()
         }
         else if (line.indexOf("code07") >= 0)
         {
-            writeBtln("request-bluetoothName");
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-bluetoothName");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -405,17 +422,17 @@ int Bluetooth::checkBlueTooth()
             writeBtln("ok");
             return 70;
         }
-        else if (line.indexOf("code08") >= 0)
+        else if (line.indexOf("code08") >= 0) //suspention
         {
             writeBtln("ok");
             return 80;
         }
-        else if (line.indexOf("code09") >= 0)
+        else if (line.indexOf("code09") >= 0) //pausa
         {
             writeBtln("ok");
             return 90;
         }
-        else if (line.indexOf("code10") >= 0)
+        else if (line.indexOf("code10") >= 0) //reanudar
         {
             writeBtln("ok");
             return 100;
@@ -484,7 +501,9 @@ int Bluetooth::checkBlueTooth()
         }
         else if (line.indexOf("code16") >= 0)
         {
-            writeBtln("request-newPosition");
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-newPosition");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -498,7 +517,9 @@ int Bluetooth::checkBlueTooth()
         }
         else if (line.indexOf("code17") >= 0)
         {
-            writeBtln("request-programName");
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-programName");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -522,7 +543,9 @@ int Bluetooth::checkBlueTooth()
         else if (line.indexOf("code18") >= 0)
         {
             int colors;
-            writeBtln("request-numberOfColors");
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-numberOfColors");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {

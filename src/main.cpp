@@ -278,17 +278,14 @@ void setup()
     delay(500); 
     //====
     //====Cablibrating====
-    #ifdef DEBUGGING_DATA
-        Serial.println("init func");
-    #endif
-    haloCalib.init();
     
+    haloCalib.init();
     #ifdef DEBUGGING_DATA
-        Serial.println("start func");
+        Serial.println("Calibrando...");
     #endif
     haloCalib.start();
     #ifdef DEBUGGING_DATA
-        Serial.println("Salio de start");
+        Serial.println("calibrado");
     #endif
     //====After calibration current has to be set up====
     driver.rms_current(NORMAL_CURRENT);
@@ -360,7 +357,7 @@ void setup()
     }
     //=====
     
-    //goEdgeSpiral(false);
+    goEdgeSpiral(false);
     firstExecution = true;
     
 }
@@ -735,7 +732,6 @@ int runFile(String fileName){
         if (file.fileType == 1 || file.fileType == 3)
         {
             if (speedChangedMain){
-                Serial.println("entro a ese pedo");
                 Sandsara.resetSpeeds();
                 speedChangedMain = false;
             }
@@ -804,7 +800,7 @@ int runFile(String fileName){
 		if (intermediateCalibration == true)
 		{
             #ifdef DEBUGGING_DATA
-                Serial.println("se calibrara");
+                Serial.println("se realizara la calibracion intermedia");
             #endif
 			haloCalib.verificacion_cal();
 		}
@@ -894,7 +890,6 @@ int moveInterpolateTo(double x, double y, double distance)
     for (int i = 1; i <= intervals; i++)
     {
         if (speedChangedMain){
-            Serial.println("entro a ese pedo");
             Sandsara.resetSpeeds();
             speedChangedMain = false;
         }
@@ -947,7 +942,6 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     for (long i = 0; i < slices; i++)
     {
         if (speedChangedMain){
-            Serial.println("entro a ese pedo");
             Sandsara.resetSpeeds();
             speedChangedMain = false;
         }
@@ -1008,7 +1002,6 @@ void executeCode(int errorCode){
         romSetPallete(ledModeGlobal);
     }
     else if (errorCode == 50){
-        Serial.println("code 50");
         int speed = SandsaraBt.getSpeed();
         Sandsara.setSpeed(speed);
         romSetSpeedMotor(speed);
@@ -1028,13 +1021,22 @@ void executeCode(int errorCode){
     else if (errorCode == 80){
         suspensionModeGlobal = true;
         pauseModeGlobal = false;
+        #ifdef DEBUGGING_DATA
+            Serial.println("Entro a modo suspencion");
+        #endif
     }
     else if (errorCode == 90){
         pauseModeGlobal = true;
+        #ifdef DEBUGGING_DATA
+            Serial.println("Entro en modo pausa");
+        #endif
     }
     else if (errorCode == 100){
         pauseModeGlobal = false;
         suspensionModeGlobal = false;
+        #ifdef DEBUGGING_DATA
+            Serial.println("Reanudado");
+        #endif
     }
     else if (errorCode == 130){
         SandsaraBt.writeBt("currentProgram= ");
@@ -1071,12 +1073,16 @@ void executeCode(int errorCode){
     else if (errorCode == 160){
         changePositionList = true;
         changeProgram = false;
-        
+        #ifdef DEBUGGING_DATA
+            Serial.println("cambio de programa por su posicion en la lista");
+        #endif
     }
     else if (errorCode == 170){
         changeProgram = true;
         changePositionList = false;
-        
+        #ifdef DEBUGGING_DATA
+            Serial.println("cambio de programa por su nombre en la memoria SD");
+        #endif
     }
     else if (errorCode == 190){
         incrementIndexGlobal = romGetIncrementIndexPallete();
@@ -1516,7 +1522,7 @@ void changePalette(int pallet)
     else if( pallet == 13)  { currentPalette = pallette13;               currentBlending = LINEARBLEND;}
     else if( pallet == 14)  { currentPalette = pallette14;               currentBlending = LINEARBLEND;}
     else if( pallet == 15)  { currentPalette = pallette15;               currentBlending = LINEARBLEND;}
-    else if( pallet == 51)  { romGetCustomPallete(currentPalette);      currentBlending = LINEARBLEND;}
+    else if( pallet == 16)  { romGetCustomPallete(currentPalette);      currentBlending = LINEARBLEND;}
     else if( pallet == CODE_NOSD_PALLETE    )     { currentPalette = NO_SD_PALLETE;           incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;}
     else if( pallet == CODE_UPDATING_PALLETE)     { currentPalette = UPTADATING_PALLETE;      incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;}
     else if( pallet == CODE_CALIBRATING_PALLETE)  { currentPalette = CALIBRATING_PALLETE;     incrementIndexGlobal = false;  delayLeds = DELAYCOLORCODE;}
@@ -1816,12 +1822,12 @@ void moveSteps(void* pvParameters)
             positions[1] = Sandsara.stepper2.currentPosition() + q2Steps + q1Steps;
             #ifndef DISABLE_MOTORS
                 Sandsara.steppers.moveTo(positions);
-                String info1;
+                /*String info1;
                 String info2;
                 info1 = "1:" + String(int(Sandsara.stepper1.speed())) + "," + String(q1Steps) + ",1";
                 info2 = "2:" + String(int(Sandsara.stepper2.speed())) + "," + String(q2Steps) + "," + String(pathSpeed);
                 Serial.println(info1);
-                Serial.println(info2);
+                Serial.println(info2);*/
                 Sandsara.setRealSpeed1(Sandsara.stepper1.speed());
                 Sandsara.setRealSpeed2(Sandsara.stepper2.speed());
                 Sandsara.steppers.runSpeedToPosition();

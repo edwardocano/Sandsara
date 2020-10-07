@@ -70,11 +70,12 @@
  * si DISABLE_MOTORS se define, los motores no se moveran a la hora de dibujar los archivos.
  */
 //#define PROCESSING_SIMULATOR
-//#define DEBUGGING_DATA
+#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
 //#define DISABLE_MOTORS
 //#define DEBUGGIN_LED2
 #define IMPLEMENT_ACCELERATION
+#define RESQUEST_ANSWER
 
 /**
  * encoder es el pin para la senal del encoder
@@ -136,7 +137,7 @@
 #define MIN_SPEED_MOTOR         1
 #define MAX_PERIOD_LED          500
 #define MIN_PERIOD_LED          10
-#define MAX_PALLETE             30
+#define MAX_PALLETE             16
 #define MIN_PALLETE             0
 #define MAX_CHARACTERS_BTNAME   30
 #define MIN_REPRODUCTION_MODE   1

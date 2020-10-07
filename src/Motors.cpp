@@ -416,7 +416,6 @@ void Motors::resetSpeeds(){
         moveTo(xBufferAux[cxyPointerAux], yBufferAux[cxyPointerAux]);
         lowerSpeed = false;
     }
-    Serial.println("Salio de reset");
 }
 
 double greaterValue(double a, double b){
