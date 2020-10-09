@@ -1097,16 +1097,17 @@ void executeCode(int errorCode){
         ledsDirection = romGetLedsDirection();
     }
     else if (errorCode == 970){
-        romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
+        /*romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
         romSetPlaylist(PLAYLIST_DEFAULT);
         romSetPallete(PALLETE_DEFAULT);
         romSetPeriodLed(PERIOD_LED_DEFAULT);
         romSetOrderMode(ORDERMODE_DEFAULT);
         romSetBluetoothName(BLUETOOTHNAME);
-        romSetIntermediateCalibration(false);
-        for (int i = ADDRESSPOLESENSE1; i < ADDRESSPOLESENSE1 + ADDRESSESTOVERIFY; i++){
+        romSetIntermediateCalibration(false);*/
+        for (int i = 0; i < 512; i++){
             EEPROM.write(i, -1);
         }
+        EEPROM.commit();
         delay(1000);
         rebootWithMessage("Se hiso reset de fabrica, Reiniciando...");
     }

@@ -169,13 +169,15 @@ int Bluetooth::checkBlueTooth()
             writeBtln(String(codeError));
             return codeError;
         }
-        if (line.indexOf("transferir") >= 0)
+        if (line.indexOf("code01") >= 0)
         {
-            Serial.print("Entro a readLine ");
+            /*Serial.print("Entro a readLine ");
             Serial.println(ESP.getFreeHeap());
             Serial.print("memoria disponible en heap: ");
-            Serial.println(xPortGetFreeHeapSize());
-            writeBtln("request-name");
+            Serial.println(xPortGetFreeHeapSize());*/
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-name");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -266,8 +268,6 @@ int Bluetooth::checkBlueTooth()
                         }
                         else if (line.indexOf("done") >= 0)
                         {
-                            Serial.print("tiempo total:");
-                            Serial.println(timeVarTotal);
                             file.close();
                             pauseModeGlobal = false;
                             writeBtln("ok");
@@ -558,11 +558,13 @@ int Bluetooth::checkBlueTooth()
                 writeBtln("error= -181");
                 return -181;
             }
+            
             uint8_t positions[colors];
             uint8_t red[colors];
             uint8_t green[colors];
             uint8_t blue[colors];
-            writeBtln("request-positions");
+            //====request-positions====
+            writeBtln("ok"); 
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -576,7 +578,7 @@ int Bluetooth::checkBlueTooth()
             }
             
             //====reading red colors====
-            writeBtln("request-red");
+            writeBtln("ok");
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -590,7 +592,7 @@ int Bluetooth::checkBlueTooth()
             }
             //====
             //====reading green colors====
-            writeBtln("request-green");
+            writeBtln("ok");
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -604,7 +606,7 @@ int Bluetooth::checkBlueTooth()
             }
             //====
             //====reading blue colors====
-            writeBtln("request-blue");
+            writeBtln("ok");
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -622,7 +624,9 @@ int Bluetooth::checkBlueTooth()
             return 180;
         }
         else if (line.indexOf("code19") >= 0){
-            writeBtln("request-incrementIndexStatus");
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-incrementIndexStatus");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -640,7 +644,9 @@ int Bluetooth::checkBlueTooth()
             return 190;
         }
         else if (line.indexOf("code20") >= 0){
-            writeBtln("request-intermediateCalibration");
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-intermediateCalibration");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -662,7 +668,9 @@ int Bluetooth::checkBlueTooth()
             return 210;
         }
         else if(line.indexOf("code22") >= 0){
-            writeBtln("request-ledsDirection");
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-ledsDirection");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -681,7 +689,9 @@ int Bluetooth::checkBlueTooth()
             return 220;
         }
         else if(line.indexOf("code23") >= 0){
-            writeBtln("request-nameToDelete");
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-nameToDelete");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -704,7 +714,9 @@ int Bluetooth::checkBlueTooth()
         }
         else if (line.indexOf("code66") >= 0)
         {
-            writeBtln("request-nameUpdate");
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-nameUpdate");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -734,7 +746,9 @@ int Bluetooth::checkBlueTooth()
         }
         else if (line.indexOf("code97") >= 0)
         {
-            writeBtln("request-Y/N");
+            #ifdef RESQUEST_ANSWER
+                writeBtln("request-Y/N");
+            #endif
             codeError = readLine(line);
             if (codeError != 0)
             {
@@ -909,8 +923,8 @@ int Bluetooth::readBt(uint8_t dataBt[], int bytesToRead)
         }
         if (millis() - tInit > timeOutBt)
         {
-            writeBt("bytes enviados: ");
-            writeBtln(String(i));
+            /*writeBt("bytes enviados: ");
+            writeBtln(String(i));*/
         #ifdef BLUECOMMENTS
             Serial.print("bytes enviados: ");
             Serial.println(i);
