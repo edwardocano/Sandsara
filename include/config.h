@@ -75,7 +75,7 @@
 //#define DISABLE_MOTORS
 //#define DEBUGGIN_LED2
 #define IMPLEMENT_ACCELERATION
-#define RESQUEST_ANSWER
+//#define RESQUEST_ANSWER
 
 /**
  * encoder es el pin para la senal del encoder
