@@ -2836,17 +2836,17 @@ int Check_ini(void)
 	for (int i = ADDRESSPOLESENSE1; i < ADDRESSPOLESENSE1 + ADDRESSESTOVERIFY; i++)
 	{
 		value_eeprom = EEPROM.read(i);
-		if (value_eeprom == 255)
+		if (value_eeprom != 255)
 		{
 			cont_eeprom++;
 		}
 	}
-	if (cont_eeprom == ADDRESSESTOVERIFY)
+	if (cont_eeprom >= ADDRESSESTOVERIFY)
 	{
-		return 1;
+		return 0;
 	}
 	else
 	{
-		return 0;
+		return 1;
 	}
 }   
