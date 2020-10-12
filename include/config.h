@@ -75,7 +75,7 @@
 //#define DISABLE_MOTORS
 //#define DEBUGGIN_LED2
 #define IMPLEMENT_ACCELERATION
-//#define RESQUEST_ANSWER
+#define RESQUEST_ANSWER
 
 /**
  * encoder es el pin para la senal del encoder
@@ -145,10 +145,11 @@
 #define MAX_POSITIONLIST        1000
 #define MAX_NUMBERLEDS          100
 #define LEDS_OF_HALO            60
-#define LEDS_OF_STELLE          36
+#define LEDS_OF_STELLE          72
 #define MAX_STEPS_PER_SECOND    190
 #define MAX_CHARACTER_PER_LINE  1000
 #define OUTOFTIME_BLUETOOTH     20000
+#define OUTOFTIME_BLUETOOTH_LINE 1000
 #define NORMAL_CURRENT          600
 #define CURRENT_IN_CALIBRATION  600
 //#define ACCELERATION            400.0

@@ -883,8 +883,9 @@ int Bluetooth::readLine(String &line)
             return -9; //outOfRange in readLine
         }
         if (millis() - wdtFeedTime > 500){
+            //delay(1);
+            vTaskDelay(100);
             wdtFeedTime = millis();
-            delay(1);
         }
     }
     indexRemove = line.indexOf('\r');
@@ -932,8 +933,8 @@ int Bluetooth::readBt(uint8_t dataBt[], int bytesToRead)
             return -4; //timeOut in readBt
         }
         if (millis() - wdtFeedTime > 500){
+            vTaskDelay(100);
             wdtFeedTime = millis();
-            delay(1);
         }
     }
     #ifdef BLUECOMMENTS

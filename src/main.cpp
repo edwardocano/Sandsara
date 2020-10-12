@@ -356,8 +356,8 @@ void setup()
         orderModeGlobal = 1;
     }
     //=====
-    
     goEdgeSpiral(false);
+    delay(1000);
     firstExecution = true;
     
 }
@@ -821,8 +821,7 @@ void goHomeSpiral(){
     Sandsara.stopAndResetPositions();
     float currentModule = Sandsara.getCurrentModule();
     availableDeceleration = true;
-    Sandsara.setSpeed(SPEED_TO_CENTER);
-    if (currentModule < DISTANCIA_MAX / sqrt(2)){
+    if (currentModule < DISTANCIA_MAX / 2){//sqrt(2)){
         goCenterSpiral(false);
     }
     else
@@ -830,7 +829,6 @@ void goHomeSpiral(){
         goEdgeSpiral(false);
     }
     availableDeceleration = false;
-    Sandsara.completePath();
     delay(1000); 
 }
 
@@ -839,10 +837,12 @@ void goHomeSpiral(){
  * 
  */
 void goCenterSpiral(bool stop){
+    Sandsara.setSpeed(SPEED_TO_CENTER);
     stopProgramChangeGlobal = stop;
     spiralGoTo(0,PI/2);
     stopProgramChangeGlobal = true;
     Sandsara.setSpeed(romGetSpeedMotor());
+    Sandsara.completePath();
 }
 
 /**
@@ -850,10 +850,12 @@ void goCenterSpiral(bool stop){
  * 
  */
 void goEdgeSpiral(bool stop){
+    Sandsara.setSpeed(SPEED_TO_CENTER);
     stopProgramChangeGlobal = stop;
     spiralGoTo(DISTANCIA_MAX,0);
     stopProgramChangeGlobal = true;
     Sandsara.setSpeed(romGetSpeedMotor());
+    Sandsara.completePath();
 }
 
 /**
