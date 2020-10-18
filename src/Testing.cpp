@@ -19,6 +19,8 @@ Calibration haloCalibTest;
 #define NUMPIXELS 36 // numero de pixels en la tira
 Adafruit_NeoPixel pixels_test(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 #define DELAYVAL 500
+unsigned long t0, t1;
+uint16_t waitTime = 10000.0;
 
 
 
@@ -91,7 +93,91 @@ void Testing::Test()
 	#if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
     clock_prescale_set(clock_div_1);
     #endif
-	haloCalibTest.init();
+	//haloCalibTest.init();
+    SERIAL_PORT.begin(115200);
+	SERIAL_PORT2.begin(115200);
+
+	pinMode(DIAG_PIN, INPUT);
+	pinMode(EN_PIN, OUTPUT);
+	pinMode(STEP_PIN, OUTPUT);
+	pinMode(DIR_PIN, OUTPUT);
+
+	pinMode(DIAG_PIN2, INPUT);
+	pinMode(EN_PIN2, OUTPUT);
+	pinMode(STEP_PIN2, OUTPUT);
+	pinMode(DIR_PIN2, OUTPUT);
+
+	digitalWrite(EN_PIN, LOW);
+	digitalWrite(DIR_PIN, LOW);
+
+	digitalWrite(EN_PIN2, LOW);
+	digitalWrite(DIR_PIN2, LOW);
+
+	driver.begin();                   
+
+	driver.pdn_disable(true);         // enables the  PDN/UART comunication.
+	
+	driver.toff(4);                   // Establece el tiempo de disminucion lenta (tiempo de apagado) [1 ... 15]
+	                                  // Esta configuración también limita la frecuencia máxima de chopper. Para operar con StealthChop
+									  // En caso de operar solo con StealthChop, cualquier configuración está bien.
+	
+	driver.blank_time(24);
+	
+	driver.rms_current(CURRENT_IN_CALIBRATION);          // Fija el valor de la corriente
+
+	driver.microsteps(MICROSTEPPING); // Se define el valor de microstepps
+
+	driver.TCOOLTHRS(0xFFFFF);        // Velocidad umbral inferior para encender la energía inteligente CoolStep y StallGuard a la salida del DIAG
+	
+	driver.semin(0);                  // Umbral inferior CoolStep [0 ... 15].
+                                      // Si SG_RESULT cae por debajo de este umbral, CoolStep aumenta la corriente a ambas bobinas.
+                                      // 0: deshabilitar CoolStep
+
+	driver.shaft(false);              //Establece el sentido de giro del motor mediante la comunicacion UART
+
+	driver.sedn(0b01);                // Establece el número de lecturas de StallGuard2 por encima del umbral superior necesario
+                                      // por cada disminución de corriente de la corriente del motor.
+	
+	driver.SGTHRS(STALL_VALUE);       // Nivel de umbral StallGuard4 [0 ... 255] para la detección de bloqueo. Compensa
+  									  // características específicas del motor y controla la sensibilidad. Un valor más alto da un valor más alto
+  									  // sensibilidad. Un valor más alto hace que StallGuard4 sea más sensible y requiere menos torque para
+  									  // indica una oposicion al movimiento. 
+
+	
+	
+	driver2.begin();
+
+	driver2.pdn_disable(true);         // Activa la comunicacion PDN/UART
+
+	driver2.toff(4);                   // Establece el tiempo de disminucion lenta (tiempo de apagado) [1 ... 15]
+	                                   // Esta configuración también limita la frecuencia máxima de chopper. Para operar con StealthChop
+									   // En caso de operar solo con StealthChop, cualquier configuración está bien.
+
+	driver2.blank_time(24);
+
+	driver2.rms_current(CURRENT_IN_CALIBRATION);          // Fija el valor de la corriente
+
+	driver2.microsteps(MICROSTEPPING); // Se define el valor de microstepps
+
+	driver2.TCOOLTHRS(0xFFFFF);        // Velocidad umbral inferior para encender la energía inteligente CoolStep y StallGuard a la salida del DIAG
+
+	driver2.semin(0);                  // Umbral inferior CoolStep [0 ... 15].
+                                       // Si SG_RESULT cae por debajo de este umbral, CoolStep aumenta la corriente a ambas bobinas.
+                                       // 0: deshabilitar CoolStep
+
+	//driver.semax(2);
+
+	driver2.shaft(false);              // Establece el sentido de giro del motor mediante la comunicacion UART
+
+	driver2.sedn(0b01);                // Establece el número de lecturas de StallGuard2 por encima del umbral superior necesario
+                                       // por cada disminución de corriente de la corriente del motor.
+
+	driver2.SGTHRS(STALL_VALUE2);      // Nivel de umbral StallGuard4 [0 ... 255] para la detección de bloqueo. Compensa
+  									   // características específicas del motor y controla la sensibilidad. Un valor más alto da un valor más alto
+  									   // sensibilidad. Un valor más alto hace que StallGuard4 sea más sensible y requiere menos torque para
+  									   // indica una oposicion al movimiento. 
+
+
 	File myFile;
 	File root;
 	SdFat SD;
@@ -103,12 +189,29 @@ void Testing::Test()
 	Serial.println(analogRead(PIN_ProducType));
 
 	//====Inicializar SD====
+	t1 = millis();
+	t0 = t1;
 	while (!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
 	{
-		Serial.println("Card Fail");
+		
 		delay(200);
+		t1 = millis();
+		if (t1 - t0 > waitTime)
+		{
+			t0 = millis();
+			break;
+			
+		}
 	}
-	Serial.println("Card OK");
+	if(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
+	{
+	    Serial.println("Card Fail");
+	}
+	else
+	{
+		Serial.println("Card OK");
+	}
+	
 	root = SD.open("/");
 
 	cardSize = SD.card()->cardSize();
@@ -144,7 +247,6 @@ void Testing::Test()
 	}
 
 	//==============================================
-
 	digitalWrite(EN_PIN, LOW);
 	digitalWrite(DIR_PIN, LOW);
 	digitalWrite(EN_PIN2, LOW);
@@ -240,28 +342,30 @@ void Testing::Test()
 void info_motor1()
 {
 	uint8_t result_1 = driver.test_connection();
-	if (result_1 == 1)
-	{
-		Serial.println(F("M1 Fail"));
-		Serial.println(result_1);
-	}
 	if (result_1 == 0)
 	{
 		Serial.println(F("M1 OK"));
+	}
+	else
+	{
+		
+
+		Serial.println(F("M1 Fail"));
+		Serial.println(result_1);
 	}
 }
 
 void info_motor2()
 {
 	uint8_t result_2 = driver2.test_connection();
-	if (result_2 == 1)
-	{
-		Serial.println(F("M2 Fail"));
-		Serial.println(result_2);
-	}
 	if (result_2 == 0)
 	{
 		Serial.println(F("M2 OK"));
+	}
+	else
+	{
+		Serial.println(F("M2 Fail"));
+		Serial.println(result_2);
 	}
 }
 
