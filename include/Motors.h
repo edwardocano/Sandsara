@@ -10,6 +10,10 @@
 
 /**
  * @class Motors
+ * @brief Se encarga del control de los motores
+ * 
+ * Esta clase se encarga de calcular los pasos necesarios para llegar a una determinada posicion. En esta clase
+ * tambien se encuentran todas las matematicas con respecto a la cinematica y cinematica inversa de Sandsara.
  * @param microstepping almacena el valor de microstepping del motor
  * @param x_current alamacena la coordenada x de la posicion actual de Sandsara (en milimetros).
  * @param y_current alamacena la coordenada y de la posicion actual de Sandsara (en milimetros).
@@ -64,11 +68,7 @@ class Motors {
     public:
         Motors();
         void    moveTo(double x, double y, bool = false);
-        void    movePolarTo(double , double ); //(modulo,angulo)
         void    init(double = 0,double = 0);
-        void    goHome();
-        void    setHomePosition();
-        void    setCouplingAngle(double );
         double  getCurrentModule();
         double  getCurrentAngle();
         void    setZCurrent(double );

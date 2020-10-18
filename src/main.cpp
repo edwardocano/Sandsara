@@ -255,7 +255,7 @@ void setup()
                     1);
     delay(500); 
     //====
-    //====new task for leds====
+    //====new task for Bluetooth====
     xTaskCreatePinnedToCore(
                     bluetoothThread,   
                     "Task2",     
@@ -266,7 +266,7 @@ void setup()
                     0);
     delay(500); 
     //====
-    //====new task for leds====
+    //====new task for Motors====
     xTaskCreatePinnedToCore(
                     moveSteps,   
                     "motorsTasks",     

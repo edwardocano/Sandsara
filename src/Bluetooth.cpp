@@ -75,86 +75,84 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 }
 
 /**
- * @brief revisa si hay algo dispobible por bluetooth. Puede recibir alguno de los siguientes mensajes.
- * 
- * code01, significa que va a transferir un archivo.
- * code02, significa que se esta solicitando el cambio de playlist.
- * code03, significa que se esta solicitando el cambio de orden de reproduccion.
- * code04, significa que se esta solicitando el cambio de paleta de leds.
- * code05, significa que se solicita el cambio de velocidad de motores.
- * code06, significa que se solicita el cambio de velocidad de los leds.
- * code07, significa que se desea cambiar el nombre del bluetooth.
- * code08, significa que se desea entrar en modo de suspencion.
- * code09, significa que se desea pausar el path.
- * code10, significa que se desea salir del modo suspencion o pausa.
- * code11, significa que se desea conocer la version del firmware
- * code12, significa que se desea conocer los parametros guardados en ROM.
- * code13, significa que se desea conocer el nombre del path actual.
- * code14, significa que se desea conocer el nombre del siguiente path.
- * code15, significa que se desea conocer la lista de reproduccion actual.
- * code16, significa que se desea cambiar de path por posicion en la playlist.
- * code17, significa que se desea cambiar de path por nombre.
- * code18, significa que se modifico la paleta de colores custom.
- * code19, means that you want to change indexIncrement Variable.
- * code20, means that you want to change the intermediateCalibration Variable.
- * code21, means that you want to rewind the playlist.
- * code22, means that you want to change the direction of leds.
- * code23, means that you want to delete a file from SD card.
- * code66, actualizar firmware
- * code80, Reiniciar Sandsara
+ * @brief revisa si hay algo dispobible por bluetooth. Puede recibir e interpretar los siguientes mensajes.
+ * - code01, significa que va a transferir un archivo.
+ * - code02, significa que se esta solicitando el cambio de playlist.
+ * - code03, significa que se esta solicitando el cambio de orden de reproduccion.
+ * - code04, significa que se esta solicitando el cambio de paleta de leds.
+ * - code05, significa que se solicita el cambio de velocidad de motores.
+ * - code06, significa que se solicita el cambio de velocidad de los leds.
+ * - code07, significa que se desea cambiar el nombre del bluetooth.
+ * - code08, significa que se desea entrar en modo de suspencion.
+ * - code09, significa que se desea pausar el path.
+ * - code10, significa que se desea salir del modo suspencion o pausa.
+ * - code11, significa que se desea conocer la version del firmware
+ * - code12, significa que se desea conocer los parametros guardados en ROM.
+ * - code13, significa que se desea conocer el nombre del path actual.
+ * - code14, significa que se desea conocer el nombre del siguiente path.
+ * - code15, significa que se desea conocer la lista de reproduccion actual.
+ * - code16, significa que se desea cambiar de path por posicion en la playlist.
+ * - code17, significa que se desea cambiar de path por nombre.
+ * - code18, significa que se modifico la paleta de colores custom.
+ * - code19, means that you want to change indexIncrement Variable.
+ * - code20, means that you want to change the intermediateCalibration Variable.
+ * - code21, means that you want to rewind the playlist.
+ * - code22, means that you want to change the direction of leds.
+ * - code23, means that you want to delete a file from SD card.
+ * - code66, actualizar firmware
+ * - code80, Reiniciar Sandsara
  * 
  * @return un codigo de reporte que indica lo siguiente
- *  1, se escribio un nuevo archivo.
- *  0, no hay informacion disponible del bluetooth.
- * 10, se solicito un cambio de playlist, para recuperar el nombre llamar a la funcion miembro getPlaylist().
- * 20, se solicito un cambio en orderMode, para recuperar el numero llamar a la funcion miembro getOrderMode().
- * 30, se solicito un cambio en ledMode, para recueperar el numero llamar a la funcion miembro getLedMode().
- * 50, se solicita el cambio de velocidad de motores, la velocidad se almacena en la variable miembro speed. speed se obtiene con getSpeed().
- * 60, se solicita el cambio de velocidad de los leds, la velocidad se almacena en la variable miembro periodLed. periodLed se obtiene con getPeriodLed().
- * 70, se solicita cambio de nombre de bluetooth.
- * 80, se solicita entrar en modo de suspencion.
- * 90, se solicita entrar en modo de pausa.
- * 100, se solicita salir del modo suspencion o pausa.
- * 110, se envio la version del firmware por bluetooth.
- * 120, se enviaron datos de sandsara
- * 130, se solicita el nombre del programa actual.
- * 140, se solicita el nombre del programa siguiente.
- * 150, se solicita la lista de reproduccion completa.
- * 160, se solicita cambiar de pista por medio de su posicion en la playlist, para conocer la posicion a la que se desea cambiar llamar a la funcion miembro getPositionList().
- * 170, se solicita reproducir un archivo, para conocer el nombre llamar la funcion miembro getProgram().
- * 180, se modifico la paleta custom en rom.
- * 200, intermediateCalibration variable was midified in ROM.
- * 970, se solicita un reset de fabrica.
- * -1, no se reconoce el comando enviado.
- * -2, se quiso enviar un numero de bytes incorrecto.
- * -3, se excedio el tiempo de respuesta del transmisor en la funcion readLine (depende de la variable timeOutBt, medida en milisegundos)
- * -4, se excedio el tiempo de respuesta del transmisor en la funcion readBt (depende de la variable timeOutBt, medida en milisegundos)
- * -5, se intento enviar un archivo con un nombre ya existente.
- * -7, no coincide checksum.
- * -8, no se pudo crear el archivo.
- * -9, se han leido mas de X numero de caracteres sin encontrar un '\n' en la funcion readLine().
- * -11, la playlist que se desea cambiar no existe.
- * -21, orderMode no valido.
- * -31, ledMode no valido.
- * -51, es un directorio
- * -52, el archivo esta vacio
- * -53, el archivo no se pudo abrir.02
- * -54, no se pudo finalizar la actualizacion
- * -55, no hay suficiente espacio para el OTA.
- * -56, Ocurrio un error al actualizar el firmware
- * -60, Velocidad no permitida para los motores
- * -70, periodo no permitido para los leds
- * -80, nombre muy largo para bluetooth
- * -81, No se pudo cambiar el nombre del bluetooth, pero se vera el cambio cuando se reinicie.
- * -97, se intento un reset de fabrica pero no se confirmo.
- * -171, se desea correr un programa que no existe en la SD.
- * -172, se intento cambiar a un archivo con una extension no valida.
- * -181, numero de colores en una paleta incorrecto.
- * -182, numero de posiciones distinto a numero de colores en la paleta.
- * -183, numero de colores red distinto a numero de colores en la paleta.
- * -184, numero de colores green distinto a numero de colores en la paleta.
- * -185, numero de colores blue distinto a numero de colores en la paleta.
-
+ * - 1, se escribio un nuevo archivo.
+ * - 0, no hay informacion disponible del bluetooth.
+ * - 10, se solicito un cambio de playlist, para recuperar el nombre llamar a la funcion miembro getPlaylist().
+ * - 20, se solicito un cambio en orderMode, para recuperar el numero llamar a la funcion miembro getOrderMode().
+ * - 30, se solicito un cambio en ledMode, para recueperar el numero llamar a la funcion miembro getLedMode().
+ * - 50, se solicita el cambio de velocidad de motores, la velocidad se almacena en la variable miembro speed. speed se obtiene con getSpeed().
+ * - 60, se solicita el cambio de velocidad de los leds, la velocidad se almacena en la variable miembro periodLed. periodLed se obtiene con getPeriodLed().
+ * - 70, se solicita cambio de nombre de bluetooth.
+ * - 80, se solicita entrar en modo de suspencion.
+ * - 90, se solicita entrar en modo de pausa.
+ * - 100, se solicita salir del modo suspencion o pausa.
+ * - 110, se envio la version del firmware por bluetooth.
+ * - 120, se enviaron datos de sandsara
+ * - 130, se solicita el nombre del programa actual.
+ * - 140, se solicita el nombre del programa siguiente.
+ * - 150, se solicita la lista de reproduccion completa.
+ * - 160, se solicita cambiar de pista por medio de su posicion en la playlist, para conocer la posicion a la que se desea cambiar llamar a la funcion miembro getPositionList().
+ * - 170, se solicita reproducir un archivo, para conocer el nombre llamar la funcion miembro getProgram().
+ * - 180, se modifico la paleta custom en rom.
+ * - 200, intermediateCalibration variable was midified in ROM.
+ * - -970, se solicita un reset de fabrica.
+ * - -1, no se reconoce el comando enviado.
+ * - -2, se quiso enviar un numero de bytes incorrecto.
+ * - -3, se excedio el tiempo de respuesta del transmisor en la funcion readLine (depende de la variable timeOutBt, medida en milisegundos)
+ * - -4, se excedio el tiempo de respuesta del transmisor en la funcion readBt (depende de la variable timeOutBt, medida en milisegundos)
+ * - -5, se intento enviar un archivo con un nombre ya existente.
+ * - -7, no coincide checksum.
+ * - -8, no se pudo crear el archivo.
+ * - -9, se han leido mas de X numero de caracteres sin encontrar un '\n' en la funcion readLine().
+ * - -11, la playlist que se desea cambiar no existe.
+ * - -21, orderMode no valido.
+ * - -31, ledMode no valido.
+ * - -51, es un directorio
+ * - -52, el archivo esta vacio
+ * - -53, el archivo no se pudo abrir.02
+ * - -54, no se pudo finalizar la actualizacion
+ * - -55, no hay suficiente espacio para el OTA.
+ * - -56, Ocurrio un error al actualizar el firmware
+ * - -60, Velocidad no permitida para los motores
+ * - -70, periodo no permitido para los leds
+ * - -80, nombre muy largo para bluetooth
+ * - -81, No se pudo cambiar el nombre del bluetooth, pero se vera el cambio cuando se reinicie.
+ * - -97, se intento un reset de fabrica pero no se confirmo.
+ * - -171, se desea correr un programa que no existe en la SD.
+ * - -172, se intento cambiar a un archivo con una extension no valida.
+ * - -181, numero de colores en una paleta incorrecto.
+ * - -182, numero de posiciones distinto a numero de colores en la paleta.
+ * - -183, numero de colores red distinto a numero de colores en la paleta.
+ * - -184, numero de colores green distinto a numero de colores en la paleta.
+ * - -185, numero de colores blue distinto a numero de colores en la paleta.
  */
 int Bluetooth::checkBlueTooth()
 {
@@ -775,55 +773,55 @@ int Bluetooth::checkBlueTooth()
 }
 
 /**
- * @brief recupera el dato que se envio por medio de bluetooth que corresponde al index de la paleta de colores.
- * @return el index de la paleta de colores que se envio por bluetooth.
+ * @brief Recupera el dato que se envio por medio de bluetooth que corresponde al index de la paleta de colores.
+ * @return El index de la paleta de colores que se envio por bluetooth.
  */
 int Bluetooth::getLedMode(){
     return ledMode;
 }
 /**
- * @brief recupera el dato que se envio por medio de bluetooth que corresponde al nombre de la playlist
- * @return el nombre de la playlist.
+ * @brief Recupera el dato que se envio por medio de bluetooth que corresponde al nombre de la playlist
+ * @return El nombre de la playlist.
  */
 String Bluetooth::getPlaylist(){
     return playList;
 }
 
 /**
- * @brief recupera el dato que se envio por medio de bluetooth que corresponde a la velocidad de los motores
- * @return la valocidad de los motores, medida en mm/s
+ * @brief Recupera el dato que se envio por medio de bluetooth que corresponde a la velocidad de los motores
+ * @return La valocidad de los motores, medida en mm/s
  */
 int Bluetooth::getSpeed(){
     return speed;
 }
 
 /**
- * @brief recupera el dato que se envio por medio de bluetooth que corresponde al tiempo de actualizacion de los leds
- * @return el tiempo de actualizacion de los leds, medido en milisegundos.
+ * @brief Recupera el dato que se envio por medio de bluetooth que corresponde al tiempo de actualizacion de los leds
+ * @return El tiempo de actualizacion de los leds, medido en milisegundos.
  */
 int Bluetooth::getPeriodLed(){
     return periodLed;
 }
 
 /**
- * @brief recupera el dato que se envio por medio de bluetooth que corresponde al orden de reproduccion.
- * @return el orden de reproduccion de los archivos.
+ * @brief Recupera el dato que se envio por medio de bluetooth que corresponde al orden de reproduccion.
+ * @return El orden de reproduccion de los archivos.
  */
 int Bluetooth::getOrderMode(){
     return orderMode;
 }
 
 /**
- * @brief recupera el dato que se envio por medio de bluetooth que corresponde al nombre del bluetooth.
- * @return el ultimo numero referente al oreden de reproduccion que se solicito por bluetooth.
+ * @brief Recupera el dato que se envio por medio de bluetooth que corresponde al nombre del bluetooth.
+ * @return El ultimo numero referente al oreden de reproduccion que se solicito por bluetooth.
  */
 String Bluetooth::getBluetoothName(){
     return bluetoothName;
 }
 
 /**
- * @brief envia un mensaje por bluetooth.
- * @param msg es el mensaje que va a ser enviado por bluetooth.
+ * @brief Envia un mensaje por bluetooth.
+ * @param msg Es el mensaje que va a ser enviado por bluetooth.
  * @return 0 cuando termina la funcion.
  */
 int Bluetooth::writeBt(String msg)
@@ -836,10 +834,10 @@ int Bluetooth::writeBt(String msg)
     return 0;
 }
 /**
- * @brief envia un mensaje por bluetooth con un salto de linea.
- * @param msg es el mensaje que va a ser enviado por bluetooth.
+ * @brief Envia un mensaje por bluetooth con un salto de linea.
+ * @param msg Es el mensaje que va a ser enviado por bluetooth.
  * @return 0 cuando termina la funcion.
- * @note el salto de linea se hace con "\r\n"
+ * @note El salto de linea se hace con "\r\n"
  */
 int Bluetooth::writeBtln(String msg)
 {
@@ -849,9 +847,9 @@ int Bluetooth::writeBtln(String msg)
 }
 
 /**
- * @brief lee informacion del bluetooth hasta encontrar un '\n'
- * @param line, es donde se almacena lo que se envio por bluetooth (se eliminan los valores '\n' y '\r')
- * @return uno de los siguientes numeros.
+ * @brief Lee informacion del bluetooth hasta encontrar un '\n'
+ * @param line Es donde se almacena lo que se envio por bluetooth (se eliminan los valores '\n' y '\r')
+ * @return Uno de los siguientes numeros.
  *  0, todo termino con normalidad.
  * -3, significa que ha transcurrido mas tiempo del esperado sin encontrar un '\n' (depende de la variable timeOutBt).
  * -9, significa que se han leido mas de MAX_CHARACTER_PER_LINE caracteres sin econtrar un '\n'.
@@ -902,10 +900,10 @@ int Bluetooth::readLine(String &line)
 }
 
 /**
- * @brief lee una cantidad de bytes igual a bytesToRead del bluetooth y los almacena en dataBt.
- * @param dataBt, es un array que va a almacenar los bytes transmitidos por bluetooth.
- * @param bytesToRead, es la cantidad de bytes que se leeran del bluetooth.
- * @return uno de los siguientes codigos.
+ * @brief Lee una cantidad de bytes igual a bytesToRead del bluetooth y los almacena en dataBt.
+ * @param dataBt Es un array que va a almacenar los bytes transmitidos por bluetooth.
+ * @param bytesToRead Es la cantidad de bytes que se leeran del bluetooth.
+ * @return Uno de los siguientes codigos.
  *  0, todo termino con normalidad.
  * -10, significa que ha transcurrido mas tiempo del esperado sin encontrar un '\n' (depende de la variable timeOutBt).
  */
@@ -1100,9 +1098,9 @@ String Bluetooth::GetMD5String(uint8_t *msg, int mlen)
 
 /**
  * @brief Actualiza el firmware.
- * @return uno de los siguientes numeros.
- * -4, no se pudo finalizar la actualizacion
- * -5, no hay suficiente espacio para el OTA.
+ * @return Uno de los siguientes numeros.
+ * -4, No se pudo finalizar la actualizacion
+ * -5, No hay suficiente espacio para el OTA.
  * -6, Ocurrio un error al actualizar el firmware
  */
 int performUpdate(Stream &updateSource, size_t updateSize)
@@ -1160,14 +1158,14 @@ int performUpdate(Stream &updateSource, size_t updateSize)
 }
 
 /**
- * @brief revisa si el archivo es valido y si lo es actualiza el firmware
- * @return uno de los siguientes numeros
- *  1, se actualizo el firmware
- * -1, es un directorio
- * -2, el archivo esta vacio
- * -3, el archivo no se pudo abrir.
- * -4, no se pudo finalizar la actualizacion
- * -5, no hay suficiente espacio para el OTA.
+ * @brief Revisa si el archivo es valido y si lo es actualiza el firmware
+ * @return Uno de los siguientes numeros
+ *  1, Se actualizo el firmware
+ * -1, Es un directorio
+ * -2, El archivo esta vacio
+ * -3, El archivo no se pudo abrir.
+ * -4, No se pudo finalizar la actualizacion
+ * -5, No hay suficiente espacio para el OTA.
  * -6, Ocurrio un error al actualizar el firmware
  */
 int updateFromFS(SdFat &fs, String name)
@@ -1211,8 +1209,8 @@ int updateFromFS(SdFat &fs, String name)
 }
 
 /**
- * @brief intenta actualizar el firmware
- * @return un codigo para saber si ocurre un error a la hora de realizar la actualizacion.
+ * @brief Intenta actualizar el firmware
+ * @return Un codigo para saber si ocurre un error a la hora de realizar la actualizacion.
  */
 int programming(String name){
     int errorCode;
@@ -1221,8 +1219,8 @@ int programming(String name){
 }
 
 /**
- * @brief reinicia el Esp32 pero antes escribe un mensaje por Serial.
- * @return un codigo para saber si ocurre un error a la hora de realizar la actualizacion.
+ * @brief Reinicia el Esp32 pero antes escribe un mensaje por Serial.
+ * @return Un codigo para saber si ocurre un error a la hora de realizar la actualizacion.
  */
 void rebootWithMessage(String reason){
     #ifdef DEBUGGING_DATA
@@ -1233,30 +1231,30 @@ void rebootWithMessage(String reason){
 }
 
 /**
- * @brief recupera el dato que se envio por medio de bluetooth que corresponde al nombre del programa que se desea reproducir.
- * @return el nombre del archivo que se desea reproducir.
+ * @brief Recupera el dato que se envio por medio de bluetooth que corresponde al nombre del programa que se desea reproducir.
+ * @return El nombre del archivo que se desea reproducir.
  */
 String Bluetooth::getProgram(){
     return program;
 }
 
 /**
- * @brief recupera el dato que se envio por medio de bluetooth que corresponde a la posicion del archivo que se desea reproducir.
- * @return la posicion en la playlist que se desea reproducir.
+ * @brief Recupera el dato que se envio por medio de bluetooth que corresponde a la posicion del archivo que se desea reproducir.
+ * @return La posicion en la playlist que se desea reproducir.
  */
 int Bluetooth::getPositionList(){
     return positionList;
 }
 
 /**
- * @brief convierte un string en un array
+ * @brief Convierte un string en un array
  * un string de la forma x1,x2,...,xn se convierte en un array [0]=x1, [1]=x1, ...,[n-1]=xn
- * @param str es el string que se desea convertir.
- * @param array es el array donde se van a guardar los valores del string
- * @param n es el numero de elementos que tiene el string
- * @return uno de los siguientes numeros
- * 0, todo salio normal.
- * -1, no hay n elementos en el string
+ * @param str Es el string que se desea convertir.
+ * @param array Es el array donde se van a guardar los valores del string
+ * @param n Es el numero de elementos que tiene el string
+ * @return Uno de los siguientes numeros
+ * 0, Todo salio normal.
+ * -1, No hay n elementos en el string
  */
 int stringToArray(String str, uint8_t* array, int n){
     int i;

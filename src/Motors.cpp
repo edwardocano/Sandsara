@@ -379,6 +379,9 @@ void Motors::updateVariablesToMovingThread(){
     cxyPointer = xyPointerBuffer[cPointerBuffer];
 }
 
+/**
+ * @brief Recalcula las velocidades de los puntos guardados para movimientos futuros
+ */
 void Motors::resetSpeeds(){
     int cxyPointerAux = cxyPointer;
     int xyPointerAux = xyPointer;
@@ -686,7 +689,7 @@ void Motors::ik(double x, double y, double *q1, double *q2)
     *q2 = *q2 - 2 * PI * auxiliar;
 }
 
-///====perations with components====
+//====Operations with components====
 /**
  * @brief rota la posicion x,y con centro en 0,0 tantos grados como se desee.
  * 

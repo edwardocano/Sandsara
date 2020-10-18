@@ -76,18 +76,18 @@ SdFiles::~SdFiles()
  * @param component1 es donde se almacenara el primero componente (x o z)
  * @param component2 es donde se almacenara el segundo componente (y o theta)
  * @note los componentes se encuentran comprendidos en los siguientes rangos.
- * x,y --> [-150,150]
- * z   --> [0, 150]
- * theta --> (-inf, inf)
+ * - x,y --> [-150,150]
+ * - z   --> [0, 150]
+ * - theta --> (-inf, inf)
  * Sin embargo los datos se pueden salir de estos rangos si el archivo no sigue las indicaciones correctas.
  * @return un codigo de error que puede significar lo siguiente
- *  0 no hubo problemas
- *  1 ya no hay mas lineas por leer en el archivo
- *  3 la linea es un comentario.
- * -1 no se encontro el separador de los componentes (',' o ' ')
- * -4 no se encontro un segundo componente
- * -6 no es un tipo de archivo valido
- * -10 ya no hay mas archivos por leer por posible problema con memoria sd.
+ * - 0 no hubo problemas
+ * - 1 ya no hay mas lineas por leer en el archivo
+ * - 3 la linea es un comentario.
+ * - -1 no se encontro el separador de los componentes (',' o ' ')
+ * - -4 no se encontro un segundo componente
+ * - -6 no es un tipo de archivo valido
+ * - -10 ya no hay mas archivos por leer por posible problema con memoria sd.
  */
 int SdFiles::getNextComponents(double *component1, double *component2)
 {
@@ -149,10 +149,10 @@ int SdFiles::getStatus()
 /**
  * @brief determina el tipo de archivo por extension.
  * @return un numero que representa uno de los siguientes tipos de archivo.
- * 1 para un .txt.
- * 2 para un .thr.
- * 3 para un .bin.
- * -1 ninguno de los anteriores.
+ * - 1 para un .txt.
+ * - 2 para un .thr.
+ * - 3 para un .bin.
+ * - -1 ninguno de los anteriores.
  */
 int SdFiles::getType(String name_file)
 {
@@ -175,9 +175,9 @@ int SdFiles::getType(String name_file)
  * @param c2 es donde se va a almacenar el valor del componente 2.
  * @note los valores devuelven por medio de c1 y c2.
  * @return un codigo de error, pudiendo ser uno de los siguientes
- *  3, la linea es un comentario
- * -1, no encuentra el caracter separador.
- * -4, no encuentra el segundo componente.
+ * - 3, la linea es un comentario
+ * - -1, no encuentra el caracter separador.
+ * - -4, no encuentra el segundo componente.
  * @see getNextComponents.
  */
 int SdFiles::getComponents(String line, double *c1, double *c2)
@@ -326,9 +326,9 @@ String SdFiles::nextRow()
  * 
  * Los datos los almacena en dataBuffer en el caso de archivos .txt o .thr y en dataBufferBin para archivos .bin
  * @return un codigo de error que puede significar lo siguiente.
- *  0 no hubo problemas.
- *  1 ya no hay datos restantes por leer.
- * -10 ya no hay mas archivos por leer por posible problema con memoria sd.
+ * - 0 no hubo problemas.
+ * - 1 ya no hay datos restantes por leer.
+ * - -10 ya no hay mas archivos por leer por posible problema con memoria sd.
  */
 int SdFiles::readFile()
 {
@@ -433,8 +433,8 @@ int SdFiles::readFile()
 /**
  * @brief regresa un componente perteneciente al primer punto del archivo.
  * @param component es la poscion del componente que se quiere obtener, es decir:
- * 1 --> para el primer componente
- * 2 --> para el segundo componente
+ * - 1 --> para el primer componente
+ * - 2 --> para el segundo componente
  * en el caso de archivos .txt o .bin el primer componente es 'x', y el segundo 'y'.
  * en el caso de archivos .thr el primer componente es 'z', y el segundo 'theta'.
  * @param ignoreZero si este valor es 1, devolvera el primer punto que no sea 0,0 (coordenadas cartesianas)
@@ -492,8 +492,8 @@ double SdFiles::getStartPoint(int component, int ignoreZero)
 /**
  * @brief regresa un componente perteneciente al ultimo punto del archivo.
  * @param component es la poscion del componente que se quiere obtener, es decir:
- * 1 --> para el primer componente
- * 2 --> para el segundo componente
+ * - 1 --> para el primer componente
+ * - 2 --> para el segundo componente
  * en el caso de archivos .txt o .bin el primer componente es 'x', y el segundo 'y'
  * en el caso de archivos .thr el primer componente es 'z', y el segundo 'theta'
  * @param ignoreZero si este valor es 1, devolvera el primer punto que no sea 0,0 (coordenadas cartesianas)
@@ -729,13 +729,13 @@ double SdFiles::getStartModule(){
  * @param dirFile es la direccion del archivo, empezando con '/'.
  * @param lineText es la variable donde se va a guardar el contenido de la linea leida.
  * @return un codigo de error, pudiendo ser alguno de los siguientes.
- * 0, Encontro la linea lineNumber y esta linea termina con un '\n'.
- * 1, Encontro la linea lineNumber, pero no termina con '\n'.
- * 2, No encontro la linea lineNumber y no se encontro un '\n' al final de esta linea, por lo que en lineText esta guardada la ultima linea del archivo.
- * 3, No encontro la linea lineNumber y sí se encontro un '\n' al final de esta linea, por lo que en lineText esta guardada la ultima linea del archivo.
- * -1, No se pudo abrir el archivo con la direccion dirFile.
- * -2, El archivo abierto es un directorio.
- * -3, La linea que se desea leer no es valida.
+ * - 0, Encontro la linea lineNumber y esta linea termina con un '\\n'.
+ * - 1, Encontro la linea lineNumber, pero no termina con '\\n'.
+ * - 2, No encontro la linea lineNumber y no se encontro un '\\n' al final de esta linea, por lo que en lineText esta guardada la ultima linea del archivo.
+ * - 3, No encontro la linea lineNumber y sí se encontro un '\\n' al final de esta linea, por lo que en lineText esta guardada la ultima linea del archivo.
+ * - -1, No se pudo abrir el archivo con la direccion dirFile.
+ * - -2, El archivo abierto es un directorio.
+ * - -3, La linea que se desea leer no es valida.
  */
 int SdFiles::getLineNumber(int lineNumber, String dirFile, String &lineText)
 {
@@ -751,17 +751,17 @@ int SdFiles::getLineNumber(int lineNumber, String dirFile, String &lineText)
     if (lineNumber < 1)
     {
         readingSDFile = false;
-        return -3; ///invalid line number to be read.
+        return -3; //invalid line number to be read.
     }
     if (!file)
     {
         readingSDFile = false;
-        return -1; ///dirFile coudn't open.
+        return -1; //dirFile coudn't open.
     }
     if (file.isDirectory())
     {
         readingSDFile = false;
-        return -2; ///the file is a directory
+        return -2; //the file is a directory
     }
     for (int number = 1; number < lineNumber; number++)
     {
@@ -847,7 +847,7 @@ int SdFiles::creatListOfFiles(String fileName)
     if (!file)
     {
         readingSDFile = false;
-        return -1; ///file coudn't be created.
+        return -1; //file coudn't be created.
     }
     fileName.toLowerCase();
     while (true)

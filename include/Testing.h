@@ -9,6 +9,10 @@
 #include <EEPROM.h>
 #include "config.h"
 
+/**
+ * @class Testing
+ * @brief Realizar comprobacion de todos los componentes de Sandsara.
+ */
 class Testing{
     public:
         void Test();

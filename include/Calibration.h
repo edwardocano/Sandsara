@@ -9,6 +9,15 @@
 #include <EEPROM.h>
 #include "config.h"
 
+/**
+ * @class Calibration
+ * @brief Se encarga de encontrar el origen del robot.
+ * 
+ * Esta clase realiza una calibracion de los motores para encotrar una posicion de origen, esto se consigue
+ * con la lectura de unos sensores de efecto hall. La primera vez que se enciende Sandsara esta clase tambien se encarga
+ * de calibrar los sensores hall con respecto a la polaridad de los imanes en los brazos de Sandsara.
+ * 
+ */
 class Calibration{
     public:
         Calibration();

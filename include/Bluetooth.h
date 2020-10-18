@@ -11,7 +11,8 @@
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
 #endif
 /**
- * @class Bluetooth es la clase que se encarga de manejar el bluetooth
+ * @class Bluetooth
+ * @brief Se encarga de gestionar la comunicacion por bluetooth
  * @param timeOutBt es el tiempo, en milisegundos, que se va a esperar para recibir respuesta del dispositivo bluetooth conectado.
  * @param dataBt es donde se va a almacenar la informacion recibida.
  */

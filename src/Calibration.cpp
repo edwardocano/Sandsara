@@ -471,7 +471,7 @@ int Calibration::start()
 			value_f = meanFilter2.AddValue(analogRead(hall1));
 		}
 		read_hall1 = value_f / 4;
-		if (read_hall1 > max_hall1 || read_hall1 < min_hall1) ///stop first arm condition.
+		if (read_hall1 > max_hall1 || read_hall1 < min_hall1) //stop first arm condition.
 		{
 			if (avoid == 0)
 			{
