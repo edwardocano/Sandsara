@@ -164,6 +164,17 @@ void setup()
     //====Serial configuration====
     Serial.begin(115200);
     //====
+    //====SD initialization====
+    while(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
+    {
+        //changePalette(CODE_NOSD_PALLETE);
+        #ifdef DEBUGGING_DATA
+            Serial.println("Card failed, or not present");
+        #endif
+        delay(200); 
+    }
+    //changePalette(ledModeGlobal);
+    findUpdate();
     //====Palletes initialization====
     NO_SD_PALLETE= breathRed;
     UPTADATING_PALLETE = breathYellow;
@@ -295,16 +306,7 @@ void setup()
     digitalWrite(EN_PIN, LOW);
     digitalWrite(EN_PIN2, LOW);
     //====
-    //====SD initialization====
-    while(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
-    {
-        changePalette(CODE_NOSD_PALLETE);
-        #ifdef DEBUGGING_DATA
-            Serial.println("Card failed, or not present");
-        #endif
-        delay(200); 
-    }
-    changePalette(ledModeGlobal);
+    
     #ifdef DEBUGGING_DATA
         Serial.println("Card present");
     #endif
@@ -343,7 +345,7 @@ void setup()
     #endif
     //====
     //====Searching for an update====
-    findUpdate();
+    //findUpdate();
     //====
     #ifdef PROCESSING_SIMULATOR
         Serial.println("inicia");

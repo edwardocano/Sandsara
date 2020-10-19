@@ -30,7 +30,7 @@
  * DISTANCIA_MAX es el radio maximo, desde el centro, que va a dibujar el robot
  * RESOLUCION_MAX es el numero que representa la DISTANCIA_MAX
  */
-#define DISTANCIA_MAX 90
+#define DISTANCIA_MAX 144
 #define RESOLUCION_MAX 32768.0
 
 /**
