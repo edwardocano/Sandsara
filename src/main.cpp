@@ -160,7 +160,7 @@ Testing haloTest;
 
 void setup()
 {
-    delay(3000); // power-up safety delay
+    delay(1000); // power-up safety delay
     //====Serial configuration====
     Serial.begin(115200);
     //====
