@@ -2,6 +2,8 @@
 #include "Calibration.h"
 #include <Adafruit_NeoPixel.h>
 
+TaskHandle_t Task3;
+
 extern TMC2209Stepper driver;
 extern TMC2209Stepper driver2;
 
@@ -9,6 +11,7 @@ void info_motor1(void);
 void info_motor2(void);
 void mover(int,int,int);
 void Testing(void);
+void Task3code( void *);
 
 Calibration haloCalibTest;
 
@@ -16,9 +19,9 @@ Calibration haloCalibTest;
   #include <avr/power.h>
 #endif
 #define PIN 32
-#define NUMPIXELS 36 // numero de pixels en la tira
+#define NUMPIXELS 60 // numero de pixels en la tira
 Adafruit_NeoPixel pixels_test(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-#define DELAYVAL 500
+#define DELAYVAL 100
 unsigned long t0, t1;
 uint16_t waitTime = 10000.0;
 
@@ -96,6 +99,18 @@ void Testing::Test()
 	//haloCalibTest.init();
     SERIAL_PORT.begin(115200);
 	SERIAL_PORT2.begin(115200);
+
+	pixels_test.begin();
+
+	xTaskCreatePinnedToCore(
+                    Task3code,   /* Task function. */
+                    "Task3",     /* name of task. */
+                    5000,       /* Stack size of task */
+                    NULL,        /* parameter of the task */
+                    5,           /* priority of the task */
+                    &Task3,      /* Task handle to keep track of created task */
+                    0);          /* pin task to core 0 */                  
+    delay(500);	
 
 	pinMode(DIAG_PIN, INPUT);
 	pinMode(EN_PIN, OUTPUT);
@@ -175,7 +190,7 @@ void Testing::Test()
 	driver2.SGTHRS(STALL_VALUE2);      // Nivel de umbral StallGuard4 [0 ... 255] para la detección de bloqueo. Compensa
   									   // características específicas del motor y controla la sensibilidad. Un valor más alto da un valor más alto
   									   // sensibilidad. Un valor más alto hace que StallGuard4 sea más sensible y requiere menos torque para
-  									   // indica una oposicion al movimiento. 
+  									   // indica una oposicion al movimiento. 								 
 
 
 	File myFile;
@@ -185,7 +200,9 @@ void Testing::Test()
 	info_motor1();
 	info_motor2();
 	delay(2000);
-	Serial.println("Pin config");
+	Serial.print("Pin Config");
+	Serial.print("\t");
+    Serial.print("Value: ");
 	Serial.println(analogRead(PIN_ProducType));
 
 	//====Inicializar SD====
@@ -205,24 +222,25 @@ void Testing::Test()
 	}
 	if(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
 	{
-	    Serial.println("Card Fail");
+	    Serial.print("Card Fail");
+		Serial.print("\t\t");
 	}
 	else
 	{
-		Serial.println("Card OK");
+		Serial.print("Card OK");
+		Serial.print("\t\t");
 	}
 	
 	root = SD.open("/");
 
 	cardSize = SD.card()->cardSize();
-	Serial.println("Card size");
+	Serial.print("Card size: ");
 	Serial.print(0.000512*cardSize);
 	Serial.println("  MB");
 
 	delay(1000);
 
-	Serial.println("Test Hall");
-	delay(5000);
+	//Serial.println("Test Hall");
 	//===============Sensor_Hall==================
 	int dato_hall1 = 0;
 	int dato_hall2 = 0;
@@ -231,19 +249,19 @@ void Testing::Test()
 	dato_hall2 = analogRead(hall2);
 	if (dato_hall1 > 1500 && dato_hall1 < 2200)
 	{
-		Serial.println("Hall 1 OK");
+		Serial.println("Sensor Hall 1 OK");
 	}
 	else
 	{
-		Serial.println("Hall 1 Fail");
+		Serial.println("Sensor Hall 1 Fail");
 	}
 	if (dato_hall2 > 1500 && dato_hall2 < 2200)
 	{
-		Serial.println("Hall 2 OK");
+		Serial.println("Sensor Hall 2 OK");
 	}
 	else
 	{
-		Serial.println("Hall 2 Fail");
+		Serial.println("Sensor Hall 2 Fail");
 	}
 
 	//==============================================
@@ -256,74 +274,112 @@ void Testing::Test()
 	digitalWrite(DIR_PIN2, LOW);
 	driver2.rms_current(500);
 	driver2.microsteps(16);
-	Serial.println("Currente M2");
-	Serial.println(driver2.rms_current());
-	Serial.println("Microsteps M2");
-	Serial.println(driver2.microsteps());
-	mover(1600, 2, 1000);
+	//Serial.println("Currente M2");
+	//Serial.println(driver2.rms_current());
+	Serial.print("Microsteps M2 16");
+	Serial.print("\t");
+	if(driver2.microsteps() == 16)
+	{
+	    Serial.println("OK");
+	}
+	else
+	{
+		Serial.println("Fail");
+	}
+	
+	//mover(1600, 2, 1000);
 	delay(500);
 
 	digitalWrite(DIR_PIN2, HIGH);
 	driver2.rms_current(700);
 	driver2.microsteps(32);
-	Serial.println("Currente M2");
-	Serial.println(driver2.rms_current());
-	Serial.println("Microsteps M2");
-	Serial.println(driver2.microsteps());
-	mover(3200, 2, 1000);
+	//Serial.println("Currente M2");
+	//Serial.println(driver2.rms_current());
+	Serial.print("Microsteps M2 32");
+	Serial.print("\t");
+	if(driver2.microsteps() == 32)
+	{
+	    Serial.println("OK");
+	}
+	else
+	{
+		Serial.println("Fail");
+	}
+	//mover(3200, 2, 1000);
 	delay(500);
 
 	digitalWrite(DIR_PIN2, LOW);
 	driver2.rms_current(900);
 	driver2.microsteps(64);
-	Serial.println("Currente M2");
-	Serial.println(driver2.rms_current());
-	Serial.println("Microsteps M2");
-	Serial.println(driver2.microsteps());
-	mover(6400, 2, 1000);
+	//Serial.println("Currente M2");
+	//Serial.println(driver2.rms_current());
+	Serial.print("Microsteps M2 64");
+	Serial.print("\t");
+	if(driver2.microsteps() == 64)
+	{
+	    Serial.println("OK");
+	}
+	else
+	{
+		Serial.println("Fail");
+	}
+	//mover(6400, 2, 1000);
 	delay(500);
 	//===============Motor1==================
 	digitalWrite(DIR_PIN, LOW);
 	driver.rms_current(500);
 	driver.microsteps(16);
-	Serial.println("Currente M1");
-	Serial.println(driver.rms_current());
-	Serial.println("Microsteps M1");
-	Serial.println(driver.microsteps());
-	mover(1600, 1, 1000);
+	//Serial.println("Currente M1");
+	//Serial.println(driver.rms_current());
+	Serial.print("Microsteps M1 16");
+	Serial.print("\t");
+	if(driver.microsteps() == 16)
+	{
+	    Serial.println("OK");
+	}
+	else
+	{
+		Serial.println("Fail");
+	}
+	//mover(1600, 1, 1000);
 	delay(500);
 
 	digitalWrite(DIR_PIN, HIGH);
 	driver.rms_current(700);
 	driver.microsteps(32);
-	Serial.println("Currente M1");
-	Serial.println(driver.rms_current());
-	Serial.println("Microsteps M1");
-	Serial.println(driver.microsteps());
-	mover(3200, 1, 1000);
+	//Serial.println("Currente M1");
+	//Serial.println(driver.rms_current());
+	Serial.print("Microsteps M1 32");
+	Serial.print("\t");
+	if(driver.microsteps() == 32)
+	{
+	    Serial.println("OK");
+	}
+	else
+	{
+		Serial.println("Fail");
+	}
+	//mover(3200, 1, 1000);
 	delay(500);
 
 	digitalWrite(DIR_PIN, LOW);
 	driver.rms_current(900);
 	driver.microsteps(64);
-	Serial.println("Currente M1");
-	Serial.println(driver.rms_current());
-	Serial.println("Microsteps M1");
-	Serial.println(driver.microsteps());
-	mover(6400, 1, 1000);
-	delay(500);
-
-	delay(1000);
-    pixels_test.begin();
-	for (int i = 0; i < NUMPIXELS; i++)
+	//Serial.println("Currente M1");
+	//Serial.println(driver.rms_current());
+	Serial.print("Microsteps M1 64");
+	Serial.print("\t");
+	if(driver.microsteps() == 64)
 	{
-		pixels_test.setPixelColor(i, pixels_test.Color(255, 255, 255));
-
-		pixels_test.show(); // Send the updated pixel colors to the hardware.
-
-		delay(DELAYVAL); // Pause before next pass through loop
+	    Serial.println("OK");
 	}
-
+	else
+	{
+		Serial.println("Fail");
+	}
+	//mover(6400, 1, 1000);
+	delay(500);
+    
 	driver.rms_current(500);
 	driver.microsteps(16);
 	driver2.rms_current(500);
@@ -337,6 +393,7 @@ void Testing::Test()
 		mover(1, 1, 1000);
 		mover(1, 2, 1000);
 	}
+	
 }
 
 void info_motor1()
@@ -344,13 +401,13 @@ void info_motor1()
 	uint8_t result_1 = driver.test_connection();
 	if (result_1 == 0)
 	{
-		Serial.println(F("M1 OK"));
+		Serial.println(F("Motor 1 OK"));
 	}
 	else
 	{
 		
 
-		Serial.println(F("M1 Fail"));
+		Serial.println(F("Motor 1 Fail"));
 		Serial.println(result_1);
 	}
 }
@@ -360,11 +417,11 @@ void info_motor2()
 	uint8_t result_2 = driver2.test_connection();
 	if (result_2 == 0)
 	{
-		Serial.println(F("M2 OK"));
+		Serial.println(F("Motor 2 OK"));
 	}
 	else
 	{
-		Serial.println(F("M2 Fail"));
+		Serial.println(F("Motor 2 Fail"));
 		Serial.println(result_2);
 	}
 }
@@ -392,4 +449,17 @@ void mover(int pasos, int motor_d, int Velocidad)
 			delayMicroseconds(Velocidad);
 		}
 	}
+}
+
+void Task3code( void * pvParameters ){
+  
+	for (int i = 0; i < NUMPIXELS; i++)
+	{
+		pixels_test.setPixelColor(i, pixels_test.Color(255, 255, 255));
+
+		pixels_test.show(); // Send the updated pixel colors to the hardware.
+
+		delay(DELAYVAL); // Pause before next pass through loop
+	} 
+	vTaskDelete(NULL);
 }
