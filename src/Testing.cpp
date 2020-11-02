@@ -192,206 +192,254 @@ void Testing::Test()
   									   // sensibilidad. Un valor más alto hace que StallGuard4 sea más sensible y requiere menos torque para
   									   // indica una oposicion al movimiento. 								 
 
-
-	File myFile;
+    File myFile;
 	File root;
 	SdFat SD;
 	uint32_t cardSize;
-	info_motor1();
-	info_motor2();
-	delay(2000);
-	Serial.print("Pin Config");
-	Serial.print("\t");
-    Serial.print("Value: ");
-	Serial.println(analogRead(PIN_ProducType));
-
-	//====Inicializar SD====
-	t1 = millis();
-	t0 = t1;
-	while (!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
+	while(true)
 	{
-		
-		delay(200);
-		t1 = millis();
-		if (t1 - t0 > waitTime)
+		//Serial.print("Pin Config");
+		//Serial.print("\t");
+		//Serial.print("		Value: ");
+		//Serial.println(analogRead(PIN_ProducType));
+		Serial.println("TESTING");
+
+		int cont_m1 = 0;
+		int cont_m2 = 0;
+
+		//Serial.println("Test Hall");
+		//===============Sensor_Hall==================
+		int dato_hall1 = 0;
+		int dato_hall2 = 0;
+
+		dato_hall1 = analogRead(hall1);
+		dato_hall2 = analogRead(hall2);
+		if (dato_hall1 > 1500 && dato_hall1 < 2200)
 		{
-			t0 = millis();
-			break;
-			
+			Serial.println("Sensor Hall 1 			OK");
 		}
-	}
-	if(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
-	{
-	    Serial.print("Card Fail");
-		Serial.print("\t\t");
-	}
-	else
-	{
-		Serial.print("Card OK");
-		Serial.print("\t\t");
-	}
-	
-	root = SD.open("/");
+		else
+		{
+			Serial.println("Sensor Hall 1 			Fail");
+		}
+		if (dato_hall2 > 1500 && dato_hall2 < 2200)
+		{
+			Serial.println("Sensor Hall 2 			OK");
+		}
+		else
+		{
+			Serial.println("Sensor Hall 2 			Fail");
+		}
 
-	cardSize = SD.card()->cardSize();
-	Serial.print("Card size: ");
-	Serial.print(0.000512*cardSize);
-	Serial.println("  MB");
+		//===============Info Motors===================
+		info_motor1();
+		info_motor2();
+		digitalWrite(EN_PIN, LOW);
+		digitalWrite(DIR_PIN, LOW);
+		digitalWrite(EN_PIN2, LOW);
+		digitalWrite(DIR_PIN2, LOW);
+		//================Test===================
+		//===============Motor2==================
+		digitalWrite(DIR_PIN2, LOW);
 
-	delay(1000);
+		//Current m2
+		cont_m2 = 0;
+		driver2.microsteps(16);
+		driver2.rms_current(500);
 
-	//Serial.println("Test Hall");
-	//===============Sensor_Hall==================
-	int dato_hall1 = 0;
-	int dato_hall2 = 0;
+		if(driver2.rms_current() >=400 && driver2.rms_current() <=600)
+		{
+			//Serial.println("OK");
+			cont_m2++;
+		}
+		delay(100);
 
-	dato_hall1 = analogRead(hall1);
-	dato_hall2 = analogRead(hall2);
-	if (dato_hall1 > 1500 && dato_hall1 < 2200)
-	{
-		Serial.println("Sensor Hall 1 OK");
-	}
-	else
-	{
-		Serial.println("Sensor Hall 1 Fail");
-	}
-	if (dato_hall2 > 1500 && dato_hall2 < 2200)
-	{
-		Serial.println("Sensor Hall 2 OK");
-	}
-	else
-	{
-		Serial.println("Sensor Hall 2 Fail");
-	}
+		digitalWrite(DIR_PIN2, HIGH);
 
-	//==============================================
-	digitalWrite(EN_PIN, LOW);
-	digitalWrite(DIR_PIN, LOW);
-	digitalWrite(EN_PIN2, LOW);
-	digitalWrite(DIR_PIN2, LOW);
-	//================Test===================
-	//===============Motor2==================
-	digitalWrite(DIR_PIN2, LOW);
-	driver2.rms_current(500);
-	driver2.microsteps(16);
-	//Serial.println("Currente M2");
-	//Serial.println(driver2.rms_current());
-	Serial.print("Microsteps M2 16");
-	Serial.print("\t");
-	if(driver2.microsteps() == 16)
-	{
-	    Serial.println("OK");
-	}
-	else
-	{
-		Serial.println("Fail");
-	}
-	
-	//mover(1600, 2, 1000);
-	delay(500);
+		driver2.microsteps(16);
+		driver2.rms_current(700);
 
-	digitalWrite(DIR_PIN2, HIGH);
-	driver2.rms_current(700);
-	driver2.microsteps(32);
-	//Serial.println("Currente M2");
-	//Serial.println(driver2.rms_current());
-	Serial.print("Microsteps M2 32");
-	Serial.print("\t");
-	if(driver2.microsteps() == 32)
-	{
-	    Serial.println("OK");
-	}
-	else
-	{
-		Serial.println("Fail");
-	}
-	//mover(3200, 2, 1000);
-	delay(500);
+		if(driver2.rms_current() >=600 && driver2.rms_current() <=800)
+		{
+			cont_m2++;
+		}
+		delay(100);
 
-	digitalWrite(DIR_PIN2, LOW);
-	driver2.rms_current(900);
-	driver2.microsteps(64);
-	//Serial.println("Currente M2");
-	//Serial.println(driver2.rms_current());
-	Serial.print("Microsteps M2 64");
-	Serial.print("\t");
-	if(driver2.microsteps() == 64)
-	{
-	    Serial.println("OK");
-	}
-	else
-	{
-		Serial.println("Fail");
-	}
-	//mover(6400, 2, 1000);
-	delay(500);
-	//===============Motor1==================
-	digitalWrite(DIR_PIN, LOW);
-	driver.rms_current(500);
-	driver.microsteps(16);
-	//Serial.println("Currente M1");
-	//Serial.println(driver.rms_current());
-	Serial.print("Microsteps M1 16");
-	Serial.print("\t");
-	if(driver.microsteps() == 16)
-	{
-	    Serial.println("OK");
-	}
-	else
-	{
-		Serial.println("Fail");
-	}
-	//mover(1600, 1, 1000);
-	delay(500);
+		digitalWrite(DIR_PIN2, LOW);
+		driver2.microsteps(64);
+		driver2.rms_current(900);
 
-	digitalWrite(DIR_PIN, HIGH);
-	driver.rms_current(700);
-	driver.microsteps(32);
-	//Serial.println("Currente M1");
-	//Serial.println(driver.rms_current());
-	Serial.print("Microsteps M1 32");
-	Serial.print("\t");
-	if(driver.microsteps() == 32)
-	{
-	    Serial.println("OK");
-	}
-	else
-	{
-		Serial.println("Fail");
-	}
-	//mover(3200, 1, 1000);
-	delay(500);
+		if(driver2.rms_current() >=800 && driver2.rms_current() <=1000)
+		{
+			cont_m2++;
+		}
+		delay(100);
+		if(cont_m2 == 3)
+		{
+			Serial.println("Config Current M2		OK");
+		}
+		else
+		{
+			Serial.println("Config Current M2		Fail");
+		}
+		
+		//Microsteps m2
+		cont_m2 = 0;
+		driver2.rms_current(500);
+		driver2.microsteps(16);
 
-	digitalWrite(DIR_PIN, LOW);
-	driver.rms_current(900);
-	driver.microsteps(64);
-	//Serial.println("Currente M1");
-	//Serial.println(driver.rms_current());
-	Serial.print("Microsteps M1 64");
-	Serial.print("\t");
-	if(driver.microsteps() == 64)
-	{
-	    Serial.println("OK");
-	}
-	else
-	{
-		Serial.println("Fail");
-	}
-	//mover(6400, 1, 1000);
-	delay(500);
-    
-	driver.rms_current(500);
-	driver.microsteps(16);
-	driver2.rms_current(500);
-	driver2.microsteps(16);
-	digitalWrite(EN_PIN, LOW);
-	digitalWrite(DIR_PIN, LOW);
-	digitalWrite(EN_PIN2, LOW);
-	digitalWrite(DIR_PIN2, LOW);
-	while (true)
-	{
-		mover(1, 1, 1000);
-		mover(1, 2, 1000);
+		if(driver2.microsteps() == 16)
+		{
+			cont_m2++;
+		}
+		delay(100);
+
+		digitalWrite(DIR_PIN2, HIGH);
+		driver2.microsteps(32);
+		if(driver2.microsteps() == 32)
+		{
+			cont_m2++;
+		}
+		delay(100);
+
+		digitalWrite(DIR_PIN2, LOW);
+		driver2.microsteps(64);
+
+		if(driver2.microsteps() == 64)
+		{
+			cont_m2++;
+		}
+		delay(100);
+		if(cont_m2 == 3)
+		{
+			Serial.println("Config Steps M2			OK");
+		}
+		else
+		{
+			Serial.println("Config Steps M2			Fail");
+		}
+		
+		//===============Motor1==================
+		digitalWrite(DIR_PIN, LOW);
+		//Current m1
+		cont_m1 = 0;
+		driver.microsteps(16);
+		driver.rms_current(500);
+
+		if(driver.rms_current() >=400 && driver.rms_current() <=600)
+		{
+			//Serial.println("OK");
+			cont_m1++;
+		}
+		delay(100);
+
+		digitalWrite(DIR_PIN, HIGH);
+
+		driver.microsteps(16);
+		driver.rms_current(700);
+
+		if(driver.rms_current() >=600 && driver.rms_current() <=800)
+		{
+			cont_m1++;
+		}
+		delay(100);
+
+		digitalWrite(DIR_PIN, LOW);
+		driver.microsteps(64);
+		driver.rms_current(900);
+
+		if(driver.rms_current() >=800 && driver.rms_current() <=1000)
+		{
+			cont_m1++;
+		}
+		delay(100);
+		if(cont_m1 == 3)
+		{
+			Serial.println("Config Current M1		OK");
+		}
+		else
+		{
+			Serial.println("Config Current M1		Fail");
+		}
+		
+		//MicroSteps m1
+		cont_m1 = 0;
+		driver.microsteps(16);
+		driver.rms_current(500);
+
+		if(driver.microsteps() == 16)
+		{
+			//Serial.println("OK");
+			cont_m1++;
+		}
+		delay(100);
+
+		digitalWrite(DIR_PIN, HIGH);
+
+		driver.microsteps(32);
+
+		if(driver.microsteps() == 32)
+		{
+			cont_m1++;
+		}
+		delay(100);
+
+		digitalWrite(DIR_PIN, LOW);
+		driver.microsteps(64);
+
+		if(driver.microsteps() == 64)
+		{
+			cont_m1++;
+		}
+		delay(100);
+		if(cont_m1 == 3)
+		{
+			Serial.println("Config Steps M1			OK");
+		}
+		else
+		{
+			Serial.println("Config Steps M1			Fail");
+		}
+		
+
+		//====SD====
+		t1 = millis();
+		t0 = t1;
+		while (!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
+		{
+			
+			delay(200);
+			t1 = millis();
+			if (t1 - t0 > waitTime)
+			{
+				t0 = millis();
+				break;
+				
+			}
+		}
+		if(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
+		{
+			Serial.println("Card 				Fail");
+			//Serial.print("\t\t");
+		}
+		else
+		{
+			Serial.println("Card 				OK");
+			//Serial.print("\t\t");
+		}
+
+		while(true)
+		{
+			if (Serial.available())
+			{
+				char data = Serial.read();
+			
+				if (data >= '0' && data <= '9')
+				{
+					break;
+				}
+			}
+		}
 	}
 	
 }
