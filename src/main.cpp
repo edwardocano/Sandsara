@@ -203,9 +203,18 @@ void setup()
 	//====Testing====
 	int dat_pin;
 	dat_pin = analogRead(PIN_ProducType);
-	if(dat_pin > 1000 && dat_pin < 4000)
+	if(dat_pin > 682 && dat_pin < 2047)
 	{
 		haloTest.Test();	
+	}
+    if(dat_pin > 2047 && dat_pin < 3413)
+	{
+		for(int x = 0; x < 512; x++)
+        {
+            EEPROM.write(x,-1);
+            EEPROM.commit();
+            delay(20);
+        }	
 	}
     //====restore the value intermediateCalibration====
     intermediateCalibration = romGetIntermediateCalibration();
