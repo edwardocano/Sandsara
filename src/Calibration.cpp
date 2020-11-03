@@ -76,7 +76,7 @@ void IRAM_ATTR onTimer()
 
 	if (flag == 0)
 	{
-        //Serial.println(micros() - t_old);
+
         t_old = micros();
 		digitalWrite(STEP_PIN, !digitalRead(STEP_PIN));
 	}
@@ -587,14 +587,6 @@ int Calibration::start()
 					EEPROM.write(ADDRESSPOLESENSE1, Pole_sens1);
 					EEPROM.commit();
 					Pole_sens2 = Pole2();
-                    #ifdef DEBUGGING_DATA
-                        Serial.println("Polo 1");
-                        Serial.println(Pole_sens1);
-                    #endif
-                    #ifdef DEBUGGING_DATA
-                        Serial.println("Polo 2");
-                        Serial.println(Pole_sens2);
-                    #endif
 					EEPROM.write(ADDRESSPOLESENSE2, Pole_sens2);
 					EEPROM.commit();
 				}
@@ -602,14 +594,6 @@ int Calibration::start()
 				{
 					Pole_sens1 = EEPROM.read(ADDRESSPOLESENSE1);
 					Pole_sens2 = EEPROM.read(ADDRESSPOLESENSE2);
-                    #ifdef DEBUGGING_DATA
-                        Serial.println("Polo 1");
-                        Serial.println(Pole_sens1);
-                    #endif
-                    #ifdef DEBUGGING_DATA
-                        Serial.println("Polo 2");
-                        Serial.println(Pole_sens2);
-                    #endif
 				}
 
 				if (Pole_sens1 == 1)

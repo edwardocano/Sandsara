@@ -1,4 +1,4 @@
-#include <Arduino.h>
+#include "Arduino.h"
 #include "SdFiles.h"
 #include "Motors.h"
 #include "Bluetooth.h"
@@ -168,9 +168,6 @@ void setup()
     while(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
     {
         //changePalette(CODE_NOSD_PALLETE);
-        #ifdef DEBUGGING_DATA
-            Serial.println("Card failed, or not present");
-        #endif
         delay(200); 
     }
     //changePalette(ledModeGlobal);
@@ -300,13 +297,7 @@ void setup()
     //====Cablibrating====
     
     haloCalib.init();
-    #ifdef DEBUGGING_DATA
-        Serial.println("Calibrando...");
-    #endif
     haloCalib.start();
-    #ifdef DEBUGGING_DATA
-        Serial.println("calibrado");
-    #endif
     //====After calibration current has to be set up====
     driver.rms_current(NORMAL_CURRENT);
     driver2.rms_current(NORMAL_CURRENT);
@@ -314,11 +305,6 @@ void setup()
     pinMode(EN_PIN2, OUTPUT);
     digitalWrite(EN_PIN, LOW);
     digitalWrite(EN_PIN2, LOW);
-    //====
-    
-    #ifdef DEBUGGING_DATA
-        Serial.println("Card present");
-    #endif
     //====
     //====Restore playlist name and orderMode====    
     playListGlobal = romGetPlaylist();
@@ -329,37 +315,18 @@ void setup()
     }
     changePalette(romGetPallete());
     if (playListGlobal.equals("/")){
-        #ifdef DEBUGGING_DATA
-            Serial.print("No hay una playlist guardada, se reproduciran todos los archivos en la sd");
-        #endif
+        
     }
     else
     {
         if (sdExists(playListGlobal)){
             delay(1);
-            #ifdef DEBUGGING_DATA
-                Serial.print("lista guardada: ");
-                Serial.println(playListGlobal);
-            #endif
+            
         }
         else{
-            #ifdef DEBUGGING_DATA
-                Serial.println("La playlist no existe, se reproduciran todos los archivos en la sd");
-            #endif
+            
         }
     }
-    #ifdef DEBUGGING_DATA
-        Serial.print("orderMode guardado: ");
-        Serial.println(orderModeGlobal);
-    #endif
-    //====
-    //====Searching for an update====
-    //findUpdate();
-    //====
-    #ifdef PROCESSING_SIMULATOR
-        Serial.println("inicia");
-    #endif
-    
     
     //=====if the file playlist.playlist exits it will be executed====
     if (sdExists("/playlist.playlist")){
@@ -375,28 +342,16 @@ void setup()
 
 void loop()
 {
-    #ifdef DEBUGGING_DATA
-        Serial.println("Iniciara la funcion runSansara");
-    #endif
+
     errorCode = run_sandsara(playListGlobal, orderModeGlobal);
-    #ifdef DEBUGGING_DATA
-        Serial.print("errorCode de run: ");
-        Serial.println(errorCode);
-    #endif
     if (errorCode == -10){
         Sandsara.completePath();
         while(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
         {
             changePalette(CODE_NOSD_PALLETE);
-            #ifdef DEBUGGING_DATA
-                Serial.println("Card failed, or not present");
-            #endif
             delay(200); 
         }
         changePalette(ledModeGlobal);
-        #ifdef DEBUGGING_DATA
-            Serial.println("Card present");
-        #endif
         
 
     }
@@ -482,10 +437,6 @@ int run_sandsara(String playList, int orderMode)
         }
         playList = "/DEFAULT.playlist";
     }
-    #ifdef DEBUGGING_DATA
-        Serial.print("Numero de archivos: ");
-        Serial.println(numberOfFiles);
-    #endif
 
     if (numberOfFiles == 0){
         return -4;
@@ -500,9 +451,6 @@ int run_sandsara(String playList, int orderMode)
         //====Save the current position in playlist====
         romSetPositionList(pListFileGlobal);
         //====
-        #ifdef DEBUGGING_DATA
-            Serial.println("Abrira el siguiente archivo disponible");
-        #endif
         errorCode = SdFiles::getLineNumber(pListFileGlobal, playList, fileName);
         if (errorCode < 0)
         {
@@ -608,12 +556,7 @@ int runFile(String fileName){
         pListFileGlobal += 1;
         return -70;
     }
-    #ifdef PROCESSING_SIMULATOR
-        Serial.print("fileName: ");
-        Serial.println(fileName);
-    #endif
-    /*Serial.print("fileName: ");
-    Serial.println(fileName);*/
+
     startFileAngle = file.getStartAngle();
     startFileAngle = Motors::normalizeAngle(startFileAngle);
     endFileAngle = file.getFinalAngle();
@@ -673,7 +616,6 @@ int runFile(String fileName){
     //the next while is stopped until file is finished or is interrupted.
     while (true)
     {
-        //Serial.println("ejecutara nueva posicion");
         //====check if speed change====
         
         //====check if you want to change the path====
@@ -681,9 +623,6 @@ int runFile(String fileName){
             changePositionList = false;
             changeProgram = false;
             goHomeSpiral();
-            #ifdef PROCESSING_SIMULATOR
-                Serial.println("finished");
-            #endif
             if (changeProgram){
                 return 30;
             }
@@ -695,9 +634,6 @@ int runFile(String fileName){
             changePositionList = false;
             changeProgram = false;
             goHomeSpiral();
-            #ifdef PROCESSING_SIMULATOR
-                Serial.println("finished");
-            #endif
             if (changePositionList){
                 return 20;
             }
@@ -714,23 +650,16 @@ int runFile(String fileName){
         }
         if (suspensionModeGlobal == true){
             goHomeSpiral();
-            #ifdef PROCESSING_SIMULATOR
-                Serial.println("finished");
-            #endif
             return 40;
         }
         //====Check if you want to change playlist or Orden mode====
         if (rewindPlaylist){
             goHomeSpiral();
             rewindPlaylist = false;
-            #ifdef PROCESSING_SIMULATOR
-                Serial.println("finished");
-            #endif
             return 1;
         }
         //====
         //====Get new components of the next point to go====
-        //Serial.println("antes de next components");
         working_status = file.getNextComponents(&component_1, &component_2);                
         if (working_status == 3)
         {
@@ -772,7 +701,6 @@ int runFile(String fileName){
         {
             break;
         }
-        //Serial.println("saliendo de mover");
     }
     
     //====update z and theta current====
@@ -787,14 +715,7 @@ int runFile(String fileName){
     //====check if there was a SD problem====
     if (working_status == -10)
     {
-        #ifdef DEBUGGING_DATA
-            Serial.println("There were problems for reading SD");
-            Serial.println("Se mandara a cero");
-        #endif
         movePolarTo(0, 0, 0, true);
-        #ifdef PROCESSING_SIMULATOR
-            Serial.println("finished");
-        #endif
         return -10;
     }
     //====
@@ -805,21 +726,12 @@ int runFile(String fileName){
         movePolarTo(DISTANCIA_MAX, 0, 0, true);
     }
     else if (posisionCase == 0){
-        #ifdef DEBUGGING_DATA
-            Serial.println("Se mandara a cero");
-        #endif
         movePolarTo(0, 0, 0, true);
 		if (intermediateCalibration == true)
 		{
-            #ifdef DEBUGGING_DATA
-                Serial.println("se realizara la calibracion intermedia");
-            #endif
 			haloCalib.verificacion_cal();
 		}
 	}
-    #ifdef PROCESSING_SIMULATOR
-        Serial.println("finished");
-    #endif
     delay(1000);
     return 10;
 }
@@ -934,7 +846,6 @@ int moveInterpolateTo(double x, double y, double distance)
  * 2, se cambio el orderMode
  */
 int movePolarTo(double component_1, double component_2, double couplingAngle, bool littleMovement){
-    //Serial.println("dentro de movePolar");
     double zNext = component_1;
     double thetaNext = component_2 - couplingAngle;
     double thetaCurrent = Sandsara.getThetaCurrent();
@@ -1035,22 +946,13 @@ void executeCode(int errorCode){
     else if (errorCode == 80){
         suspensionModeGlobal = true;
         pauseModeGlobal = false;
-        #ifdef DEBUGGING_DATA
-            Serial.println("Entro a modo suspencion");
-        #endif
     }
     else if (errorCode == 90){
         pauseModeGlobal = true;
-        #ifdef DEBUGGING_DATA
-            Serial.println("Entro en modo pausa");
-        #endif
     }
     else if (errorCode == 100){
         pauseModeGlobal = false;
         suspensionModeGlobal = false;
-        #ifdef DEBUGGING_DATA
-            Serial.println("Reanudado");
-        #endif
     }
     else if (errorCode == 130){
         SandsaraBt.writeBt("currentProgram= ");
@@ -1087,16 +989,10 @@ void executeCode(int errorCode){
     else if (errorCode == 160){
         changePositionList = true;
         changeProgram = false;
-        #ifdef DEBUGGING_DATA
-            Serial.println("cambio de programa por su posicion en la lista");
-        #endif
     }
     else if (errorCode == 170){
         changeProgram = true;
         changePositionList = false;
-        #ifdef DEBUGGING_DATA
-            Serial.println("cambio de programa por su nombre en la memoria SD");
-        #endif
     }
     else if (errorCode == 190){
         incrementIndexGlobal = romGetIncrementIndexPallete();
@@ -1602,15 +1498,9 @@ void findUpdate(){
             int indexDot2 = fileName.indexOf(".", indexDot1 + 1);
             int indexDot3 = fileName.indexOf(".", indexDot2 + 1);
             if (indexDash1 == -1 || indexDash2 == -1 || indexDot1 == -1 || indexDot2 == -1 || indexDot3 == -1){
-                #ifdef DEBUGGING_DATA
-                    Serial.println("No se encontraron 3 puntos y 2 dash");
-                #endif
                 continue;
             }
             if (!fileName.substring(indexDot3).equals(".bin")){
-                #ifdef DEBUGGING_DATA
-                    Serial.println("no es un .bin");
-                #endif
                 continue;
             }
             int v1 = fileName.substring(indexDash1 + 1, indexDot1).toInt();
@@ -1618,9 +1508,6 @@ void findUpdate(){
             int v3 = fileName.substring(indexDot2 + 1, indexDash2).toInt();
             int hash = fileName.substring(indexDash2 + 1, indexDot3).toInt();
             if (hash != v1 + v2 + v3 + 1){
-                #ifdef DEBUGGING_DATA
-                    Serial.println("El hash no coincide");
-                #endif
                 continue;
             }
             if (v1 > v1Current){
@@ -1804,7 +1691,7 @@ void moveSteps(void* pvParameters)
             #endif
             startMovement = false;
             
-            //Serial.println(pathSpeed);
+
             #ifdef IMPLEMENT_ACCELERATION
                 //pathSpeed
             #endif
@@ -1822,14 +1709,6 @@ void moveSteps(void* pvParameters)
             #endif
             if (maxSpeed > MAX_STEPS_PER_SECOND * MICROSTEPPING)
                 maxSpeed = MAX_STEPS_PER_SECOND * MICROSTEPPING;
-
-            #ifdef PROCESSING_SIMULATOR
-                Serial.print(q1Steps);
-                Serial.print(",");
-                Serial.print(q2Steps + q1Steps);
-                Serial.print(",");
-                Serial.println(int(maxSpeed));
-            #endif
             
             Sandsara.stepper1.setMaxSpeed(maxSpeed);
             Sandsara.stepper2.setMaxSpeed(maxSpeed);
@@ -1837,12 +1716,6 @@ void moveSteps(void* pvParameters)
             positions[1] = Sandsara.stepper2.currentPosition() + q2Steps + q1Steps;
             #ifndef DISABLE_MOTORS
                 Sandsara.steppers.moveTo(positions);
-                /*String info1;
-                String info2;
-                info1 = "1:" + String(int(Sandsara.stepper1.speed())) + "," + String(q1Steps) + ",1";
-                info2 = "2:" + String(int(Sandsara.stepper2.speed())) + "," + String(q2Steps) + "," + String(pathSpeed);
-                Serial.println(info1);
-                Serial.println(info2);*/
                 Sandsara.setRealSpeed1(Sandsara.stepper1.speed());
                 Sandsara.setRealSpeed2(Sandsara.stepper2.speed());
                 Sandsara.steppers.runSpeedToPosition();

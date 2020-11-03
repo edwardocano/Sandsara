@@ -46,14 +46,10 @@ Bluetooth::Bluetooth(){
 int Bluetooth::init(String name){
     if (!SerialBT.begin(name)){ //Bluetooth device name
         SerialBT.begin("Sandsara");
-#ifdef BLUECOMMENTS
-        Serial.println("No se inicializo con nombre por defecto");
-#endif
+
     }
     SerialBT.register_callback(callback);
-#ifdef BLUECOMMENTS
-    Serial.println("The device started, now you can pair it with bluetooth!");
-#endif
+
     return 0;
 }
 
@@ -61,16 +57,12 @@ void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
 {
     if (event == ESP_SPP_SRV_OPEN_EVT)
     {
-#ifdef BLUECOMMENTS
-        Serial.println("Client Connected");
-#endif
+
     }
 
     if (event == ESP_SPP_CLOSE_EVT)
     {
-#ifdef BLUECOMMENTS
-        Serial.println("Client disconnected");
-#endif
+
     }
 }
 
@@ -169,10 +161,6 @@ int Bluetooth::checkBlueTooth()
         }
         if (line.indexOf("code01") >= 0)
         {
-            /*Serial.print("Entro a readLine ");
-            Serial.println(ESP.getFreeHeap());
-            Serial.print("memoria disponible en heap: ");
-            Serial.println(xPortGetFreeHeapSize());*/
             #ifdef RESQUEST_ANSWER
                 writeBtln("request-name");
             #endif
@@ -188,10 +176,7 @@ int Bluetooth::checkBlueTooth()
             {
                 fileNameBt.remove(0, 1);
             }
-#ifdef BLUECOMMENTS
-            Serial.print("Nombre del archivo: ");
-            Serial.println(fileNameBt);
-#endif
+
             if (sdExists("/" + fileNameBt))
             {
                 codeError = -5;
@@ -223,10 +208,7 @@ int Bluetooth::checkBlueTooth()
                         {
                             indexWord = line.indexOf("bytes=");
                             bytesToRead = line.substring(6).toInt();
-                            #ifdef BLUECOMMENTS
-                                Serial.print("bytesToRead: ");
-                                Serial.println(bytesToRead);
-                            #endif
+                            
                             if (bytesToRead <= 0 || bytesToRead > BUFFER_BLUETOOTH)
                             {
                                 codeError = -2;
@@ -248,10 +230,7 @@ int Bluetooth::checkBlueTooth()
                                 break;
                             }
                             checksum = GetMD5String(dataBt, bytesToRead);
-                            #ifdef BLUECOMMENTS
-                                Serial.print("checksum: ");
-                                Serial.println(checksum);
-                            #endif
+                            
                             if (!line.equals(checksum))
                             {
                                 codeError = -7;
@@ -269,9 +248,7 @@ int Bluetooth::checkBlueTooth()
                             file.close();
                             pauseModeGlobal = false;
                             writeBtln("ok");
-#ifdef BLUECOMMENTS
-                            Serial.println("guardado en memoria");
-#endif
+
                             codeError = 1;
                             return codeError; //file was written
                         }
@@ -287,9 +264,7 @@ int Bluetooth::checkBlueTooth()
                     {
                         file.close();
                         sdRemove("/" + fileNameBt);
-#ifdef BLUECOMMENTS
-                        Serial.println("transferencia cancelada");
-#endif
+
                     }
                 }
             }
@@ -893,9 +868,7 @@ int Bluetooth::readLine(String &line)
     }
     indexRemove = line.indexOf('\n');
     line.remove(indexRemove, 1);
-#ifdef BLUECOMMENTS
-    Serial.println(line);
-#endif
+
     return 0;
 }
 
@@ -924,10 +897,7 @@ int Bluetooth::readBt(uint8_t dataBt[], int bytesToRead)
         {
             /*writeBt("bytes enviados: ");
             writeBtln(String(i));*/
-        #ifdef BLUECOMMENTS
-            Serial.print("bytes enviados: ");
-            Serial.println(i);
-        #endif
+        
             return -4; //timeOut in readBt
         }
         if (millis() - wdtFeedTime > 500){
@@ -935,9 +905,7 @@ int Bluetooth::readBt(uint8_t dataBt[], int bytesToRead)
             wdtFeedTime = millis();
         }
     }
-    #ifdef BLUECOMMENTS
-        Serial.println("salio de readBt normal");
-    #endif
+    
     return 0;
 }
 
@@ -1110,49 +1078,32 @@ int performUpdate(Stream &updateSource, size_t updateSize)
         size_t written = Update.writeStream(updateSource);
         if (written == updateSize)
         {
-            #ifdef DEBUGGING_DATA
-                Serial.println("Written : " + String(written) + " successfully");
-            #endif
+    
         }
         else
         {
-            #ifdef DEBUGGING_DATA
-                Serial.println("Written only : " + String(written) + "/" + String(updateSize) + ". Retry?");
-            #endif
+
             
         }
         if (Update.end())
         {
-            Serial.println("OTA done!");
             if (Update.isFinished())
             {
-                #ifdef DEBUGGING_DATA
-                    Serial.println("Update successfully completed. Rebooting.");
-                #endif
                 
                 return 1;
             }
             else
             {
-                #ifdef DEBUGGING_DATA
-                    Serial.println("Update not finished? Something went wrong!");
-                #endif
                 return -4;
             }
         }
         else
         {
-            #ifdef DEBUGGING_DATA
-                Serial.println("Error Occurred. Error #: " + String(Update.getError()));
-            #endif
             return -6;
         }
     }
     else
     {
-        #ifdef DEBUGGING_DATA
-            Serial.println("Not enough space to begin OTA");
-        #endif
         return -5;
     }
 }
@@ -1176,7 +1127,7 @@ int updateFromFS(SdFat &fs, String name)
     {
         if (updateBin.isDirectory())
         {
-            Serial.println("Error, update.bin is not a file");
+            
             updateBin.close();
             return -1;
         }
@@ -1185,7 +1136,7 @@ int updateFromFS(SdFat &fs, String name)
 
         if (updateSize > 0)
         {
-            Serial.println("Try to start update");
+
             errorCode = performUpdate(updateBin, updateSize);
             updateBin.close();
             sdRemove(name);
@@ -1193,7 +1144,7 @@ int updateFromFS(SdFat &fs, String name)
         }
         else
         {
-            Serial.println("Error, file is empty");
+
             updateBin.close();
             return -2;
         }
@@ -1203,7 +1154,7 @@ int updateFromFS(SdFat &fs, String name)
     }
     else
     {
-        Serial.println("Could not load update.bin from sd root");
+
         return -3;
     }
 }
@@ -1223,9 +1174,6 @@ int programming(String name){
  * @return Un codigo para saber si ocurre un error a la hora de realizar la actualizacion.
  */
 void rebootWithMessage(String reason){
-    #ifdef DEBUGGING_DATA
-        Serial.println(reason);
-    #endif
     delay(1000);
     ESP.restart();
 }

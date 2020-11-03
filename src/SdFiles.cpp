@@ -19,10 +19,7 @@ SdFiles::SdFiles(String nameF, int directionMode)
     fileName = nameF;
     fileType = getType(fileName);
     this->directionMode = directionMode;
-#ifdef DEBUGGING_DATA
-    Serial.print("Se abrira el archivo: ");
-    Serial.println(fileName);
-#endif
+
     while (readingSDFile){
         delay(1);
     }

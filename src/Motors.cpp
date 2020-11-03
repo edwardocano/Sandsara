@@ -180,18 +180,6 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                     accel2 = 0;
                     lowerSpeed = false;
                 }
-                /*String info1;
-                String info2;
-                if ((accel1 > ACCEL_THRESHOLD) || (accel2 > ACCEL_THRESHOLD)){
-                    info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + "," + String(factorInt);//",1";
-                }
-                else{
-                    info1 = "1:" + String(int(currentSpeed1)) + "," + String(positions[0]) + "," + String(factorInt);//",0";
-                }
-                
-                info2 = "2:" + String(int(currentSpeed2)) + "," + String(positions[1]) + "," + String(int(_pathSpeed));
-                Serial.println(info1);
-                Serial.println(info2);*/
 
                 if ((accel1 > ACCEL_THRESHOLD) || (accel2 > ACCEL_THRESHOLD)){
                     double maxAccel, safeSpeed;
@@ -273,7 +261,7 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 if (fullBuffer){
                     unsigned long t = millis();
                     while (eTaskGetState(motorsTask) != 3){
-                        //Serial.println("delay de 2 segundos");
+                        
                         if (millis() - t > 500){
                             delay(1);
                         }
@@ -349,12 +337,12 @@ void Motors::completePath(){
  * @brief this function resets some variables and replace the position variables to the real positions of Sandsara.
  */
 void Motors::stopAndResetPositions(){
-    //Serial.println("stopAndResetPositions");
+    
     while (eTaskGetState(motorsTask) != 3){
         delay(1);
         continue;
     }
-    //Serial.println("salio de while");    
+       
     cPointerBuffer = 0;
     pointerBuffer = 0;
     fullBuffer = false;
@@ -364,10 +352,7 @@ void Motors::stopAndResetPositions(){
     q2_current = realQ2;
     x_current = dkX(q1_current, q2_current);
     y_current = dkY(q1_current, q2_current);
-    /*Serial.print("q1_current ");
-    Serial.println(q1_current);
-    Serial.print("q2_current ");
-    Serial.println(q2_current);*/
+    
 }
 
 void Motors::updateVariablesToMovingThread(){
@@ -388,18 +373,7 @@ void Motors::resetSpeeds(){
 
     double xBufferAux[SAMPLES], yBufferAux[SAMPLES];
     stopAndResetPositions();
-    /*Serial.print("xActual: ");
-    Serial.println(x_current);
-    Serial.print("yActual: ");
-    Serial.println(y_current);
 
-    Serial.print("cxyPointer: ");
-    Serial.println(cxyPointer);
-
-    Serial.print("xBuffer: ");
-    Serial.println(xBuffer[cxyPointer]);
-    Serial.print("yBuffer: ");
-    Serial.println(yBuffer[cxyPointer]);*/
     cxyPointer = 0;
     xyPointer = 0;
     for (int i = 0; i < SAMPLES; i++){
