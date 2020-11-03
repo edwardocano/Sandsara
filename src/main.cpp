@@ -375,6 +375,7 @@ void loop()
         Serial.println(errorCode);
     #endif
     if (errorCode == -10){
+        Sandsara.completePath();
         while(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
         {
             changePalette(CODE_NOSD_PALLETE);
