@@ -198,17 +198,10 @@ void Testing::Test()
 	uint32_t cardSize;
 	while(true)
 	{
-		//Serial.print("Pin Config");
-		//Serial.print("\t");
-		//Serial.print("		Value: ");
-		//Serial.println(analogRead(PIN_ProducType));
-		//Serial.println("TESTING");
 
 		int cont_m1 = 0;
 		int cont_m2 = 0;
 		int band_sd = 0;
-
-		//Serial.println("Test Hall");
 		//===============Sensor_Hall==================
 		int dato_hall1 = 0;
 		int dato_hall2 = 0;
@@ -250,7 +243,6 @@ void Testing::Test()
 
 		if(driver2.rms_current() >=400 && driver2.rms_current() <=600)
 		{
-			//Serial.println("OK");
 			cont_m2++;
 		}
 		delay(100);
@@ -329,7 +321,6 @@ void Testing::Test()
 
 		if(driver.rms_current() >=400 && driver.rms_current() <=600)
 		{
-			//Serial.println("OK");
 			cont_m1++;
 		}
 		delay(100);
@@ -370,7 +361,6 @@ void Testing::Test()
 
 		if(driver.microsteps() == 16)
 		{
-			//Serial.println("OK");
 			cont_m1++;
 		}
 		delay(100);
@@ -422,13 +412,13 @@ void Testing::Test()
 		if(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
 		{
 			Serial.println("Card_Fail");
-			//Serial.print("\t\t");
+			
 		}
 		else
 		{
 			Serial.println("Card_OK");
 			band_sd = 1;
-			//Serial.print("\t\t");
+			
 		}
         
 		while(true)
@@ -439,13 +429,11 @@ void Testing::Test()
 				if(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
 				{
 					Serial.println("Card_Fail");
-					//Serial.print("\t\t");
 				}
 				else
 				{
 					Serial.println("Card_OK");
 					band_sd = 1;
-					//Serial.print("\t\t");
 				}
 			}
 
