@@ -213,7 +213,7 @@ void setup()
         {
             EEPROM.write(x,-1);
             EEPROM.commit();
-            delay(50);
+            delay(20);
         }	
 	}
     //====restore the value intermediateCalibration====
