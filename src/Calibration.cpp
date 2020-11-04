@@ -293,7 +293,7 @@ int Calibration::start()
 		digitalWrite(EN_PIN2, HIGH);
 		digitalWrite(DIR_PIN2, LOW);
         cont_turn1++;
-		if (analogRead(PIN_ProducType) > 4000)
+		if (analogRead(PIN_ProducType) > 3500)
 		{
 			if (digitalRead(DIAG_PIN) == 1 || cont_turn == 1480)
 			{
@@ -367,7 +367,7 @@ int Calibration::start()
 					flag = 3;
 					delay(10);
 					cont_turn++;
-					if (analogRead(PIN_ProducType) > 4000)
+					if (analogRead(PIN_ProducType) > 3500)
 					{
 						if ((digitalRead(DIAG_PIN2) == 1 and avoid2 == 1) || cont_turn == 1480)
 						{
@@ -518,7 +518,7 @@ int Calibration::start()
 					flag = 3;
 					delay(10);
 					cont_turn++;
-					if (analogRead(PIN_ProducType) > 4000)
+					if (analogRead(PIN_ProducType) > 3500)
 					{
 
 						if ((digitalRead(DIAG_PIN2) == 1 and avoid2 == 1) || cont_turn == 1480)
@@ -2131,7 +2131,7 @@ int zero_Hall1(void)
 	int flag_c = 0;
 	digitalWrite(DIR_PIN, HIGH);
 	digitalWrite(DIR_PIN2, HIGH);
-	if (analogRead(PIN_ProducType) > 4000)
+	if (analogRead(PIN_ProducType) > 3500)
 	{
 		normal_turn();
 		delay(500);
@@ -2425,7 +2425,7 @@ int zero_Hall2(void)
 	int flag_c = 0;
 	
 
-	if (analogRead(PIN_ProducType) > 4000)
+	if (analogRead(PIN_ProducType) > 3500)
 	{
 		digitalWrite(EN_PIN, HIGH);
 		flag = 3;
