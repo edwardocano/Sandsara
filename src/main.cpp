@@ -163,6 +163,24 @@ void setup()
     delay(1000); // power-up safety delay
     //====Serial configuration====
     Serial.begin(115200);
+    //====Testing====
+    //Serial.println("Inicio esp32, Programado con ESP-Prog");
+	int dat_pin;
+	dat_pin = analogRead(PIN_ProducType);
+    dat_pin = 2000;
+	if(dat_pin > 682 && dat_pin < 2047)
+	{
+		haloTest.Test();	
+	}
+    if(dat_pin > 2047 && dat_pin < 3413)
+	{
+		for(int x = 0; x < 512; x++)
+        {
+            EEPROM.write(x,-1);
+            EEPROM.commit();
+            delay(20);
+        }	
+	}
     //====
     //====SD initialization====
     while(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
@@ -197,22 +215,7 @@ void setup()
     //====EEPROM Initialization====
     EEPROM.begin(EEPROM_SIZE);
     delay(500);
-	//====Testing====
-	int dat_pin;
-	dat_pin = analogRead(PIN_ProducType);
-	if(dat_pin > 682 && dat_pin < 2047)
-	{
-		haloTest.Test();	
-	}
-    if(dat_pin > 2047 && dat_pin < 3413)
-	{
-		for(int x = 0; x < 512; x++)
-        {
-            EEPROM.write(x,-1);
-            EEPROM.commit();
-            delay(20);
-        }	
-	}
+	
     //====restore the value intermediateCalibration====
     intermediateCalibration = romGetIntermediateCalibration();
     //====

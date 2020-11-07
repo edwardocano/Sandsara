@@ -196,8 +196,15 @@ void Testing::Test()
 	File root;
 	SdFat SD;
 	uint32_t cardSize;
+	
+	while (!Serial) {
+    // wait for serial port to connect. Needed for native USB
+	;
+    }
+	delay(1000);
 	while(true)
 	{
+		if(Serial) {
 
 		int cont_m1 = 0;
 		int cont_m2 = 0;
@@ -411,12 +418,13 @@ void Testing::Test()
 		}
 		if(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
 		{
-			Serial.println("Card_Fail");
-			
+			Serial.print("Card_Fail");
+			Serial.println("@@@@@");
 		}
 		else
 		{
-			Serial.println("Card_OK");
+			Serial.print("Card_OK");
+			Serial.println("@@@@@");
 			band_sd = 1;
 			
 		}
@@ -428,11 +436,13 @@ void Testing::Test()
 				SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD);
 				if(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
 				{
-					Serial.println("Card_Fail");
+					Serial.print("Card_Fail");
+					Serial.println("@@@@@");
 				}
 				else
 				{
-					Serial.println("Card_OK");
+					Serial.print("Card_OK");
+					Serial.println("@@@@@");
 					band_sd = 1;
 				}
 			}
@@ -446,6 +456,7 @@ void Testing::Test()
 					break;
 				}
 			}
+		}
 		}
 	}
 	
