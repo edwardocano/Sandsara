@@ -507,10 +507,7 @@ void setup()
                     1);
     delay(500); 
     //====
-
-    Serial.println("Starting BLE work!");
-
-    BLEDevice::init("ESP32 BLE pruebas");
+    BLEDevice::init("Sandsara BLE");
     BLEServer *pServer = BLEDevice::createServer();    
     BLEService *pServiceLedConfig = pServer->createService(BLEUUID(SERVICE_UUID1), 30);
     BLEService *pServicePath = pServer->createService(BLEUUID(SERVICE_UUID2), 30);
