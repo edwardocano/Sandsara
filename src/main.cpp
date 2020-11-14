@@ -556,6 +556,7 @@ void setup()
         CHARACTERISTIC_UUID_MSGERRORLEDS,
         BLECharacteristic::PROPERTY_READ |
             BLECharacteristic::PROPERTY_NOTIFY);
+    characteristic_msgErrorLeds->addDescriptor(new BLE2902());
 
     //====Characteristics for path configuration====
     characteristic_1 = pServicePath->createCharacteristic(
