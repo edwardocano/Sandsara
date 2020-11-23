@@ -16,60 +16,6 @@ bool readingSDFile = false;
 
 #include <EEPROM.h>
 
-
-
-
-
-
-#include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLEServer.h>
-#include <BLE2902.h>
-
-// See the following for generating UUIDs:
-// https://www.uuidgenerator.net/
-
-#define SERVICE_UUID1 "fd31a2be-22e7-11eb-adc1-0242ac120002"
-#define SERVICE_UUID2 "fd31a58e-22e7-11eb-adc1-0242ac120002"
-#define SERVICE_UUID3 "fd31a688-22e7-11eb-adc1-0242ac120002"
-#define SERVICE_UUID4 "fd31a778-22e7-11eb-adc1-0242ac120002"
-#define SERVICE_UUID5 "fd31a840-22e7-11eb-adc1-0242ac120002"
-#define SERVICE_UUID6 "fd31abc4-22e7-11eb-adc1-0242ac120002"
-
-
-#define CHARACTERISTIC_UUID_LEDSPEED "1a9a7b7e-2305-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_CYCLEMODE "1a9a7dea-2305-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_DIRECTION "1a9a8042-2305-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_SELECTEDPALETTE "1a9a813c-2305-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_AMOUNTCOLORS "1a9a820e-2305-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_POSITIONS "1a9a82d6-2305-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_RED "1a9a83a8-2305-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_GREEN "1a9a8466-2305-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_BLUE "1a9a852e-2305-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_UPDATECPALETTE "1a9a87b8-2305-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_MSGERRORLEDS "1a9a8880-2305-11eb-adc1-0242ac120002"
-/*
-
-1a9a8948-2305-11eb-adc1-0242ac120002
-1a9a8a06-2305-11eb-adc1-0242ac120002
-1a9a8ac4-2305-11eb-adc1-0242ac120002
-1a9a8b8c-2305-11eb-adc1-0242ac120002*/
-
-#define CHARACTERISTIC_UUID_1 "903cfcc2-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_2 "903cfede-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_3 "903cffe2-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_4 "903d00be-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_5 "903d0190-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_6 "903d024e-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_7 "903d0316-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_8 "903d0596-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_9 "903d065e-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_10 "903d071c-22eb-11eb-adc1-0242ac120002"
-
-
-
-
-
 //====Extern Variables====
 extern TMC2209Stepper driver;
 extern TMC2209Stepper driver2;
@@ -112,7 +58,9 @@ bool    suspensionModeGlobal = false;
 bool    startMovement = false;
 long    q1StepsGlobal, q2StepsGlobal;
 double  distanceGlobal;
-bool speedChangedMain = false;
+bool    speedChangedMain = false;
+String      changedProgram;
+int         changedPosition;
 //====
 //====Pallete Color Variables====
 CRGBPalette16   NO_SD_PALLETE;
@@ -127,7 +75,7 @@ pallette10,pallette11,pallette12,
 pallette13,pallette14,pallette15;
 //====
 Motors Sandsara;
-
+Bluetooth BluetoothSand;
 int errorCode;
 //====function prototypes====
 extern  int programming(String );
@@ -211,183 +159,6 @@ Calibration haloCalib;
 //====Testing========
 Testing haloTest;
 //====
-
-
-BLECharacteristic *characteristic_ledSpeed;
-BLECharacteristic *characteristic_updateCustomPalette;
-BLECharacteristic *characteristic_cycleMode;
-BLECharacteristic *characteristic_direction;
-BLECharacteristic *characteristic_amountOfColors;
-BLECharacteristic *characteristic_positions;
-BLECharacteristic *characteristic_red;
-BLECharacteristic *characteristic_green;
-BLECharacteristic *characteristic_blue;
-BLECharacteristic *characteristic_msgErrorLeds;
-BLECharacteristic *characteristic_selectedPaletteIndex;
-
-BLECharacteristic *characteristic_1;
-BLECharacteristic *characteristic_2;
-BLECharacteristic *characteristic_3;
-BLECharacteristic *characteristic_4;
-BLECharacteristic *characteristic_5;
-BLECharacteristic *characteristic_6;
-BLECharacteristic *characteristic_7;
-BLECharacteristic *characteristic_8;
-BLECharacteristic *characteristic_9;
-
-
-class speedLedCallbacks : public BLECharacteristicCallbacks
-{
-    void onWrite(BLECharacteristic *characteristic)
-    {
-        std::string rxValue = characteristic->getValue();
-        String value = rxValue.c_str();
-        int periodLed = value.toInt();
-        if(periodLed < MIN_PERIOD_LED || periodLed > MAX_PERIOD_LED){
-            characteristic_msgErrorLeds->setValue("error = -70");
-            characteristic_msgErrorLeds->notify();
-            return;
-        }
-        Serial.print("speed led was changed to: ");
-        Serial.println(periodLed);
-        periodLedsGlobal = periodLed;
-        delayLeds = periodLed;
-        romSetPeriodLed(periodLedsGlobal);
-        characteristic_msgErrorLeds->setValue("ok");
-        characteristic_msgErrorLeds->notify();
-    } //onWrite
-};
-
-class cycleModeCallbacks : public BLECharacteristicCallbacks
-{
-    void onWrite(BLECharacteristic *characteristic)
-    {
-        std::string rxValue = characteristic->getValue();
-        String value = rxValue.c_str();
-        int cycleMode = value.toInt();
-        if (cycleMode > 0){
-            romSetIncrementIndexPallete(true);
-        }
-        else{
-            romSetIncrementIndexPallete(false);
-        }
-        incrementIndexGlobal = romGetIncrementIndexPallete();
-        characteristic_msgErrorLeds->setValue("ok");
-        characteristic_msgErrorLeds->notify();
-    } //onWrite
-};
-
-class directionCallbacks : public BLECharacteristicCallbacks
-{
-    void onWrite(BLECharacteristic *characteristic)
-    {
-        //retorna ponteiro para o registrador contendo o valor atual da caracteristica
-        std::string rxValue = characteristic->getValue();
-        String value = rxValue.c_str();
-        int direction = value.toInt();
-        if (direction != 0){
-            romSetLedsDirection(true);
-        }
-        else{
-            romSetLedsDirection(false);
-        }
-        ledsDirection = romGetLedsDirection();
-        characteristic_msgErrorLeds->setValue("ok");
-        characteristic_msgErrorLeds->notify();
-    } //onWrite
-};
-
-class selectedPaletteCallbacks : public BLECharacteristicCallbacks
-{
-    void onWrite(BLECharacteristic *characteristic)
-    {
-        //retorna ponteiro para o registrador contendo o valor atual da caracteristica
-        std::string rxValue = characteristic->getValue();
-        String value = rxValue.c_str();
-        int valueInt = value.toInt();
-        if(valueInt < MIN_PALLETE || valueInt > MAX_PALLETE){
-            characteristic_msgErrorLeds->setValue("error = -31");
-            characteristic_msgErrorLeds->notify();
-            return;
-        }
-        ledModeGlobal = valueInt;
-        //verifica se existe dados (tamanho maior que zero)
-        changePalette(ledModeGlobal);
-        romSetPallete(ledModeGlobal);
-        characteristic_msgErrorLeds->setValue("ok");
-        characteristic_msgErrorLeds->notify();
-    } //onWrite
-};
-
-class CallbacksToUpdate : public BLECharacteristicCallbacks
-{
-    void onWrite(BLECharacteristic *characteristic)
-    {
-        int amountOfColors = String(characteristic_amountOfColors->getValue().c_str()).toInt();
-        uint8_t positions[amountOfColors];
-        uint8_t red[amountOfColors];
-        uint8_t green[amountOfColors];
-        uint8_t blue[amountOfColors];
-        String positionsString = characteristic_positions->getValue().c_str();
-        String redString = characteristic_red->getValue().c_str();
-        String greenString = characteristic_green->getValue().c_str();
-        String blueString = characteristic_blue->getValue().c_str();
-        Serial.println(positionsString);
-        Serial.println(redString);
-        Serial.println(greenString);
-        Serial.println(blueString);
-        if (amountOfColors < 2 || amountOfColors > 16){
-            characteristic_msgErrorLeds->setValue("error= -181");
-            characteristic_msgErrorLeds->notify();
-            return;}
-        if (stringToArray(positionsString, positions, amountOfColors) < 0){
-            characteristic_msgErrorLeds->setValue("error= -182");
-            characteristic_msgErrorLeds->notify();
-            return;}
-        if (stringToArray(redString, red, amountOfColors) < 0){
-            characteristic_msgErrorLeds->setValue("error= -183");
-            characteristic_msgErrorLeds->notify();
-            return;}
-        if (stringToArray(greenString, green, amountOfColors) < 0){
-            characteristic_msgErrorLeds->setValue("error= -184");
-            characteristic_msgErrorLeds->notify();
-            return;}
-        if (stringToArray(blueString, blue, amountOfColors) < 0){
-            characteristic_msgErrorLeds->setValue("error= -185");
-            characteristic_msgErrorLeds->notify();
-            return;}
-        romSetCustomPallete(positions, red, green, blue, amountOfColors);
-        characteristic_msgErrorLeds->setValue("ok");
-        characteristic_msgErrorLeds->notify();
-        Serial.println("Se actualizo custom Pallete");
-    } //onWrite
-};
-
-class genericCallbacks : public BLECharacteristicCallbacks
-{
-    void onWrite(BLECharacteristic *characteristic)
-    {
-        //retorna ponteiro para o registrador contendo o valor atual da caracteristica
-        std::string rxValue = characteristic->getValue();
-        std::string uuid = characteristic->getUUID().toString();
-        String value = rxValue.c_str();
-        double valueDouble = value.toDouble();
-        for (int i = 0; i < uuid.length(); i++)
-        {
-            Serial.print(uuid[i]);
-        }
-        //verifica se existe dados (tamanho maior que zero)
-        Serial.print(" Value was changed to: ");
-        for (int i = 0; i < rxValue.length(); i++)
-        {
-            Serial.print(rxValue[i]);
-        }
-        Serial.println();
-    } //onWrite
-};
-
-
-
 
 
 
@@ -496,6 +267,8 @@ void setup()
     delay(1000);
     //====Restore leds direction====
     ledsDirection = romGetLedsDirection();
+
+    BluetoothSand.init("Sandsara BLE");
     //====new task for leds====
     xTaskCreatePinnedToCore(
                     ledsFunc,
@@ -507,152 +280,7 @@ void setup()
                     1);
     delay(500); 
     //====
-    BLEDevice::init("Sandsara BLE");
-    BLEServer *pServer = BLEDevice::createServer();    
-    BLEService *pServiceLedConfig = pServer->createService(BLEUUID(SERVICE_UUID1), 30);
-    BLEService *pServicePath = pServer->createService(BLEUUID(SERVICE_UUID2), 30);
-    BLEService *pServiceSphere = pServer->createService(BLEUUID(SERVICE_UUID3), 30);
-    BLEService *pServicePlaylist = pServer->createService(BLEUUID(SERVICE_UUID4), 30);
-    BLEService *pServiceGeneralConfig = pServer->createService(BLEUUID(SERVICE_UUID5), 30);
-    BLEService *pService1 = pServer->createService(BLEUUID(SERVICE_UUID6), 30);
-
-    //====Characteristics for LEDs configuration====
     
-    characteristic_selectedPaletteIndex = pServiceLedConfig->createCharacteristic(
-        CHARACTERISTIC_UUID_SELECTEDPALETTE,
-        BLECharacteristic::PROPERTY_READ |
-            BLECharacteristic::PROPERTY_WRITE);
-    characteristic_ledSpeed = pServiceLedConfig->createCharacteristic(
-        CHARACTERISTIC_UUID_LEDSPEED,
-        BLECharacteristic::PROPERTY_READ |
-            BLECharacteristic::PROPERTY_WRITE);
-    characteristic_cycleMode = pServiceLedConfig->createCharacteristic(
-        CHARACTERISTIC_UUID_CYCLEMODE,
-        BLECharacteristic::PROPERTY_READ |
-            BLECharacteristic::PROPERTY_WRITE);
-    characteristic_direction = pServiceLedConfig->createCharacteristic(
-        CHARACTERISTIC_UUID_DIRECTION,
-        BLECharacteristic::PROPERTY_READ |
-            BLECharacteristic::PROPERTY_WRITE);
-    characteristic_amountOfColors = pServiceLedConfig->createCharacteristic(
-        CHARACTERISTIC_UUID_AMOUNTCOLORS,
-            BLECharacteristic::PROPERTY_WRITE);
-    characteristic_positions = pServiceLedConfig->createCharacteristic(
-        CHARACTERISTIC_UUID_POSITIONS,
-            BLECharacteristic::PROPERTY_WRITE);
-    characteristic_red = pServiceLedConfig->createCharacteristic(
-        CHARACTERISTIC_UUID_RED,
-            BLECharacteristic::PROPERTY_WRITE);
-    characteristic_green = pServiceLedConfig->createCharacteristic(
-        CHARACTERISTIC_UUID_GREEN,
-            BLECharacteristic::PROPERTY_WRITE);
-    characteristic_blue = pServiceLedConfig->createCharacteristic(
-        CHARACTERISTIC_UUID_BLUE,
-            BLECharacteristic::PROPERTY_WRITE);
-    characteristic_updateCustomPalette = pServiceLedConfig->createCharacteristic(
-        CHARACTERISTIC_UUID_UPDATECPALETTE,
-        BLECharacteristic::PROPERTY_WRITE);
-    characteristic_msgErrorLeds = pServiceLedConfig->createCharacteristic(
-        CHARACTERISTIC_UUID_MSGERRORLEDS,
-        BLECharacteristic::PROPERTY_READ |
-            BLECharacteristic::PROPERTY_NOTIFY);
-    characteristic_msgErrorLeds->addDescriptor(new BLE2902());
-
-    //====Characteristics for path configuration====
-    characteristic_1 = pServicePath->createCharacteristic(
-        CHARACTERISTIC_UUID_1,
-        BLECharacteristic::PROPERTY_READ |
-            BLECharacteristic::PROPERTY_WRITE |
-            BLECharacteristic::PROPERTY_NOTIFY);
-
-    //====Characteristics for Sphere configuration====
-    characteristic_3 = pServiceSphere->createCharacteristic(
-        CHARACTERISTIC_UUID_3,
-        BLECharacteristic::PROPERTY_READ |
-            BLECharacteristic::PROPERTY_WRITE |
-            BLECharacteristic::PROPERTY_NOTIFY);
-
-    //====Characteristics for Playlist configuration====
-    characteristic_4 = pServicePlaylist->createCharacteristic(
-        CHARACTERISTIC_UUID_4,
-        BLECharacteristic::PROPERTY_READ |
-            BLECharacteristic::PROPERTY_WRITE |
-            BLECharacteristic::PROPERTY_NOTIFY);
-
-    //====Characteristics for General configuration====
-    characteristic_5 = pServiceGeneralConfig->createCharacteristic(
-        CHARACTERISTIC_UUID_5,
-        BLECharacteristic::PROPERTY_READ |
-            BLECharacteristic::PROPERTY_WRITE |
-            BLECharacteristic::PROPERTY_NOTIFY);
-
-    //====Characteristics for 1 configuration====
-    characteristic_6 = pService1->createCharacteristic(
-        CHARACTERISTIC_UUID_6,
-        BLECharacteristic::PROPERTY_READ |
-            BLECharacteristic::PROPERTY_WRITE |
-            BLECharacteristic::PROPERTY_NOTIFY);
-            
-    //characteristic_ledSpeed->addDescriptor(new BLE2902());
-
-    characteristic_ledSpeed->setCallbacks(new speedLedCallbacks());
-    characteristic_cycleMode->setCallbacks(new cycleModeCallbacks());
-    characteristic_direction->setCallbacks(new directionCallbacks());
-    characteristic_amountOfColors->setCallbacks(new genericCallbacks());
-    characteristic_positions->setCallbacks(new genericCallbacks);
-    characteristic_red->setCallbacks(new genericCallbacks);
-    characteristic_green->setCallbacks(new genericCallbacks);
-    characteristic_blue->setCallbacks(new genericCallbacks);
-    characteristic_updateCustomPalette->setCallbacks(new CallbacksToUpdate());
-    //characteristic_msgErrorLeds->setCallbacks(new msgErrorLedCallbacks());
-    characteristic_selectedPaletteIndex->setCallbacks(new selectedPaletteCallbacks());
-
-    characteristic_ledSpeed->setValue(String(periodLedsGlobal).c_str());
-    if(romGetIncrementIndexPallete()){
-        characteristic_cycleMode->setValue("1");}
-    else{
-        characteristic_cycleMode->setValue("0");}
-    if(romGetLedsDirection()){
-        characteristic_direction->setValue("1");}
-    else{
-        characteristic_direction->setValue("0");}
-    characteristic_selectedPaletteIndex->setValue(String(romGetPallete()).c_str());
-
-    pServiceLedConfig->start();
-    pServicePath->start();
-    pServiceSphere->start();
-    pServicePlaylist->start();
-    pServiceGeneralConfig->start();
-    pService1->start();
-    //pService3->start();
-
-    // BLEAdvertising *pAdvertising = pServer->getAdvertising();  // this still is working for backward compatibility
-    BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-    pAdvertising->addServiceUUID(SERVICE_UUID1);
-    pAdvertising->addServiceUUID(SERVICE_UUID2);
-    pAdvertising->addServiceUUID(SERVICE_UUID3);
-    pAdvertising->addServiceUUID(SERVICE_UUID4);
-    pAdvertising->addServiceUUID(SERVICE_UUID5);
-    pAdvertising->addServiceUUID(SERVICE_UUID6);
-    //pAdvertising->addServiceUUID(SERVICE_UUID8);
-
-    pAdvertising->setScanResponse(true);
-    pAdvertising->setMinPreferred(0x06); // functions that help with iPhone connections issue
-    pAdvertising->setMinPreferred(0x12);
-    BLEDevice::startAdvertising();
-    Serial.println("Characteristic defined! Now you can read it in your phone!");
-    //====new task for Bluetooth====
-    /*xTaskCreatePinnedToCore(
-                    bluetoothThread,   
-                    "Task2",     
-                    5000,
-                    NULL,
-                    4,
-                    &Task2,
-                    0);
-    delay(500); */
-    //====
-    //====new task for Motors====
     xTaskCreatePinnedToCore(
                     moveSteps,   
                     "motorsTasks",     
@@ -669,7 +297,7 @@ void setup()
     #ifdef DEBUGGING_DATA
         Serial.println("Calibrando...");
     #endif
-    haloCalib.start();
+    //haloCalib.start();
     #ifdef DEBUGGING_DATA
         Serial.println("calibrado");
     #endif
@@ -913,13 +541,13 @@ int run_sandsara(String playList, int orderMode)
         //====
         if (errorCode == -70)   {continue;}
         else if (errorCode == -71)   {break;}
-        else if (errorCode == 20)    {/*pListFileGlobal = SandsaraBt.getPositionList();*/ continue;}
+        else if (errorCode == 20)    {pListFileGlobal = changedPosition; continue;}
         else if (errorCode == 30)    {
             while(errorCode == 30){
-                //fileName = SandsaraBt.getProgram();
+                fileName = changedProgram;
                 errorCode = runFile(fileName);
             }
-            if (errorCode == 20)    {/*pListFileGlobal = SandsaraBt.getPositionList();*/ continue;}
+            if (errorCode == 20)    {pListFileGlobal = changedPosition; continue;}
             pListFileGlobal += 1;
             continue;
         }

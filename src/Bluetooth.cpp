@@ -2,942 +2,640 @@
 #include <Update.h>
 #include <SdFiles.h>
 
-//====extern variables and functions====
-extern SdFat SD;
-extern bool     sdExists(String );
-extern bool     sdRemove(String );
-extern bool     sdExists(String );
-extern bool     pauseModeGlobal;
-extern int      romSetCustomPallete(uint8_t* ,uint8_t* , uint8_t* ,uint8_t* , int);
-extern int      romSetIncrementIndexPallete(bool );
-extern int      romSetIntermediateCalibration(bool );
-extern int      romSetLedsDirection(bool );
-extern bool     romGetIntermediateCalibration();
-extern int      romGetPositionList();
-extern String   romGetPlaylist();
-extern int      romGetOrderMode();
-extern int      romGetPallete();
-extern int      romGetSpeedMotor();
-extern int      romGetPeriodLed();
-extern String   romGetBluetoothName();
-extern bool     romGetIncrementIndexPallete();
-extern bool     romGetLedsDirection();
-//====
-uint8_t dataBt[BUFFER_BLUETOOTH];
-//====
-// perform the actual update from a given stream
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEServer.h>
+#include <BLE2902.h>
+
+// See the following for generating UUIDs:
+// https://www.uuidgenerator.net/
+
+extern  int     periodLedsGlobal;
+extern  int     delayLeds;
+extern  int     romSetPlaylist(String );
+extern  String  romGetPlaylist();
+extern  int     romSetOrderMode(int );
+extern  int     romGetOrderMode();
+extern  int     romSetPallete(int );
+extern  int     romGetPallete();
+extern  int     romSetSpeedMotor(int );
+extern  int     romGetSpeedMotor();
+extern  int     romSetPeriodLed(int );
+extern  int     romGetPeriodLed();
+extern  int     romSetCustomPallete(uint8_t* ,uint8_t* , uint8_t* ,uint8_t*, int);
+extern  int     romSetBluetoothName(String );
+extern  String  romGetBluetoothName();
+extern  int     romSetIntermediateCalibration(bool );
+extern  bool    romGetIntermediateCalibration();
+extern  int     romSetPositionList(int );
+extern  int     romGetPositionList();
+extern  bool    romSetIncrementIndexPallete(bool );
+extern  int     romGetIncrementIndexPallete();
+extern  bool    romSetLedsDirection(bool );
+extern  bool    romGetLedsDirection();
+extern  bool    incrementIndexGlobal;
+extern  bool    ledsDirection;
+extern  int     ledModeGlobal;
+extern  void    changePalette(int );
+extern  int     stringToArray(String , uint8_t* , int );
+extern  bool    changePositionList;
+extern  bool    changeProgram;
+extern  bool    sdExists(String );
+extern  String  playListGlobal;
+extern  SdFat   SD;
+extern  bool     sdRemove(String );
+extern  bool     sdExists(String );
+extern  bool     readingSDFile;
+extern  int      orderModeGlobal;
+extern  bool    rewindPlaylist;
+
+//====variables====
+extern  String      changedProgram;
+extern  int         changedPosition;
+bool        sendFlag = false;
+char        buffer[10000];
+char        *pointerB;
+int         bufferSize;
+File        fileReceive;
+
+//====Prototypes====
 int performUpdate(Stream &, size_t );
-// check given FS for valid update.bin and perform update if available
 int updateFromFS(SdFat &, String );
 int programming(String );
 void rebootWithMessage(String );
 int stringToArray(String , uint8_t* , int );
-//====
 
-//====
-//--------------Bluetooth--------------------------------------------------------
-//-------------------------------------------------------------------------------
-void callback(esp_spp_cb_event_t , esp_spp_cb_param_t* );
+
+
+
+//====BLE Characteristics======
+//=============================
+
+//Led strip config
+BLECharacteristic *characteristic_ledSpeed;
+BLECharacteristic *characteristic_updateCustomPalette;
+BLECharacteristic *characteristic_cycleMode;
+BLECharacteristic *characteristic_direction;
+BLECharacteristic *characteristic_amountOfColors;
+BLECharacteristic *characteristic_positions;
+BLECharacteristic *characteristic_red;
+BLECharacteristic *characteristic_green;
+BLECharacteristic *characteristic_blue;
+BLECharacteristic *characteristic_msgErrorLeds;
+BLECharacteristic *characteristic_selectedPaletteIndex;
+
+//path config
+/*BLECharacteristic *pathCharacteristic_name;
+BLECharacteristic *pathCharacteristic_position;
+BLECharacteristic *pathCharacteristic_percentage;
+BLECharacteristic *pathCharacteristic_errorMsg;*/
+
+//playlist config
+BLECharacteristic *playlistCharacteristic_name;
+BLECharacteristic *playlistCharacteristic_pathAmount;
+BLECharacteristic *playlistCharacteristic_pathName;
+BLECharacteristic *playlistCharacteristic_pathPosition;
+BLECharacteristic *playlistCharacteristic_readPlaylistFlag;
+BLECharacteristic *playlistCharacteristic_readPath;
+BLECharacteristic *playlistCharacteristic_addPath;
+BLECharacteristic *playlistCharacteristic_mode;
+BLECharacteristic *playlistCharacteristic_progress;
+BLECharacteristic *playlistCharacteristic_errorMsg;
+
+//Files
+BLECharacteristic *fileCharacteristic_sendFile;
+BLECharacteristic *fileCharacteristic_reciveFile;
+BLECharacteristic *fileCharacteristic_exists;
+BLECharacteristic *fileCharacteristic_delete;
+BLECharacteristic *fileCharacteristic_errorMsg;     
+
+BLECharacteristic *characteristic_1;
+BLECharacteristic *characteristic_2;
+BLECharacteristic *characteristic_3;
+BLECharacteristic *characteristic_4;
+BLECharacteristic *characteristic_5;
+BLECharacteristic *characteristic_6;
+BLECharacteristic *characteristic_7;
+BLECharacteristic *characteristic_8;
+BLECharacteristic *characteristic_9;
+
+//====Callbacks=============================
+//==========================================
+
+class speedLedCallbacks : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        std::string rxValue = characteristic->getValue();
+        String value = rxValue.c_str();
+        int periodLed = value.toInt();
+        if(periodLed < MIN_PERIOD_LED || periodLed > MAX_PERIOD_LED){
+            characteristic_msgErrorLeds->setValue("error = -70");
+            characteristic_msgErrorLeds->notify();
+            return;
+        }
+        Serial.print("speed led was changed to: ");
+        Serial.println(periodLed);
+        periodLedsGlobal = periodLed;
+        delayLeds = periodLed;
+        romSetPeriodLed(periodLedsGlobal);
+        characteristic_msgErrorLeds->setValue("ok");
+        characteristic_msgErrorLeds->notify();
+    } //onWrite
+};
+
+class cycleModeCallbacks : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        std::string rxValue = characteristic->getValue();
+        String value = rxValue.c_str();
+        int cycleMode = value.toInt();
+        if (cycleMode > 0){
+            romSetIncrementIndexPallete(true);
+        }
+        else{
+            romSetIncrementIndexPallete(false);
+        }
+        incrementIndexGlobal = romGetIncrementIndexPallete();
+        characteristic_msgErrorLeds->setValue("ok");
+        characteristic_msgErrorLeds->notify();
+    } //onWrite
+};
+
+class directionCallbacks : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        //retorna ponteiro para o registrador contendo o valor atual da caracteristica
+        std::string rxValue = characteristic->getValue();
+        String value = rxValue.c_str();
+        int direction = value.toInt();
+        if (direction != 0){
+            romSetLedsDirection(true);
+        }
+        else{
+            romSetLedsDirection(false);
+        }
+        ledsDirection = romGetLedsDirection();
+        characteristic_msgErrorLeds->setValue("ok");
+        characteristic_msgErrorLeds->notify();
+    } //onWrite
+};
+
+class selectedPaletteCallbacks : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        //retorna ponteiro para o registrador contendo o valor atual da caracteristica
+        std::string rxValue = characteristic->getValue();
+        String value = rxValue.c_str();
+        int valueInt = value.toInt();
+        if(valueInt < MIN_PALLETE || valueInt > MAX_PALLETE){
+            characteristic_msgErrorLeds->setValue("error = -31");
+            characteristic_msgErrorLeds->notify();
+            return;
+        }
+        ledModeGlobal = valueInt;
+        //verifica se existe dados (tamanho maior que zero)
+        changePalette(ledModeGlobal);
+        romSetPallete(ledModeGlobal);
+        characteristic_msgErrorLeds->setValue("ok");
+        characteristic_msgErrorLeds->notify();
+    } //onWrite
+};
+
+class CallbacksToUpdate : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        int amountOfColors = String(characteristic_amountOfColors->getValue().c_str()).toInt();
+        uint8_t positions[amountOfColors];
+        uint8_t red[amountOfColors];
+        uint8_t green[amountOfColors];
+        uint8_t blue[amountOfColors];
+        String positionsString = characteristic_positions->getValue().c_str();
+        String redString = characteristic_red->getValue().c_str();
+        String greenString = characteristic_green->getValue().c_str();
+        String blueString = characteristic_blue->getValue().c_str();
+        Serial.println(positionsString);
+        Serial.println(redString);
+        Serial.println(greenString);
+        Serial.println(blueString);
+        if (amountOfColors < 2 || amountOfColors > 16){
+            characteristic_msgErrorLeds->setValue("error= -181");
+            characteristic_msgErrorLeds->notify();
+            return;}
+        if (stringToArray(positionsString, positions, amountOfColors) < 0){
+            characteristic_msgErrorLeds->setValue("error= -182");
+            characteristic_msgErrorLeds->notify();
+            return;}
+        if (stringToArray(redString, red, amountOfColors) < 0){
+            characteristic_msgErrorLeds->setValue("error= -183");
+            characteristic_msgErrorLeds->notify();
+            return;}
+        if (stringToArray(greenString, green, amountOfColors) < 0){
+            characteristic_msgErrorLeds->setValue("error= -184");
+            characteristic_msgErrorLeds->notify();
+            return;}
+        if (stringToArray(blueString, blue, amountOfColors) < 0){
+            characteristic_msgErrorLeds->setValue("error= -185");
+            characteristic_msgErrorLeds->notify();
+            return;}
+        romSetCustomPallete(positions, red, green, blue, amountOfColors);
+        characteristic_msgErrorLeds->setValue("ok");
+        characteristic_msgErrorLeds->notify();
+        Serial.println("Se actualizo custom Pallete");
+    } //onWrite
+};
+
+class genericCallbacks : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        //retorna ponteiro para o registrador contendo o valor atual da caracteristica
+        std::string rxValue = characteristic->getValue();
+        std::string uuid = characteristic->getUUID().toString();
+        String value = rxValue.c_str();
+        double valueDouble = value.toDouble();
+        for (int i = 0; i < uuid.length(); i++)
+        {
+            Serial.print(uuid[i]);
+        }
+        //verifica se existe dados (tamanho maior que zero)
+        Serial.print(" Value was changed to: ");
+        for (int i = 0; i < rxValue.length(); i++)
+        {
+            Serial.print(rxValue[i]);
+        }
+        Serial.println();
+    } //onWrite
+};
+
+//===============================callbacks for playlist config==============================================
+//==========================================================================================================
+
+class playlistCallbacks_name : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        std::string rxValue = characteristic->getValue();
+        String value = rxValue.c_str();
+        String playList = value + ".playlist";
+        if (!sdExists(playList)){
+            playlistCharacteristic_errorMsg->setValue("error=-1");
+            playlistCharacteristic_errorMsg->notify();
+            return;
+        }
+        playListGlobal = "/" + playList;
+        romSetPlaylist(playListGlobal);
+        rewindPlaylist = true;
+        playlistCharacteristic_errorMsg->setValue("ok");
+        playlistCharacteristic_errorMsg->notify();
+    } //onWrite
+};
+
+class playlistCallbacks_pathName : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        std::string rxValue = characteristic->getValue();
+        String name = rxValue.c_str();
+        
+        Serial.print("name: ");
+        Serial.println(name);
+        if (SdFiles::getType(name) < 0){
+            playlistCharacteristic_errorMsg->setValue("error= -2");
+            playlistCharacteristic_errorMsg->notify();
+            return;
+        }
+        if (!sdExists(name)){
+            playlistCharacteristic_errorMsg->setValue("error= -3");
+            playlistCharacteristic_errorMsg->notify();
+            return;
+        }
+        changedProgram = name;
+        playlistCharacteristic_errorMsg->setValue("ok");
+        playlistCharacteristic_errorMsg->notify();
+        changeProgram = true;
+        changePositionList = false;
+    } //onWrite
+};
+
+class playlistCallbacks_pathPosition : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        std::string rxValue = characteristic->getValue();
+        String value = rxValue.c_str();
+        int position = value.toInt();
+
+        Serial.print("position: ");
+        Serial.println(position);
+        
+        changedPosition = position;
+        playlistCharacteristic_errorMsg->setValue("ok");
+        playlistCharacteristic_errorMsg->notify();
+        changePositionList = true;
+        changeProgram = false;
+    } //onWrite
+};
+
+class playlistCallbacks_addPath : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        std::string rxValue = characteristic->getValue();
+        String pathName = rxValue.c_str();
+        while (readingSDFile){
+            delay(1);
+        }
+        readingSDFile = true;
+        File file = SD.open(playListGlobal, FILE_WRITE);
+        if (!file){
+            playlistCharacteristic_errorMsg->setValue("error= -4");
+            playlistCharacteristic_errorMsg->notify();
+            return;
+        }
+        pathName = "\r\n" + pathName;
+        file.print(pathName);
+        file.close();
+        readingSDFile = false;
+        playlistCharacteristic_errorMsg->setValue("ok");
+        playlistCharacteristic_errorMsg->notify();
+    } //onWrite
+};
+
+class playlistCallbacks_mode : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        std::string rxValue = characteristic->getValue();
+        String value = rxValue.c_str();
+        int mode = value.toInt();
+        if(mode < 1 || mode > 4){
+            playlistCharacteristic_errorMsg->setValue("error= -5");
+            playlistCharacteristic_errorMsg->notify();
+            return;
+        }
+        orderModeGlobal = mode;
+        romSetOrderMode(orderModeGlobal);
+        playlistCharacteristic_errorMsg->setValue("ok");
+        playlistCharacteristic_errorMsg->notify();
+
+    } //onWrite
+};
+
+//================================Sending files=====================================
+//==================================================================================
+class FilesCallbacks_sendFile : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        if (!sendFlag){
+            std::string rxData = characteristic->getValue();
+            Serial.println("BeginOTA");
+            String name = rxData.c_str();
+            if (sdExists(name)){
+                fileCharacteristic_errorMsg->setValue("error=-1"); //archivo ya existe
+                fileCharacteristic_errorMsg->notify();
+            }
+            fileReceive = SD.open(name, FILE_WRITE);
+            if (!fileReceive)
+            {
+                fileCharacteristic_errorMsg->setValue("error=-2"); //file cannot be opened
+                fileCharacteristic_errorMsg->notify();
+                Serial.println("error= -2"); //file cannot be opened
+            }
+            Serial.println("se creo archivo");
+            pointerB = buffer;
+            bufferSize = 0;
+            sendFlag = true;
+            fileCharacteristic_errorMsg->setValue("ok");
+            fileCharacteristic_errorMsg->notify();
+        }
+        else{
+            pointerB = buffer;
+            fileReceive.write(buffer, bufferSize);
+            Serial.print("buffer size: ");
+            Serial.println(bufferSize);
+            bufferSize = 0;
+            fileReceive.close();
+            Serial.println("EndOTA");
+            sendFlag = false;
+            fileCharacteristic_errorMsg->setValue("done");
+            fileCharacteristic_errorMsg->notify();
+        }
+    }
+};
+
+class FilesCallbacks_recieveBytes : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        if (sendFlag)
+        {
+            std::string rxData = characteristic->getValue();
+            int len = rxData.length();
+            if (len > 0)
+            {
+                //rxData.c_str();
+                size_t lens = rxData.copy(pointerB, len, 0);
+                //memcpy(pointerB, rxData.c_str(),);
+                pointerB = pointerB + lens;
+                
+                bufferSize += lens;
+                if (bufferSize >= 9000){
+                    pointerB = buffer;
+                    fileReceive.write(buffer, bufferSize);
+                    Serial.print("buffer size: ");
+                    Serial.println(bufferSize);
+                    bufferSize = 0;
+                }
+                characteristic->notify();
+            }
+            
+        }
+    }
+};
+
 
 Bluetooth::Bluetooth(){
     
 }
 
 int Bluetooth::init(String name){
-    if (!SerialBT.begin(name)){ //Bluetooth device name
-        SerialBT.begin("Sandsara");
-#ifdef BLUECOMMENTS
-        Serial.println("No se inicializo con nombre por defecto");
-#endif
-    }
-    SerialBT.register_callback(callback);
-#ifdef BLUECOMMENTS
-    Serial.println("The device started, now you can pair it with bluetooth!");
-#endif
-    return 0;
-}
+    BLEDevice::init(name.c_str());
+    BLEServer *pServer = BLEDevice::createServer();    
+    BLEService *pServiceLedConfig = pServer->createService(BLEUUID(SERVICE_UUID1), 30);
+    //BLEService *pServicePath = pServer->createService(BLEUUID(SERVICE_UUID2), 30);
+    //BLEService *pServiceSphere = pServer->createService(BLEUUID(SERVICE_UUID3), 30);
+    BLEService *pServicePlaylist = pServer->createService(BLEUUID(SERVICE_UUID4), 30);
+    BLEService *pServiceGeneralConfig = pServer->createService(BLEUUID(SERVICE_UUID5), 30);
+    BLEService *pServiceFile = pServer->createService(BLEUUID(SERVICE_UUID6), 30);
 
-void callback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param)
-{
-    if (event == ESP_SPP_SRV_OPEN_EVT)
-    {
-#ifdef BLUECOMMENTS
-        Serial.println("Client Connected");
-#endif
-    }
+    //====Characteristics for LEDs configuration====
+    
+    characteristic_selectedPaletteIndex = pServiceLedConfig->createCharacteristic(
+        CHARACTERISTIC_UUID_SELECTEDPALETTE,
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_WRITE);
+    characteristic_ledSpeed = pServiceLedConfig->createCharacteristic(
+        CHARACTERISTIC_UUID_LEDSPEED,
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_WRITE);
+    characteristic_cycleMode = pServiceLedConfig->createCharacteristic(
+        CHARACTERISTIC_UUID_CYCLEMODE,
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_WRITE);
+    characteristic_direction = pServiceLedConfig->createCharacteristic(
+        CHARACTERISTIC_UUID_DIRECTION,
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_WRITE);
+    characteristic_amountOfColors = pServiceLedConfig->createCharacteristic(
+        CHARACTERISTIC_UUID_AMOUNTCOLORS,
+            BLECharacteristic::PROPERTY_WRITE);
+    characteristic_positions = pServiceLedConfig->createCharacteristic(
+        CHARACTERISTIC_UUID_POSITIONS,
+            BLECharacteristic::PROPERTY_WRITE);
+    characteristic_red = pServiceLedConfig->createCharacteristic(
+        CHARACTERISTIC_UUID_RED,
+            BLECharacteristic::PROPERTY_WRITE);
+    characteristic_green = pServiceLedConfig->createCharacteristic(
+        CHARACTERISTIC_UUID_GREEN,
+            BLECharacteristic::PROPERTY_WRITE);
+    characteristic_blue = pServiceLedConfig->createCharacteristic(
+        CHARACTERISTIC_UUID_BLUE,
+            BLECharacteristic::PROPERTY_WRITE);
+    characteristic_updateCustomPalette = pServiceLedConfig->createCharacteristic(
+        CHARACTERISTIC_UUID_UPDATECPALETTE,
+        BLECharacteristic::PROPERTY_WRITE);
+    characteristic_msgErrorLeds = pServiceLedConfig->createCharacteristic(
+        CHARACTERISTIC_UUID_MSGERRORLEDS,
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_NOTIFY);
+    characteristic_msgErrorLeds->addDescriptor(new BLE2902());
 
-    if (event == ESP_SPP_CLOSE_EVT)
-    {
-#ifdef BLUECOMMENTS
-        Serial.println("Client disconnected");
-#endif
-    }
-}
+    characteristic_ledSpeed->setCallbacks(new speedLedCallbacks());
+    characteristic_cycleMode->setCallbacks(new cycleModeCallbacks());
+    characteristic_direction->setCallbacks(new directionCallbacks());
+    characteristic_amountOfColors->setCallbacks(new genericCallbacks());
+    characteristic_positions->setCallbacks(new genericCallbacks);
+    characteristic_red->setCallbacks(new genericCallbacks);
+    characteristic_green->setCallbacks(new genericCallbacks);
+    characteristic_blue->setCallbacks(new genericCallbacks);
+    characteristic_updateCustomPalette->setCallbacks(new CallbacksToUpdate());
+    //characteristic_msgErrorLeds->setCallbacks(new msgErrorLedCallbacks());
+    characteristic_selectedPaletteIndex->setCallbacks(new selectedPaletteCallbacks());
 
-/**
- * @brief revisa si hay algo dispobible por bluetooth. Puede recibir e interpretar los siguientes mensajes.
- * - code01, significa que va a transferir un archivo.
- * - code02, significa que se esta solicitando el cambio de playlist.
- * - code03, significa que se esta solicitando el cambio de orden de reproduccion.
- * - code04, significa que se esta solicitando el cambio de paleta de leds.
- * - code05, significa que se solicita el cambio de velocidad de motores.
- * - code06, significa que se solicita el cambio de velocidad de los leds.
- * - code07, significa que se desea cambiar el nombre del bluetooth.
- * - code08, significa que se desea entrar en modo de suspencion.
- * - code09, significa que se desea pausar el path.
- * - code10, significa que se desea salir del modo suspencion o pausa.
- * - code11, significa que se desea conocer la version del firmware
- * - code12, significa que se desea conocer los parametros guardados en ROM.
- * - code13, significa que se desea conocer el nombre del path actual.
- * - code14, significa que se desea conocer el nombre del siguiente path.
- * - code15, significa que se desea conocer la lista de reproduccion actual.
- * - code16, significa que se desea cambiar de path por posicion en la playlist.
- * - code17, significa que se desea cambiar de path por nombre.
- * - code18, significa que se modifico la paleta de colores custom.
- * - code19, means that you want to change indexIncrement Variable.
- * - code20, means that you want to change the intermediateCalibration Variable.
- * - code21, means that you want to rewind the playlist.
- * - code22, means that you want to change the direction of leds.
- * - code23, means that you want to delete a file from SD card.
- * - code66, actualizar firmware
- * - code80, Reiniciar Sandsara
- * 
- * @return un codigo de reporte que indica lo siguiente
- * - 1, se escribio un nuevo archivo.
- * - 0, no hay informacion disponible del bluetooth.
- * - 10, se solicito un cambio de playlist, para recuperar el nombre llamar a la funcion miembro getPlaylist().
- * - 20, se solicito un cambio en orderMode, para recuperar el numero llamar a la funcion miembro getOrderMode().
- * - 30, se solicito un cambio en ledMode, para recueperar el numero llamar a la funcion miembro getLedMode().
- * - 50, se solicita el cambio de velocidad de motores, la velocidad se almacena en la variable miembro speed. speed se obtiene con getSpeed().
- * - 60, se solicita el cambio de velocidad de los leds, la velocidad se almacena en la variable miembro periodLed. periodLed se obtiene con getPeriodLed().
- * - 70, se solicita cambio de nombre de bluetooth.
- * - 80, se solicita entrar en modo de suspencion.
- * - 90, se solicita entrar en modo de pausa.
- * - 100, se solicita salir del modo suspencion o pausa.
- * - 110, se envio la version del firmware por bluetooth.
- * - 120, se enviaron datos de sandsara
- * - 130, se solicita el nombre del programa actual.
- * - 140, se solicita el nombre del programa siguiente.
- * - 150, se solicita la lista de reproduccion completa.
- * - 160, se solicita cambiar de pista por medio de su posicion en la playlist, para conocer la posicion a la que se desea cambiar llamar a la funcion miembro getPositionList().
- * - 170, se solicita reproducir un archivo, para conocer el nombre llamar la funcion miembro getProgram().
- * - 180, se modifico la paleta custom en rom.
- * - 200, intermediateCalibration variable was midified in ROM.
- * - -970, se solicita un reset de fabrica.
- * - -1, no se reconoce el comando enviado.
- * - -2, se quiso enviar un numero de bytes incorrecto.
- * - -3, se excedio el tiempo de respuesta del transmisor en la funcion readLine (depende de la variable timeOutBt, medida en milisegundos)
- * - -4, se excedio el tiempo de respuesta del transmisor en la funcion readBt (depende de la variable timeOutBt, medida en milisegundos)
- * - -5, se intento enviar un archivo con un nombre ya existente.
- * - -7, no coincide checksum.
- * - -8, no se pudo crear el archivo.
- * - -9, se han leido mas de X numero de caracteres sin encontrar un '\n' en la funcion readLine().
- * - -11, la playlist que se desea cambiar no existe.
- * - -21, orderMode no valido.
- * - -31, ledMode no valido.
- * - -51, es un directorio
- * - -52, el archivo esta vacio
- * - -53, el archivo no se pudo abrir.02
- * - -54, no se pudo finalizar la actualizacion
- * - -55, no hay suficiente espacio para el OTA.
- * - -56, Ocurrio un error al actualizar el firmware
- * - -60, Velocidad no permitida para los motores
- * - -70, periodo no permitido para los leds
- * - -80, nombre muy largo para bluetooth
- * - -81, No se pudo cambiar el nombre del bluetooth, pero se vera el cambio cuando se reinicie.
- * - -97, se intento un reset de fabrica pero no se confirmo.
- * - -171, se desea correr un programa que no existe en la SD.
- * - -172, se intento cambiar a un archivo con una extension no valida.
- * - -181, numero de colores en una paleta incorrecto.
- * - -182, numero de posiciones distinto a numero de colores en la paleta.
- * - -183, numero de colores red distinto a numero de colores en la paleta.
- * - -184, numero de colores green distinto a numero de colores en la paleta.
- * - -185, numero de colores blue distinto a numero de colores en la paleta.
- */
-int Bluetooth::checkBlueTooth()
-{
-    int codeError = 0;
-    String checksum;
-    if (SerialBT.available())
-    {
-        codeError = readLine(line);
-        if (codeError != 0)
-        {
-            writeBt("error= ");
-            writeBtln(String(codeError));
-            return codeError;
-        }
-        if (line.indexOf("code01") >= 0)
-        {
-            /*Serial.print("Entro a readLine ");
-            Serial.println(ESP.getFreeHeap());
-            Serial.print("memoria disponible en heap: ");
-            Serial.println(xPortGetFreeHeapSize());*/
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-name");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            fileNameBt = line;
-            if (fileNameBt.charAt(0) == ' ')
-            {
-                fileNameBt.remove(0, 1);
-            }
-#ifdef BLUECOMMENTS
-            Serial.print("Nombre del archivo: ");
-            Serial.println(fileNameBt);
-#endif
-            if (sdExists("/" + fileNameBt))
-            {
-                codeError = -5;
-                writeBtln("error= -5"); //file alrady exits
-            }
-            else
-            {
-                file = SD.open("/" + fileNameBt, FILE_WRITE);
-                if (!file)
-                {
-                    codeError = -8;
-                    writeBtln("error= -8"); //file cannot be opened
-                }
-                else
-                {
-                    pauseModeGlobal = true;
-                    unsigned long timeVar, timeVarTotal = 0, cont = 0;
-                    for (;;) 
-                    {
-                        writeBtln("ok");
-                        codeError = readLine(line);
-                        if (codeError != 0)
-                        {
-                            writeBt("error= ");
-                            writeBtln(String(codeError));
-                            break;
-                        }
-                        if (line.indexOf("bytes=") != -1)
-                        {
-                            indexWord = line.indexOf("bytes=");
-                            bytesToRead = line.substring(6).toInt();
-                            #ifdef BLUECOMMENTS
-                                Serial.print("bytesToRead: ");
-                                Serial.println(bytesToRead);
-                            #endif
-                            if (bytesToRead <= 0 || bytesToRead > BUFFER_BLUETOOTH)
-                            {
-                                codeError = -2;
-                                writeBtln("error= -2"); //invalid number of bytes
-                                break;                  
-                            }
-                            codeError = readBt(dataBt, bytesToRead);
-                            if (codeError != 0)
-                            {
-                                writeBt("error= ");
-                                writeBtln(String(codeError));
-                                break;
-                            }
-                            codeError = readLine(line);
-                            if (codeError != 0)
-                            {
-                                writeBt("error= ");
-                                writeBtln(String(codeError));
-                                break;
-                            }
-                            checksum = GetMD5String(dataBt, bytesToRead);
-                            #ifdef BLUECOMMENTS
-                                Serial.print("checksum: ");
-                                Serial.println(checksum);
-                            #endif
-                            if (!line.equals(checksum))
-                            {
-                                codeError = -7;
-                                writeBtln("error= -7"); //checkSum doesn't match
-                                break;
-                            }
-                            timeVar = millis();
-                            file.write(dataBt, bytesToRead);
-                            timeVar = millis() - timeVar;
-                            timeVarTotal += timeVar;
-                            cont += 1;
-                        }
-                        else if (line.indexOf("done") >= 0)
-                        {
-                            file.close();
-                            pauseModeGlobal = false;
-                            writeBtln("ok");
-#ifdef BLUECOMMENTS
-                            Serial.println("guardado en memoria");
-#endif
-                            codeError = 1;
-                            return codeError; //file was written
-                        }
-                        else
-                        {
-                            codeError = -1;
-                            writeBtln("error= -1"); //invalid command
-                            break;
-                        }
-                    }
-                    
-                    if (codeError != 0)
-                    {
-                        file.close();
-                        sdRemove("/" + fileNameBt);
-#ifdef BLUECOMMENTS
-                        Serial.println("transferencia cancelada");
-#endif
-                    }
-                }
-            }
-        }
-        else if (line.indexOf("code02") >= 0)
-        {
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-playList");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            playList = line + ".playlist";
-            if (!sdExists(playList)){
-                writeBt("error=-11");
-                return -11;
-            }
-            writeBtln("ok");
-            return 10;
-        }
-        else if (line.indexOf("code03") >= 0)
-        {
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-orderMode");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            orderMode = line.toInt();
-            if(orderMode < 1 || orderMode > 4){
-                writeBtln("error= -21");
-                return -21;
-            }
-            writeBtln("ok");
-            return 20;
-        }
-        else if (line.indexOf("code04") >= 0)
-        {
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-ledmode");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            ledMode = line.toInt();
-            if (ledMode < MIN_PALLETE || ledMode > MAX_PALLETE){
-                writeBtln("error= -31");
-                return -31;
-            }
-            writeBtln("ok");
-            return 30;
-        }
-        else if (line.indexOf("code05") >= 0)
-        {
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-speedMotor");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            speed = line.toInt();
-            if (speed > MAX_SPEED_MOTOR || speed < MIN_SPEED_MOTOR){
-                writeBtln("error= -60"); //invalid motor speed.
-                return -60;
-            }
-            writeBtln("ok");
-            return 50;
-        }
-        else if (line.indexOf("code06") >= 0)
-        {
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-speedLed");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            periodLed = line.toInt();
-            if (periodLed > MAX_PERIOD_LED || periodLed < MIN_PERIOD_LED){
-                writeBtln("error= -70"); //invalid led speed.
-                return -70;
-            }
-            writeBtln("ok");
-            return 60;
-        }
-        else if (line.indexOf("code07") >= 0)
-        {
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-bluetoothName");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            if (line.length() >= MAX_CHARACTERS_BTNAME){
-                writeBtln("error= -80");
-                return -80; //bluetooth name too large.
-            }
-            bluetoothName = line;
-            char deviceName[MAX_CHARACTERS_BTNAME];
-            line.toCharArray(deviceName, MAX_CHARACTERS_BTNAME);
-            if (esp_bt_dev_set_device_name(deviceName) != ESP_OK) {
-                writeBtln("error = -81");
-                return -81;
-            }
-            writeBtln("ok");
-            return 70;
-        }
-        else if (line.indexOf("code08") >= 0) //suspention
-        {
-            writeBtln("ok");
-            return 80;
-        }
-        else if (line.indexOf("code09") >= 0) //pausa
-        {
-            writeBtln("ok");
-            return 90;
-        }
-        else if (line.indexOf("code10") >= 0) //reanudar
-        {
-            writeBtln("ok");
-            return 100;
-        }
-        else if (line.indexOf("code11") >= 0)
-        {
-            writeBt("version= ");
-            writeBt(String(v1Current));
-            writeBt(".");
-            writeBt(String(v2Current));
-            writeBt(".");
-            writeBtln(String(v3Current));
-            return 110;
-        }
-        else if (line.indexOf("code12") >= 0)
-        {
-            writeBt("version= ");
-            writeBt(String(v1Current));
-            writeBt(".");
-            writeBt(String(v2Current));
-            writeBt(".");
-            writeBtln(String(v3Current));
-            writeBt("Bluetooth Name= ");
-            writeBtln(romGetBluetoothName());
-            writeBt("Motor Speed= ");
-            writeBtln(String(romGetSpeedMotor()));
-            writeBt("Palette Index= ");
-            writeBtln(String(romGetPallete()));
-            writeBt("Led Refreshing Time= ");
-            writeBtln(String(romGetPeriodLed()));
-            writeBt("Playlist= ");
-            writeBtln(romGetPlaylist());
-            writeBt("Reproduction mode= ");
-            writeBtln(String(romGetOrderMode()));
-            writeBt("Intermediate calibration= ");
-            if (romGetIntermediateCalibration()){
-                writeBtln(String("enabled"));
-            }
-            else{
-                writeBtln(String("disabled"));
-            }
-            writeBt("Position in Playlist= ");
-            writeBtln(String(romGetPositionList()));
-            writeBt("leds direction= ");
-            if (romGetLedsDirection()){
-                writeBtln(String("CW"));
-            }
-            else{
-                writeBtln(String("CCW"));
-            }
+    characteristic_ledSpeed->setValue(String(periodLedsGlobal).c_str());
+    if(romGetIncrementIndexPallete()){
+        characteristic_cycleMode->setValue("1");}
+    else{
+        characteristic_cycleMode->setValue("0");}
+    if(romGetLedsDirection()){
+        characteristic_direction->setValue("1");}
+    else{
+        characteristic_direction->setValue("0");}
+    characteristic_selectedPaletteIndex->setValue(String(romGetPallete()).c_str());
 
-            writeBtln("ok");
-            return 120;
-        }
-        else if (line.indexOf("code13") >= 0)
-        {
-            return 130;
-        }
-        else if (line.indexOf("code14") >= 0)
-        {
-            return 140;
-        }
-        else if (line.indexOf("code15") >= 0)
-        {
-            return 150;
-        }
-        else if (line.indexOf("code16") >= 0)
-        {
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-newPosition");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            positionList = line.toInt();
-            writeBtln("ok");
-            return 160;
-        }
-        else if (line.indexOf("code17") >= 0)
-        {
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-programName");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            program = line;
-            if (SdFiles::getType(line) < 0){
-                writeBtln("error= -172");
-                return -172;
-            }
-            if (!sdExists(program)){
-                writeBtln("error= -171");
-                return -171;
-            }
+    //====Characteristics for playlist configuration====
+    playlistCharacteristic_name = pServicePlaylist->createCharacteristic(
+        PLAYLIST_UUID_NAME,
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_WRITE);
+
+    playlistCharacteristic_pathAmount = pServicePlaylist->createCharacteristic(
+        PLAYLIST_UUID_PATHAMOUNT,
+        BLECharacteristic::PROPERTY_READ);
+
+    playlistCharacteristic_pathName = pServicePlaylist->createCharacteristic(
+        PLAYLIST_UUID_PATHNAME,
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_WRITE);
+
+    playlistCharacteristic_pathPosition = pServicePlaylist->createCharacteristic(
+        PLAYLIST_UUID_PATHPOSITION,
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_WRITE);
+
+    playlistCharacteristic_addPath = pServicePlaylist->createCharacteristic(
+        PLAYLIST_UUID_ADDPATH,
+            BLECharacteristic::PROPERTY_WRITE);
+
+    playlistCharacteristic_mode = pServicePlaylist->createCharacteristic(
+        PLAYLIST_UUID_MODE,
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_WRITE);
+
+    playlistCharacteristic_progress = pServicePlaylist->createCharacteristic(
+        PLAYLIST_UUID_PATHPROGRESS,
+        BLECharacteristic::PROPERTY_READ);
+
+    playlistCharacteristic_errorMsg = pServicePlaylist->createCharacteristic(
+        PLAYLIST_UUID_ERRORMSG,
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_NOTIFY);
+    playlistCharacteristic_errorMsg->addDescriptor(new BLE2902());
+
+    playlistCharacteristic_name->setCallbacks(new playlistCallbacks_name());
+    playlistCharacteristic_pathName->setCallbacks(new playlistCallbacks_pathName());
+    playlistCharacteristic_pathPosition->setCallbacks(new playlistCallbacks_pathPosition());
+    playlistCharacteristic_addPath->setCallbacks(new playlistCallbacks_addPath());
+    playlistCharacteristic_mode->setCallbacks(new playlistCallbacks_mode());
+
+    //====Characteristics for General configuration====
+    characteristic_5 = pServiceGeneralConfig->createCharacteristic(
+        CHARACTERISTIC_UUID_5,
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_WRITE |
+            BLECharacteristic::PROPERTY_NOTIFY);
+
+    //====Characteristics for File configuration====
+    fileCharacteristic_sendFile = pServiceFile->createCharacteristic(
+        FILE_UUID_SEND,
+            BLECharacteristic::PROPERTY_WRITE);
+
+    fileCharacteristic_reciveFile = pServiceFile->createCharacteristic(
+        FILE_UUID_RECIEVE,
+            BLECharacteristic::PROPERTY_WRITE |
+            BLECharacteristic::PROPERTY_NOTIFY);
+    fileCharacteristic_reciveFile->addDescriptor(new BLE2902());
+
+    fileCharacteristic_errorMsg = pServiceFile->createCharacteristic(
+        FILE_UUID_ERRORMSG,
+            BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_NOTIFY);
+    fileCharacteristic_errorMsg->addDescriptor(new BLE2902());
+
+    fileCharacteristic_sendFile->setCallbacks(new FilesCallbacks_sendFile());
+    fileCharacteristic_reciveFile->setCallbacks(new FilesCallbacks_recieveBytes());
             
-            writeBtln("ok");
-            return 170;
-        }
-        else if (line.indexOf("code18") >= 0)
-        {
-            int colors;
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-numberOfColors");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            colors = line.toInt();
-            if (colors < 1 || colors > MAX_COLORSPERPALLETE){
-                writeBtln("error= -181");
-                return -181;
-            }
-            
-            uint8_t positions[colors];
-            uint8_t red[colors];
-            uint8_t green[colors];
-            uint8_t blue[colors];
-            //====request-positions====
-            writeBtln("ok"); 
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            if (stringToArray(line, positions, colors) < 0){
-                writeBtln("error= -182");
-                return -182;
-            }
-            
-            //====reading red colors====
-            writeBtln("ok");
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            if (stringToArray(line, red, colors) < 0){
-                writeBtln("error= -183");
-                return -183;
-            }
-            //====
-            //====reading green colors====
-            writeBtln("ok");
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            if (stringToArray(line, green, colors) < 0){
-                writeBtln("error= -184");
-                return -184;
-            }
-            //====
-            //====reading blue colors====
-            writeBtln("ok");
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            if (stringToArray(line, blue, colors) < 0){
-                writeBtln("error= -185");
-                return -185;
-            }
-            
-            romSetCustomPallete(positions, red, green, blue, colors);
-            writeBtln("ok");
-            return 180;
-        }
-        else if (line.indexOf("code19") >= 0){
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-incrementIndexStatus");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            if (line.toInt() > 0){
-                romSetIncrementIndexPallete(true);
-            }
-            else{
-                romSetIncrementIndexPallete(false);
-            }
-            writeBtln("ok");
-            return 190;
-        }
-        else if (line.indexOf("code20") >= 0){
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-intermediateCalibration");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            if (line.toInt() > 0){
-                romSetIntermediateCalibration(true);
-            }
-            else{
-                romSetIntermediateCalibration(false);
-            }
-            writeBtln("ok");
-            return 200;
-        }
-        else if(line.indexOf("code21") >= 0){
-            writeBtln("ok");
-            return 210;
-        }
-        else if(line.indexOf("code22") >= 0){
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-ledsDirection");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            int direction = line.toInt();
-            if (direction != 0){
-                romSetLedsDirection(true);
-            }
-            else{
-                romSetLedsDirection(false);
-            }
-            writeBtln("ok");
-            return 220;
-        }
-        else if(line.indexOf("code23") >= 0){
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-nameToDelete");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            if (!sdExists("/" + line))
-            {
-                codeError = -231;
-                writeBtln("error= -231"); //file alrady exits
-                return codeError;
-            }
-            else
-            {
-                sdRemove("/" + line);
-            }
-            writeBtln("ok");
-            return 220;
-        }
-        else if (line.indexOf("code66") >= 0)
-        {
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-nameUpdate");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            line = "/" + line;
-            codeError = programming(line);
-            if (codeError == 1)
-            {
-                writeBtln("ok");
-                rebootWithMessage("Reiniciando");
-                return codeError;
-            }
-            else{
-                writeBt("error=");
-                writeBtln(String(codeError - 50));
-                return codeError - 50; //firmware cannot be updated
-            }
-        }
-        else if (line.indexOf("code80") >= 0)
-        {
-            writeBtln("ok");
-            rebootWithMessage("Reiniciando");
-            return -666;
-        }
-        else if (line.indexOf("code97") >= 0)
-        {
-            #ifdef RESQUEST_ANSWER
-                writeBtln("request-Y/N");
-            #endif
-            codeError = readLine(line);
-            if (codeError != 0)
-            {
-                writeBt("error= ");
-                writeBtln(String(codeError));
-                return codeError;
-            }
-            if (line.equals("Y")){
-                writeBtln("ok");
-                return 970;
-            }
-            writeBtln("reset Canceled");
-            return -97;
-        }
-        else
-        {
-            writeBtln("error= -1");
-            codeError = -1;         //invalid command
-        }
-        pauseModeGlobal = false;
-        return codeError;
-    }
-    return 0;
-}
+    //characteristic_ledSpeed->addDescriptor(new BLE2902());
 
-/**
- * @brief Recupera el dato que se envio por medio de bluetooth que corresponde al index de la paleta de colores.
- * @return El index de la paleta de colores que se envio por bluetooth.
- */
-int Bluetooth::getLedMode(){
-    return ledMode;
-}
-/**
- * @brief Recupera el dato que se envio por medio de bluetooth que corresponde al nombre de la playlist
- * @return El nombre de la playlist.
- */
-String Bluetooth::getPlaylist(){
-    return playList;
-}
+    
 
-/**
- * @brief Recupera el dato que se envio por medio de bluetooth que corresponde a la velocidad de los motores
- * @return La valocidad de los motores, medida en mm/s
- */
-int Bluetooth::getSpeed(){
-    return speed;
-}
+    pServiceLedConfig->start();
+    pServicePlaylist->start();
+    pServiceGeneralConfig->start();
+    pServiceFile->start();
+    //pService3->start();
 
-/**
- * @brief Recupera el dato que se envio por medio de bluetooth que corresponde al tiempo de actualizacion de los leds
- * @return El tiempo de actualizacion de los leds, medido en milisegundos.
- */
-int Bluetooth::getPeriodLed(){
-    return periodLed;
-}
+    // BLEAdvertising *pAdvertising = pServer->getAdvertising();  // this still is working for backward compatibility
+    BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+    pAdvertising->addServiceUUID(SERVICE_UUID1);
+    pAdvertising->addServiceUUID(SERVICE_UUID2);
+    pAdvertising->addServiceUUID(SERVICE_UUID3);
+    pAdvertising->addServiceUUID(SERVICE_UUID4);
+    pAdvertising->addServiceUUID(SERVICE_UUID5);
+    pAdvertising->addServiceUUID(SERVICE_UUID6);
+    //pAdvertising->addServiceUUID(SERVICE_UUID8);
 
-/**
- * @brief Recupera el dato que se envio por medio de bluetooth que corresponde al orden de reproduccion.
- * @return El orden de reproduccion de los archivos.
- */
-int Bluetooth::getOrderMode(){
-    return orderMode;
-}
-
-/**
- * @brief Recupera el dato que se envio por medio de bluetooth que corresponde al nombre del bluetooth.
- * @return El ultimo numero referente al oreden de reproduccion que se solicito por bluetooth.
- */
-String Bluetooth::getBluetoothName(){
-    return bluetoothName;
-}
-
-/**
- * @brief Envia un mensaje por bluetooth.
- * @param msg Es el mensaje que va a ser enviado por bluetooth.
- * @return 0 cuando termina la funcion.
- */
-int Bluetooth::writeBt(String msg)
-{
-    uint8_t* msg8 = (uint8_t *) calloc(msg.length() + 1, 1);
-    msg8 = (uint8_t *) msg.c_str();
-    SerialBT.write(msg8, msg.length());
-    SerialBT.flush();
-    delay(20);
-    return 0;
-}
-/**
- * @brief Envia un mensaje por bluetooth con un salto de linea.
- * @param msg Es el mensaje que va a ser enviado por bluetooth.
- * @return 0 cuando termina la funcion.
- * @note El salto de linea se hace con "\r\n"
- */
-int Bluetooth::writeBtln(String msg)
-{
-    msg.concat("\r\n");
-    writeBt(msg);
-    return 0;
-}
-
-/**
- * @brief Lee informacion del bluetooth hasta encontrar un '\n'
- * @param line Es donde se almacena lo que se envio por bluetooth (se eliminan los valores '\n' y '\r')
- * @return Uno de los siguientes numeros.
- *  0, todo termino con normalidad.
- * -3, significa que ha transcurrido mas tiempo del esperado sin encontrar un '\n' (depende de la variable timeOutBt).
- * -9, significa que se han leido mas de MAX_CHARACTER_PER_LINE caracteres sin econtrar un '\n'.
- */
-int Bluetooth::readLine(String &line)
-{
-    line = "";
-    int indexRemove;
-    int byteRecived = -1;
-    unsigned long tInit = millis();
-    unsigned long wdtFeedTime = millis();
-    int outOfRange = 0;
-    delay(20);
-    while (char(byteRecived) != '\n')
-    {
-        if (SerialBT.available())
-        {
-            byteRecived = SerialBT.read();
-            line.concat(char(byteRecived));
-            outOfRange += 1;
-        }
-        if (millis() - tInit > timeOutBt)
-        {
-            return -3; //timeOut in readLine
-        }
-        if (outOfRange > MAX_CHARACTER_PER_LINE)
-        {
-            line = "";
-            return -9; //outOfRange in readLine
-        }
-        if (millis() - wdtFeedTime > 500){
-            //delay(1);
-            vTaskDelay(100);
-            wdtFeedTime = millis();
-        }
-    }
-    indexRemove = line.indexOf('\r');
-    if (indexRemove != -1)
-    {
-        line.remove(indexRemove, 1);
-    }
-    indexRemove = line.indexOf('\n');
-    line.remove(indexRemove, 1);
-#ifdef BLUECOMMENTS
-    Serial.println(line);
-#endif
-    return 0;
-}
-
-/**
- * @brief Lee una cantidad de bytes igual a bytesToRead del bluetooth y los almacena en dataBt.
- * @param dataBt Es un array que va a almacenar los bytes transmitidos por bluetooth.
- * @param bytesToRead Es la cantidad de bytes que se leeran del bluetooth.
- * @return Uno de los siguientes codigos.
- *  0, todo termino con normalidad.
- * -10, significa que ha transcurrido mas tiempo del esperado sin encontrar un '\n' (depende de la variable timeOutBt).
- */
-int Bluetooth::readBt(uint8_t dataBt[], int bytesToRead)
-{
-    int i = 0;
-    unsigned long tInit = millis();
-    unsigned long wdtFeedTime = millis();
-    delay(20);
-    while (i < bytesToRead)
-    {
-        if (SerialBT.available())
-        {
-            dataBt[i] = SerialBT.read();
-            i += 1;
-        }
-        if (millis() - tInit > timeOutBt)
-        {
-            /*writeBt("bytes enviados: ");
-            writeBtln(String(i));*/
-        #ifdef BLUECOMMENTS
-            Serial.print("bytes enviados: ");
-            Serial.println(i);
-        #endif
-            return -4; //timeOut in readBt
-        }
-        if (millis() - wdtFeedTime > 500){
-            vTaskDelay(100);
-            wdtFeedTime = millis();
-        }
-    }
-    #ifdef BLUECOMMENTS
-        Serial.println("salio de readBt normal");
-    #endif
+    pAdvertising->setScanResponse(true);
+    pAdvertising->setMinPreferred(0x06); // functions that help with iPhone connections issue
+    pAdvertising->setMinPreferred(0x12);
+    BLEDevice::startAdvertising();
+    Serial.println("Characteristic defined! Now you can read it in your phone!");
     return 0;
 }
 
@@ -1076,7 +774,7 @@ static unsigned *MD5Hash(uint8_t *msg, int mlen)
     return h;
 }
 
-String Bluetooth::GetMD5String(uint8_t *msg, int mlen)
+String GetMD5String(uint8_t *msg, int mlen)
 {
     String str;
     int j;
@@ -1228,22 +926,6 @@ void rebootWithMessage(String reason){
     #endif
     delay(1000);
     ESP.restart();
-}
-
-/**
- * @brief Recupera el dato que se envio por medio de bluetooth que corresponde al nombre del programa que se desea reproducir.
- * @return El nombre del archivo que se desea reproducir.
- */
-String Bluetooth::getProgram(){
-    return program;
-}
-
-/**
- * @brief Recupera el dato que se envio por medio de bluetooth que corresponde a la posicion del archivo que se desea reproducir.
- * @return La posicion en la playlist que se desea reproducir.
- */
-int Bluetooth::getPositionList(){
-    return positionList;
 }
 
 /**
