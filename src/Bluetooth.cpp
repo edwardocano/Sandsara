@@ -446,15 +446,16 @@ class FilesCallbacks_recieveBytes : public BLECharacteristicCallbacks
                 size_t lens = rxData.copy(pointerB, len, 0);
                 //memcpy(pointerB, rxData.c_str(),);
                 pointerB = pointerB + lens;
-                Serial.print(rxData.c_str());
+                //Serial.print(rxData.c_str());
                 bufferSize += lens;
                 if (bufferSize >= 9000){
                     pointerB = buffer;
                     fileReceive.write(buffer, bufferSize);
-                    Serial.print("buffer size: ");
-                    Serial.println(bufferSize);
+                    //Serial.print("buffer size: ");
+                    //Serial.println(bufferSize);
                     bufferSize = 0;
                 }
+                characteristic->setValue("1");
                 characteristic->notify();
             }
             
