@@ -69,7 +69,7 @@ fcc002c8-2af1-11eb-adc1-0242ac120002
 #define CHARACTERISTIC_UUID_10 "903d071c-22eb-11eb-adc1-0242ac120002"
 
 //====Playlist Config====
-#define PLAYLIST_UUID_NAME              "9b12a0-2c6e-11eb-adc1-0242ac120002"
+#define PLAYLIST_UUID_NAME              "9b12a048-2c6e-11eb-adc1-0242ac120002"
 #define PLAYLIST_UUID_PATHAMOUNT        "9b12a26e-2c6e-11eb-adc1-0242ac120002"
 #define PLAYLIST_UUID_PATHNAME          "9b12a534-2c6e-11eb-adc1-0242ac120002"
 #define PLAYLIST_UUID_PATHPOSITION      "9b12a62e-2c6e-11eb-adc1-0242ac120002"
