@@ -141,7 +141,7 @@
 #define MIN_PALLETE             0
 #define MAX_CHARACTERS_BTNAME   30
 #define MIN_REPRODUCTION_MODE   1
-#define MAX_REPRODUCTION_MODE   4
+#define MAX_REPRODUCTION_MODE   2
 #define MAX_POSITIONLIST        1000
 #define MAX_NUMBERLEDS          100
 #define LEDS_OF_HALO            60

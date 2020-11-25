@@ -297,7 +297,7 @@ void setup()
     #ifdef DEBUGGING_DATA
         Serial.println("Calibrando...");
     #endif
-    //haloCalib.start();
+    haloCalib.start();
     #ifdef DEBUGGING_DATA
         Serial.println("calibrado");
     #endif
@@ -408,9 +408,7 @@ void loop()
  * @param playlist the name of playlist to be executed, e.g. "/animales.playlist"
  * @param orderMode the orden that files will be executed
  * 1, files will be reproduced in descending order according to playlist.
- * 2, files will be reproduced in random order according to playlist.
- * 3, All files in SD will be reproduced in a determined order.
- * 4, All files in SD will be reproduced in random order.
+ * 2, All files in SD will be reproduced in a determined order.
  * @return an error code that could be one below.
  *  1, playlist or orderMode were changed.
  *  0, ends without error.
@@ -431,7 +429,7 @@ int run_sandsara(String playList, int orderMode)
     int numberOfFiles;
     String fileName;
     
-    if (orderMode == 1 || orderMode == 2){
+    if (orderMode == 1){
         File file;
         file = SD.open(playList);
         if (file && !file.isDirectory()){
@@ -440,33 +438,17 @@ int run_sandsara(String playList, int orderMode)
             if (numberOfFiles < 0){
                 return -4;
             }
-            if (orderMode == 2){
-                orderRandom(playList,numberOfFiles);
-                playList = "/RANDOM.playlist";
-                pListFileGlobal = 1;
-            }
         }
         else
         {
             file.close();
-            orderMode = 3;
+            orderMode = 2;
             numberOfFiles = SdFiles::creatListOfFiles("/DEFAULT.playlist");
             if (numberOfFiles < 0){
                 return -4;
             }
             playList = "/DEFAULT.playlist";
         }
-    }
-    else if (orderMode == 4)
-    {
-        numberOfFiles = SdFiles::creatListOfFiles("/auxList32132123.playlist");
-        if (numberOfFiles < 0){
-            return -4;
-        }
-        playList = "/auxList32132123.playlist";
-        orderRandom(playList,numberOfFiles);
-        playList = "/RANDOM.playlist";
-        pListFileGlobal = 1;
     }
     else
     {
