@@ -101,4 +101,17 @@ class Bluetooth {
     public:
         Bluetooth(); 
         int init(String = "Sandsara");
+
+        void setPlaylistName(String );
+        void setPathAmount(int);
+        void setPathName(String);
+        void setPathPosition(int);
+        void setPlayMode(int);
+        void setPathProgress(int);
+
+        void setLedSpeed(int);
+        void setCycleMode(int);
+        void setLedDirection(int);
+        void setIndexPalette(int);
+
 };

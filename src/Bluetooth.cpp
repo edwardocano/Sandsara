@@ -73,17 +73,17 @@ int stringToArray(String , uint8_t* , int );
 //=============================
 
 //Led strip config
-BLECharacteristic *characteristic_ledSpeed;
-BLECharacteristic *characteristic_updateCustomPalette;
-BLECharacteristic *characteristic_cycleMode;
-BLECharacteristic *characteristic_direction;
-BLECharacteristic *characteristic_amountOfColors;
-BLECharacteristic *characteristic_positions;
-BLECharacteristic *characteristic_red;
-BLECharacteristic *characteristic_green;
-BLECharacteristic *characteristic_blue;
-BLECharacteristic *characteristic_msgErrorLeds;
-BLECharacteristic *characteristic_selectedPaletteIndex;
+BLECharacteristic *ledCharacteristic_speed;
+BLECharacteristic *ledCharacteristic_update;
+BLECharacteristic *ledCharacteristic_cycleMode;
+BLECharacteristic *ledCharacteristic_direction;
+BLECharacteristic *ledCharacteristic_amountColors;
+BLECharacteristic *ledCharacteristic_positions;
+BLECharacteristic *ledCharacteristic_red;
+BLECharacteristic *ledCharacteristic_green;
+BLECharacteristic *ledCharacteristic_blue;
+BLECharacteristic *ledCharacteristic_errorMsg;
+BLECharacteristic *ledCharacteristic_indexPalette;
 
 //path config
 /*BLECharacteristic *pathCharacteristic_name;
@@ -131,8 +131,8 @@ class speedLedCallbacks : public BLECharacteristicCallbacks
         String value = rxValue.c_str();
         int periodLed = value.toInt();
         if(periodLed < MIN_PERIOD_LED || periodLed > MAX_PERIOD_LED){
-            characteristic_msgErrorLeds->setValue("error = -70");
-            characteristic_msgErrorLeds->notify();
+            ledCharacteristic_errorMsg->setValue("error = -70");
+            ledCharacteristic_errorMsg->notify();
             return;
         }
         Serial.print("speed led was changed to: ");
@@ -140,8 +140,8 @@ class speedLedCallbacks : public BLECharacteristicCallbacks
         periodLedsGlobal = periodLed;
         delayLeds = periodLed;
         romSetPeriodLed(periodLedsGlobal);
-        characteristic_msgErrorLeds->setValue("ok");
-        characteristic_msgErrorLeds->notify();
+        ledCharacteristic_errorMsg->setValue("ok");
+        ledCharacteristic_errorMsg->notify();
     } //onWrite
 };
 
@@ -159,8 +159,8 @@ class cycleModeCallbacks : public BLECharacteristicCallbacks
             romSetIncrementIndexPallete(false);
         }
         incrementIndexGlobal = romGetIncrementIndexPallete();
-        characteristic_msgErrorLeds->setValue("ok");
-        characteristic_msgErrorLeds->notify();
+        ledCharacteristic_errorMsg->setValue("ok");
+        ledCharacteristic_errorMsg->notify();
     } //onWrite
 };
 
@@ -179,8 +179,8 @@ class directionCallbacks : public BLECharacteristicCallbacks
             romSetLedsDirection(false);
         }
         ledsDirection = romGetLedsDirection();
-        characteristic_msgErrorLeds->setValue("ok");
-        characteristic_msgErrorLeds->notify();
+        ledCharacteristic_errorMsg->setValue("ok");
+        ledCharacteristic_errorMsg->notify();
     } //onWrite
 };
 
@@ -193,16 +193,16 @@ class selectedPaletteCallbacks : public BLECharacteristicCallbacks
         String value = rxValue.c_str();
         int valueInt = value.toInt();
         if(valueInt < MIN_PALLETE || valueInt > MAX_PALLETE){
-            characteristic_msgErrorLeds->setValue("error = -31");
-            characteristic_msgErrorLeds->notify();
+            ledCharacteristic_errorMsg->setValue("error = -31");
+            ledCharacteristic_errorMsg->notify();
             return;
         }
         ledModeGlobal = valueInt;
         //verifica se existe dados (tamanho maior que zero)
         changePalette(ledModeGlobal);
         romSetPallete(ledModeGlobal);
-        characteristic_msgErrorLeds->setValue("ok");
-        characteristic_msgErrorLeds->notify();
+        ledCharacteristic_errorMsg->setValue("ok");
+        ledCharacteristic_errorMsg->notify();
     } //onWrite
 };
 
@@ -210,42 +210,42 @@ class CallbacksToUpdate : public BLECharacteristicCallbacks
 {
     void onWrite(BLECharacteristic *characteristic)
     {
-        int amountOfColors = String(characteristic_amountOfColors->getValue().c_str()).toInt();
+        int amountOfColors = String(ledCharacteristic_amountColors->getValue().c_str()).toInt();
         uint8_t positions[amountOfColors];
         uint8_t red[amountOfColors];
         uint8_t green[amountOfColors];
         uint8_t blue[amountOfColors];
-        String positionsString = characteristic_positions->getValue().c_str();
-        String redString = characteristic_red->getValue().c_str();
-        String greenString = characteristic_green->getValue().c_str();
-        String blueString = characteristic_blue->getValue().c_str();
+        String positionsString = ledCharacteristic_positions->getValue().c_str();
+        String redString = ledCharacteristic_red->getValue().c_str();
+        String greenString = ledCharacteristic_green->getValue().c_str();
+        String blueString = ledCharacteristic_blue->getValue().c_str();
         Serial.println(positionsString);
         Serial.println(redString);
         Serial.println(greenString);
         Serial.println(blueString);
         if (amountOfColors < 2 || amountOfColors > 16){
-            characteristic_msgErrorLeds->setValue("error= -181");
-            characteristic_msgErrorLeds->notify();
+            ledCharacteristic_errorMsg->setValue("error= -181");
+            ledCharacteristic_errorMsg->notify();
             return;}
         if (stringToArray(positionsString, positions, amountOfColors) < 0){
-            characteristic_msgErrorLeds->setValue("error= -182");
-            characteristic_msgErrorLeds->notify();
+            ledCharacteristic_errorMsg->setValue("error= -182");
+            ledCharacteristic_errorMsg->notify();
             return;}
         if (stringToArray(redString, red, amountOfColors) < 0){
-            characteristic_msgErrorLeds->setValue("error= -183");
-            characteristic_msgErrorLeds->notify();
+            ledCharacteristic_errorMsg->setValue("error= -183");
+            ledCharacteristic_errorMsg->notify();
             return;}
         if (stringToArray(greenString, green, amountOfColors) < 0){
-            characteristic_msgErrorLeds->setValue("error= -184");
-            characteristic_msgErrorLeds->notify();
+            ledCharacteristic_errorMsg->setValue("error= -184");
+            ledCharacteristic_errorMsg->notify();
             return;}
         if (stringToArray(blueString, blue, amountOfColors) < 0){
-            characteristic_msgErrorLeds->setValue("error= -185");
-            characteristic_msgErrorLeds->notify();
+            ledCharacteristic_errorMsg->setValue("error= -185");
+            ledCharacteristic_errorMsg->notify();
             return;}
         romSetCustomPallete(positions, red, green, blue, amountOfColors);
-        characteristic_msgErrorLeds->setValue("ok");
-        characteristic_msgErrorLeds->notify();
+        ledCharacteristic_errorMsg->setValue("ok");
+        ledCharacteristic_errorMsg->notify();
         Serial.println("Se actualizo custom Pallete");
     } //onWrite
 };
@@ -381,6 +381,7 @@ class playlistCallbacks_mode : public BLECharacteristicCallbacks
         }
         orderModeGlobal = mode;
         romSetOrderMode(orderModeGlobal);
+        rewindPlaylist = true;
         playlistCharacteristic_errorMsg->setValue("ok");
         playlistCharacteristic_errorMsg->notify();
 
@@ -513,68 +514,67 @@ int Bluetooth::init(String name){
 
     //====Characteristics for LEDs configuration====
     
-    characteristic_selectedPaletteIndex = pServiceLedConfig->createCharacteristic(
+    ledCharacteristic_indexPalette = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_SELECTEDPALETTE,
         BLECharacteristic::PROPERTY_READ |
             BLECharacteristic::PROPERTY_WRITE);
-    characteristic_ledSpeed = pServiceLedConfig->createCharacteristic(
+    ledCharacteristic_speed = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_LEDSPEED,
         BLECharacteristic::PROPERTY_READ |
             BLECharacteristic::PROPERTY_WRITE);
-    characteristic_cycleMode = pServiceLedConfig->createCharacteristic(
+    ledCharacteristic_cycleMode = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_CYCLEMODE,
         BLECharacteristic::PROPERTY_READ |
             BLECharacteristic::PROPERTY_WRITE);
-    characteristic_direction = pServiceLedConfig->createCharacteristic(
+    ledCharacteristic_direction = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_DIRECTION,
         BLECharacteristic::PROPERTY_READ |
             BLECharacteristic::PROPERTY_WRITE);
-    characteristic_amountOfColors = pServiceLedConfig->createCharacteristic(
+    ledCharacteristic_amountColors = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_AMOUNTCOLORS,
             BLECharacteristic::PROPERTY_WRITE);
-    characteristic_positions = pServiceLedConfig->createCharacteristic(
+    ledCharacteristic_positions = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_POSITIONS,
             BLECharacteristic::PROPERTY_WRITE);
-    characteristic_red = pServiceLedConfig->createCharacteristic(
+    ledCharacteristic_red = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_RED,
             BLECharacteristic::PROPERTY_WRITE);
-    characteristic_green = pServiceLedConfig->createCharacteristic(
+    ledCharacteristic_green = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_GREEN,
             BLECharacteristic::PROPERTY_WRITE);
-    characteristic_blue = pServiceLedConfig->createCharacteristic(
+    ledCharacteristic_blue = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_BLUE,
             BLECharacteristic::PROPERTY_WRITE);
-    characteristic_updateCustomPalette = pServiceLedConfig->createCharacteristic(
+    ledCharacteristic_update = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_UPDATECPALETTE,
         BLECharacteristic::PROPERTY_WRITE);
-    characteristic_msgErrorLeds = pServiceLedConfig->createCharacteristic(
+    ledCharacteristic_errorMsg = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_MSGERRORLEDS,
         BLECharacteristic::PROPERTY_READ |
             BLECharacteristic::PROPERTY_NOTIFY);
-    characteristic_msgErrorLeds->addDescriptor(new BLE2902());
+    ledCharacteristic_errorMsg->addDescriptor(new BLE2902());
 
-    characteristic_ledSpeed->setCallbacks(new speedLedCallbacks());
-    characteristic_cycleMode->setCallbacks(new cycleModeCallbacks());
-    characteristic_direction->setCallbacks(new directionCallbacks());
-    characteristic_amountOfColors->setCallbacks(new genericCallbacks());
-    characteristic_positions->setCallbacks(new genericCallbacks);
-    characteristic_red->setCallbacks(new genericCallbacks);
-    characteristic_green->setCallbacks(new genericCallbacks);
-    characteristic_blue->setCallbacks(new genericCallbacks);
-    characteristic_updateCustomPalette->setCallbacks(new CallbacksToUpdate());
-    //characteristic_msgErrorLeds->setCallbacks(new msgErrorLedCallbacks());
-    characteristic_selectedPaletteIndex->setCallbacks(new selectedPaletteCallbacks());
+    ledCharacteristic_speed->setCallbacks(new speedLedCallbacks());
+    ledCharacteristic_cycleMode->setCallbacks(new cycleModeCallbacks());
+    ledCharacteristic_direction->setCallbacks(new directionCallbacks());
+    ledCharacteristic_amountColors->setCallbacks(new genericCallbacks());
+    ledCharacteristic_positions->setCallbacks(new genericCallbacks);
+    ledCharacteristic_red->setCallbacks(new genericCallbacks);
+    ledCharacteristic_green->setCallbacks(new genericCallbacks);
+    ledCharacteristic_blue->setCallbacks(new genericCallbacks);
+    ledCharacteristic_update->setCallbacks(new CallbacksToUpdate());
+    ledCharacteristic_indexPalette->setCallbacks(new selectedPaletteCallbacks());
 
-    characteristic_ledSpeed->setValue(String(periodLedsGlobal).c_str());
+    ledCharacteristic_speed->setValue(String(periodLedsGlobal).c_str());
     if(romGetIncrementIndexPallete()){
-        characteristic_cycleMode->setValue("1");}
+        ledCharacteristic_cycleMode->setValue("1");}
     else{
-        characteristic_cycleMode->setValue("0");}
+        ledCharacteristic_cycleMode->setValue("0");}
     if(romGetLedsDirection()){
-        characteristic_direction->setValue("1");}
+        ledCharacteristic_direction->setValue("1");}
     else{
-        characteristic_direction->setValue("0");}
-    characteristic_selectedPaletteIndex->setValue(String(romGetPallete()).c_str());
+        ledCharacteristic_direction->setValue("0");}
+    ledCharacteristic_indexPalette->setValue(String(romGetPallete()).c_str());
 
     //====Characteristics for playlist configuration====
     playlistCharacteristic_name = pServicePlaylist->createCharacteristic(
@@ -652,14 +652,12 @@ int Bluetooth::init(String name){
             BLECharacteristic::PROPERTY_READ |
             BLECharacteristic::PROPERTY_NOTIFY);
     fileCharacteristic_errorMsg->addDescriptor(new BLE2902());
-
     fileCharacteristic_sendFile->setCallbacks(new FilesCallbacks_sendFile());
     fileCharacteristic_reciveFile->setCallbacks(new FilesCallbacks_recieveBytes());
     fileCharacteristic_exists->setCallbacks(new FilesCallbacks_checkFile());
     fileCharacteristic_delete->setCallbacks(new FilesCallbacks_deleteFile());
             
-    //characteristic_ledSpeed->addDescriptor(new BLE2902());
-
+    //ledCharacteristic_speed->addDescriptor(new BLE2902());
     
     pServiceLedConfig->start();
     pServicePlaylist->start();
@@ -999,4 +997,37 @@ int stringToArray(String str, uint8_t* array, int n){
         return -1;
     }
     return 0;
+}
+
+void Bluetooth::setPlaylistName(String playlistName){
+    playlistCharacteristic_name->setValue(playlistName.c_str());
+}
+void Bluetooth::setPathAmount(int pathAmount){
+    playlistCharacteristic_pathAmount->setValue(String(pathAmount).c_str());
+}
+void Bluetooth::setPathName(String pathName){
+    playlistCharacteristic_pathName->setValue(pathName.c_str());
+}
+void Bluetooth::setPathPosition(int pathPosition){
+    playlistCharacteristic_pathPosition->setValue(String(pathPosition).c_str());
+}
+void Bluetooth::setPlayMode(int mode){
+    playlistCharacteristic_mode->setValue(String(mode).c_str());
+}
+void Bluetooth::setPathProgress(int progress){
+    playlistCharacteristic_progress->setValue(String(progress).c_str());
+}
+
+
+void Bluetooth::setLedSpeed(int speed){
+    ledCharacteristic_speed->setValue(String(speed).c_str());
+}
+void Bluetooth::setCycleMode(int cycleMode){
+    ledCharacteristic_cycleMode->setValue(String(cycleMode).c_str());
+}
+void Bluetooth::setLedDirection(int ledDirection){
+    ledCharacteristic_direction->setValue(String(ledDirection).c_str());
+}
+void Bluetooth::setIndexPalette(int indexPalette){
+    ledCharacteristic_indexPalette->setValue(String(indexPalette).c_str());
 }

@@ -177,6 +177,11 @@ void setup()
         #endif
         delay(200); 
     }
+    //====
+    #ifdef DEBUGGING_DATA
+        Serial.println("Card present");
+    #endif
+    //====
     //changePalette(ledModeGlobal);
     findUpdate();
     //====Palletes initialization====
@@ -250,6 +255,51 @@ void setup()
     //====Restoring bluetooth name====
     bluetoothNameGlobal = romGetBluetoothName();
     //====
+    //====Restore playlist name and orderMode====
+    playListGlobal = romGetPlaylist();
+    orderModeGlobal = romGetOrderMode();
+    if (orderModeGlobal < MIN_REPRODUCTION_MODE || orderModeGlobal > MAX_REPRODUCTION_MODE){
+        orderModeGlobal = 1;
+        romSetOrderMode(1);
+    }
+    changePalette(romGetPallete());
+    if (playListGlobal.equals("/")){
+        #ifdef DEBUGGING_DATA
+            Serial.print("No hay una playlist guardada, se reproduciran todos los archivos en la sd");
+        #endif
+    }
+    else
+    {
+        if (sdExists(playListGlobal)){
+            delay(1);
+            #ifdef DEBUGGING_DATA
+                Serial.print("lista guardada: ");
+                Serial.println(playListGlobal);
+            #endif
+        }
+        else{
+            #ifdef DEBUGGING_DATA
+                Serial.println("La playlist no existe, se reproduciran todos los archivos en la sd");
+            #endif
+        }
+    }
+    #ifdef DEBUGGING_DATA
+        Serial.print("orderMode guardado: ");
+        Serial.println(orderModeGlobal);
+    #endif
+    //====
+    //====Searching for an update====
+    //findUpdate();
+    //====
+    #ifdef PROCESSING_SIMULATOR
+        Serial.println("inicia");
+    #endif
+    //=====if the file playlist.playlist exits it will be executed====
+    if (sdExists("/playlist.playlist")){
+        playListGlobal = "/playlist.playlist";
+        orderModeGlobal = 1;
+    }
+    //=====
     //====Configure the halo and bluetooth====
     Sandsara.init();
     //====
@@ -267,8 +317,29 @@ void setup()
     delay(1000);
     //====Restore leds direction====
     ledsDirection = romGetLedsDirection();
+    //====Restore cycleMode====
+    bool cycleMode = romGetIncrementIndexPallete();
 
     BluetoothSand.init("Sandsara BLE");
+    BluetoothSand.setPlaylistName(playListGlobal);
+    BluetoothSand.setPathAmount(0);
+    BluetoothSand.setPathName("");
+    BluetoothSand.setPlayMode(orderModeGlobal);
+    BluetoothSand.setPathProgress(0);
+
+    BluetoothSand.setLedSpeed(periodLedsGlobal);
+    if(cycleMode){
+        BluetoothSand.setCycleMode(1);
+    }else {
+        BluetoothSand.setCycleMode(0);
+    }
+    if (ledsDirection){
+        BluetoothSand.setLedDirection(1);
+    }else{
+        BluetoothSand.setLedDirection(0);
+    }
+    BluetoothSand.setIndexPalette(ledModeGlobal);
+
     //====new task for leds====
     xTaskCreatePinnedToCore(
                     ledsFunc,
@@ -308,59 +379,8 @@ void setup()
     pinMode(EN_PIN2, OUTPUT);
     digitalWrite(EN_PIN, LOW);
     digitalWrite(EN_PIN2, LOW);
-    //====
-    
-    #ifdef DEBUGGING_DATA
-        Serial.println("Card present");
-    #endif
-    //====
-    //====Restore playlist name and orderMode====    
-    playListGlobal = romGetPlaylist();
-    orderModeGlobal = romGetOrderMode();
-    if (orderModeGlobal < MIN_REPRODUCTION_MODE || orderModeGlobal > MAX_REPRODUCTION_MODE){
-        orderModeGlobal = 3;
-        romSetOrderMode(3);
-    }
-    changePalette(romGetPallete());
-    if (playListGlobal.equals("/")){
-        #ifdef DEBUGGING_DATA
-            Serial.print("No hay una playlist guardada, se reproduciran todos los archivos en la sd");
-        #endif
-    }
-    else
-    {
-        if (sdExists(playListGlobal)){
-            delay(1);
-            #ifdef DEBUGGING_DATA
-                Serial.print("lista guardada: ");
-                Serial.println(playListGlobal);
-            #endif
-        }
-        else{
-            #ifdef DEBUGGING_DATA
-                Serial.println("La playlist no existe, se reproduciran todos los archivos en la sd");
-            #endif
-        }
-    }
-    #ifdef DEBUGGING_DATA
-        Serial.print("orderMode guardado: ");
-        Serial.println(orderModeGlobal);
-    #endif
-    //====
-    //====Searching for an update====
-    //findUpdate();
-    //====
-    #ifdef PROCESSING_SIMULATOR
-        Serial.println("inicia");
-    #endif
     
     
-    //=====if the file playlist.playlist exits it will be executed====
-    if (sdExists("/playlist.playlist")){
-        playListGlobal = "/playlist.playlist";
-        orderModeGlobal = 1;
-    }
-    //=====
     goEdgeSpiral(false);
     delay(1000);
     firstExecution = true;
@@ -466,7 +486,7 @@ int run_sandsara(String playList, int orderMode)
     if (numberOfFiles == 0){
         return -4;
     }
-    
+    BluetoothSand.setPathAmount(numberOfFiles);
     changePalette(romGetPallete());
     //====restore playlist====
     currentPlaylistGlobal = playList;
@@ -575,7 +595,8 @@ int runFile(String fileName){
         pListFileGlobal += 1;
         return -70;
     }
-
+    BluetoothSand.setPathName(fileName);
+    BluetoothSand.setPathPosition(pListFileGlobal);
     double zInit = Sandsara.getCurrentModule();
     //====read of File mode is selected.
     file.autoSetMode(zInit);
