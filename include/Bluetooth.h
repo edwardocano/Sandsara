@@ -44,14 +44,14 @@ ff9f3182-2851-11eb-adc1-0242ac120002
 ff9f3254-2851-11eb-adc1-0242ac120002*/
 
 //====File config====
-#define FILE_UUID_SEND      "fcbff68e-2af1-11eb-adc1-0242ac120002" 
-#define FILE_UUID_RECIEVE   "fcbffa44-2af1-11eb-adc1-0242ac120002"
-#define FILE_UUID_EXISTS    "fcbffb52-2af1-11eb-adc1-0242ac120002"
-#define FILE_UUID_DELETE    "fcbffc24-2af1-11eb-adc1-0242ac120002"
-#define FILE_UUID_ERRORMSG  "fcbffce2-2af1-11eb-adc1-0242ac120002"
+#define FILE_UUID_RECEIVEFLAG   "fcbff68e-2af1-11eb-adc1-0242ac120002" 
+#define FILE_UUID_RECEIVE       "fcbffa44-2af1-11eb-adc1-0242ac120002"
+#define FILE_UUID_EXISTS        "fcbffb52-2af1-11eb-adc1-0242ac120002"
+#define FILE_UUID_DELETE        "fcbffc24-2af1-11eb-adc1-0242ac120002"
+#define FILE_UUID_SENDFLAG      "fcbffdaa-2af1-11eb-adc1-0242ac120002"
+#define FILE_UUID_SEND          "fcbffe72-2af1-11eb-adc1-0242ac120002"
+#define FILE_UUID_ERRORMSG      "fcbffce2-2af1-11eb-adc1-0242ac120002"
 /*
-fcbffdaa-2af1-11eb-adc1-0242ac120002
-fcbffe72-2af1-11eb-adc1-0242ac120002
 fcc0012e-2af1-11eb-adc1-0242ac120002
 fcc0020a-2af1-11eb-adc1-0242ac120002
 fcc002c8-2af1-11eb-adc1-0242ac120002

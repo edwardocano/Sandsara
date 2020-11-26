@@ -104,8 +104,8 @@ BLECharacteristic *playlistCharacteristic_progress;
 BLECharacteristic *playlistCharacteristic_errorMsg;
 
 //Files
-BLECharacteristic *fileCharacteristic_sendFile;
-BLECharacteristic *fileCharacteristic_reciveFile;
+BLECharacteristic *fileCharacteristic_receiveFlag;
+BLECharacteristic *fileCharacteristic_receive;
 BLECharacteristic *fileCharacteristic_exists;
 BLECharacteristic *fileCharacteristic_delete;
 BLECharacteristic *fileCharacteristic_errorMsg;     
@@ -275,7 +275,6 @@ class genericCallbacks : public BLECharacteristicCallbacks
 
 //===============================callbacks for playlist config==============================================
 //==========================================================================================================
-
 class playlistCallbacks_name : public BLECharacteristicCallbacks
 {
     void onWrite(BLECharacteristic *characteristic)
@@ -390,7 +389,7 @@ class playlistCallbacks_mode : public BLECharacteristicCallbacks
 
 //================================Sending files=====================================
 //==================================================================================
-class FilesCallbacks_sendFile : public BLECharacteristicCallbacks
+class FilesCallbacks_receiveFlag : public BLECharacteristicCallbacks
 {
     void onWrite(BLECharacteristic *characteristic)
     {
@@ -433,9 +432,83 @@ class FilesCallbacks_sendFile : public BLECharacteristicCallbacks
     }
 };
 
-class FilesCallbacks_recieveBytes : public BLECharacteristicCallbacks
+class FilesCallbacks_receive : public BLECharacteristicCallbacks
 {
     void onWrite(BLECharacteristic *characteristic)
+    {
+        if (sendFlag)
+        {
+            std::string rxData = characteristic->getValue();
+            int len = rxData.length();
+            if (len > 0)
+            {
+                //rxData.c_str();
+                size_t lens = rxData.copy(pointerB, len, 0);
+                //memcpy(pointerB, rxData.c_str(),);
+                pointerB = pointerB + lens;
+                //Serial.print(rxData.c_str());
+                bufferSize += lens;
+                if (bufferSize >= 9000){
+                    pointerB = buffer;
+                    fileReceive.write(buffer, bufferSize);
+                    //Serial.print("buffer size: ");
+                    //Serial.println(bufferSize);
+                    bufferSize = 0;
+                }
+                characteristic->setValue("1");
+                characteristic->notify();
+            }
+            
+        }
+    }
+};
+
+class FilesCallbacks_sendFlag : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        if (!sendFlag){
+            std::string rxData = characteristic->getValue();
+            Serial.println("Begin sending...");
+            String name = rxData.c_str();
+            if (!sdExists(name)){
+                fileCharacteristic_errorMsg->setValue("error=-1"); //archivo no existe
+                fileCharacteristic_errorMsg->notify();
+            }
+            fileReceive = SD.open(name, FILE_READ);
+            if (!fileReceive)
+            {
+                fileCharacteristic_errorMsg->setValue("error=-2"); //file cannot be opened
+                fileCharacteristic_errorMsg->notify();
+                Serial.println("error al abrir el archivo"); //file cannot be opened
+            }
+            Serial.println("se abrio el archivo");
+            pointerB = buffer;
+            bufferSize = 0;
+            sendFlag = true;
+            pauseModeGlobal = true;
+            fileCharacteristic_errorMsg->setValue("ok");
+            fileCharacteristic_errorMsg->notify();
+        }
+        else{
+            pointerB = buffer;
+            fileReceive.write(buffer, bufferSize);
+            Serial.print("buffer size: ");
+            Serial.println(bufferSize);
+            bufferSize = 0;
+            fileReceive.close();
+            Serial.println("EndOTA");
+            sendFlag = false;
+            pauseModeGlobal = false;
+            fileCharacteristic_errorMsg->setValue("done");
+            fileCharacteristic_errorMsg->notify();
+        }
+    }
+};
+
+class FilesCallbacks_send : public BLECharacteristicCallbacks
+{
+    void onRead(BLECharacteristic *characteristic)
     {
         if (sendFlag)
         {
@@ -629,15 +702,15 @@ int Bluetooth::init(String name){
             BLECharacteristic::PROPERTY_NOTIFY);
 
     //====Characteristics for File configuration====
-    fileCharacteristic_sendFile = pServiceFile->createCharacteristic(
-        FILE_UUID_SEND,
+    fileCharacteristic_receiveFlag = pServiceFile->createCharacteristic(
+        FILE_UUID_RECEIVEFLAG,
             BLECharacteristic::PROPERTY_WRITE);
 
-    fileCharacteristic_reciveFile = pServiceFile->createCharacteristic(
-        FILE_UUID_RECIEVE,
+    fileCharacteristic_receive = pServiceFile->createCharacteristic(
+        FILE_UUID_RECEIVE,
             BLECharacteristic::PROPERTY_WRITE |
             BLECharacteristic::PROPERTY_NOTIFY);
-    fileCharacteristic_reciveFile->addDescriptor(new BLE2902());
+    fileCharacteristic_receive->addDescriptor(new BLE2902());
 
     fileCharacteristic_exists = pServiceFile->createCharacteristic(
         FILE_UUID_EXISTS,
@@ -652,11 +725,11 @@ int Bluetooth::init(String name){
             BLECharacteristic::PROPERTY_READ |
             BLECharacteristic::PROPERTY_NOTIFY);
     fileCharacteristic_errorMsg->addDescriptor(new BLE2902());
-    fileCharacteristic_sendFile->setCallbacks(new FilesCallbacks_sendFile());
-    fileCharacteristic_reciveFile->setCallbacks(new FilesCallbacks_recieveBytes());
+    fileCharacteristic_receiveFlag->setCallbacks(new FilesCallbacks_receiveFlag());
+    fileCharacteristic_receive->setCallbacks(new FilesCallbacks_receive());
     fileCharacteristic_exists->setCallbacks(new FilesCallbacks_checkFile());
     fileCharacteristic_delete->setCallbacks(new FilesCallbacks_deleteFile());
-            
+
     //ledCharacteristic_speed->addDescriptor(new BLE2902());
     
     pServiceLedConfig->start();
