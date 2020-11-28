@@ -7,6 +7,19 @@
 #define v2Current 0
 #define v3Current 0
 
+/**
+ * Status de sandsara
+ * 1 calibrating
+ * 2
+ * 3
+ * 4
+ * 5
+ * 6
+ * 7
+ * 8
+ * 9
+ */
+
 //Es el valor de la resistencia colocada en los drivers, por ejemplo 0.11f representa 0.11 ohms.
 #define R_SENSE             0.11f
 
@@ -157,6 +170,7 @@
 #define SAFE_SPEED              1.0
 #define MAX_STEPS_PER_INSTRUCTION 100.0
 #define SAMPLES 50
+#define CHUNKSIZE 512
 
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0

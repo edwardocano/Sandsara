@@ -6,6 +6,8 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 #include <BLE2902.h>
+#include "Motors.h"
+#include <EEPROM.h>
 
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
@@ -49,15 +51,21 @@ extern  bool     readingSDFile;
 extern  int      orderModeGlobal;
 extern  bool     rewindPlaylist;
 extern  bool     pauseModeGlobal;
+extern  String  bluetoothNameGlobal;
+extern  bool    suspensionModeGlobal;
+extern  Motors Sandsara;
+extern  bool    speedChangedMain;
 
 //====variables====
 extern  String      changedProgram;
 extern  int         changedPosition;
+bool        receiveFlag = false;
 bool        sendFlag = false;
 char        buffer[10000];
 char        *pointerB;
 int         bufferSize;
 File        fileReceive;
+File        fileSend;
 
 //====Prototypes====
 int performUpdate(Stream &, size_t );
@@ -85,12 +93,6 @@ BLECharacteristic *ledCharacteristic_blue;
 BLECharacteristic *ledCharacteristic_errorMsg;
 BLECharacteristic *ledCharacteristic_indexPalette;
 
-//path config
-/*BLECharacteristic *pathCharacteristic_name;
-BLECharacteristic *pathCharacteristic_position;
-BLECharacteristic *pathCharacteristic_percentage;
-BLECharacteristic *pathCharacteristic_errorMsg;*/
-
 //playlist config
 BLECharacteristic *playlistCharacteristic_name;
 BLECharacteristic *playlistCharacteristic_pathAmount;
@@ -108,20 +110,24 @@ BLECharacteristic *fileCharacteristic_receiveFlag;
 BLECharacteristic *fileCharacteristic_receive;
 BLECharacteristic *fileCharacteristic_exists;
 BLECharacteristic *fileCharacteristic_delete;
+BLECharacteristic *fileCharacteristic_sendFlag;
+BLECharacteristic *fileCharacteristic_send;
 BLECharacteristic *fileCharacteristic_errorMsg;     
 
-BLECharacteristic *characteristic_1;
-BLECharacteristic *characteristic_2;
-BLECharacteristic *characteristic_3;
-BLECharacteristic *characteristic_4;
-BLECharacteristic *characteristic_5;
-BLECharacteristic *characteristic_6;
-BLECharacteristic *characteristic_7;
-BLECharacteristic *characteristic_8;
-BLECharacteristic *characteristic_9;
+//====General====
+BLECharacteristic *generalCharacteristic_version;
+BLECharacteristic *generalCharacteristic_name;
+BLECharacteristic *generalCharacteristic_status;
+BLECharacteristic *generalCharacteristic_pause;
+BLECharacteristic *generalCharacteristic_play;
+BLECharacteristic *generalCharacteristic_sleep;
+BLECharacteristic *generalCharacteristic_speed;
+BLECharacteristic *generalCharacteristic_restart;
+BLECharacteristic *generalCharacteristic_factoryReset;
+BLECharacteristic *generalCharacteristic_errorMsg;
 
-//====Callbacks=============================
-//==========================================
+//================================Callbacks=============================
+//======================================================================
 
 class speedLedCallbacks : public BLECharacteristicCallbacks
 {
@@ -393,10 +399,14 @@ class FilesCallbacks_receiveFlag : public BLECharacteristicCallbacks
 {
     void onWrite(BLECharacteristic *characteristic)
     {
-        if (!sendFlag){
+        if (!receiveFlag){
             std::string rxData = characteristic->getValue();
             Serial.println("BeginOTA");
             String name = rxData.c_str();
+            while (readingSDFile){
+                delay(1);
+            }
+            readingSDFile = true;
             if (sdExists(name)){
                 fileCharacteristic_errorMsg->setValue("error=-1"); //archivo ya existe
                 fileCharacteristic_errorMsg->notify();
@@ -411,20 +421,26 @@ class FilesCallbacks_receiveFlag : public BLECharacteristicCallbacks
             Serial.println("se creo archivo");
             pointerB = buffer;
             bufferSize = 0;
-            sendFlag = true;
+            receiveFlag = true;
             pauseModeGlobal = true;
+            readingSDFile = false;
             fileCharacteristic_errorMsg->setValue("ok");
             fileCharacteristic_errorMsg->notify();
         }
         else{
             pointerB = buffer;
+            while (readingSDFile){
+                delay(1);
+            }
+            readingSDFile = true;
             fileReceive.write(buffer, bufferSize);
+            readingSDFile = false;
             Serial.print("buffer size: ");
             Serial.println(bufferSize);
             bufferSize = 0;
             fileReceive.close();
             Serial.println("EndOTA");
-            sendFlag = false;
+            receiveFlag = false;
             pauseModeGlobal = false;
             fileCharacteristic_errorMsg->setValue("done");
             fileCharacteristic_errorMsg->notify();
@@ -436,7 +452,7 @@ class FilesCallbacks_receive : public BLECharacteristicCallbacks
 {
     void onWrite(BLECharacteristic *characteristic)
     {
-        if (sendFlag)
+        if (receiveFlag)
         {
             std::string rxData = characteristic->getValue();
             int len = rxData.length();
@@ -450,7 +466,12 @@ class FilesCallbacks_receive : public BLECharacteristicCallbacks
                 bufferSize += lens;
                 if (bufferSize >= 9000){
                     pointerB = buffer;
+                    while (readingSDFile){
+                        delay(1);
+                    }
+                    readingSDFile = true;
                     fileReceive.write(buffer, bufferSize);
+                    readingSDFile = false;
                     //Serial.print("buffer size: ");
                     //Serial.println(bufferSize);
                     bufferSize = 0;
@@ -471,37 +492,42 @@ class FilesCallbacks_sendFlag : public BLECharacteristicCallbacks
             std::string rxData = characteristic->getValue();
             Serial.println("Begin sending...");
             String name = rxData.c_str();
+            while (readingSDFile){
+                delay(1);
+            }
+            readingSDFile = true;
             if (!sdExists(name)){
+                Serial.println("no existe el archivo");
                 fileCharacteristic_errorMsg->setValue("error=-1"); //archivo no existe
                 fileCharacteristic_errorMsg->notify();
+                return;
             }
-            fileReceive = SD.open(name, FILE_READ);
-            if (!fileReceive)
+            fileSend = SD.open(name, FILE_READ);
+            if (!fileSend)
             {
                 fileCharacteristic_errorMsg->setValue("error=-2"); //file cannot be opened
                 fileCharacteristic_errorMsg->notify();
                 Serial.println("error al abrir el archivo"); //file cannot be opened
+                return;
             }
+            readingSDFile = false;
             Serial.println("se abrio el archivo");
-            pointerB = buffer;
-            bufferSize = 0;
+            /*uint8_t data[CHUNKSIZE];
+            int dataSize = fileSend.read(data, CHUNKSIZE);
+            readingSDFile = false;
+            fileCharacteristic_send->setValue(data,dataSize);
+            //fileCharacteristic_send->notify();*/
+
             sendFlag = true;
-            pauseModeGlobal = true;
+            //pauseModeGlobal = true;
+            
             fileCharacteristic_errorMsg->setValue("ok");
             fileCharacteristic_errorMsg->notify();
         }
         else{
-            pointerB = buffer;
-            fileReceive.write(buffer, bufferSize);
-            Serial.print("buffer size: ");
-            Serial.println(bufferSize);
-            bufferSize = 0;
-            fileReceive.close();
-            Serial.println("EndOTA");
+            Serial.println("entro en el else");
             sendFlag = false;
-            pauseModeGlobal = false;
-            fileCharacteristic_errorMsg->setValue("done");
-            fileCharacteristic_errorMsg->notify();
+            fileSend.close();
         }
     }
 };
@@ -512,29 +538,26 @@ class FilesCallbacks_send : public BLECharacteristicCallbacks
     {
         if (sendFlag)
         {
-            std::string rxData = characteristic->getValue();
-            int len = rxData.length();
-            if (len > 0)
-            {
-                //rxData.c_str();
-                size_t lens = rxData.copy(pointerB, len, 0);
-                //memcpy(pointerB, rxData.c_str(),);
-                pointerB = pointerB + lens;
-                //Serial.print(rxData.c_str());
-                bufferSize += lens;
-                if (bufferSize >= 9000){
-                    pointerB = buffer;
-                    fileReceive.write(buffer, bufferSize);
-                    //Serial.print("buffer size: ");
-                    //Serial.println(bufferSize);
-                    bufferSize = 0;
-                }
-                characteristic->setValue("1");
-                characteristic->notify();
+            uint8_t data[CHUNKSIZE];
+            while (readingSDFile){
+                delay(1);
             }
-            
+            readingSDFile = true;
+            int dataSize = fileSend.read(data, CHUNKSIZE);
+            readingSDFile = false;
+            if (dataSize == 0){
+                characteristic->setValue("");
+            }else {
+                characteristic->setValue(data,dataSize);
+            }
+            if(dataSize < CHUNKSIZE){
+                fileSend.close();
+                sendFlag = false;
+                Serial.println("done");
+            }
         }
     }
+
 };
 
 class FilesCallbacks_checkFile : public BLECharacteristicCallbacks
@@ -568,6 +591,91 @@ class FilesCallbacks_deleteFile : public BLECharacteristicCallbacks
         }
         fileCharacteristic_errorMsg->setValue("1");
         fileCharacteristic_errorMsg->notify();
+    }
+};
+
+//===========================Callbacks for general config==========================
+//=================================================================================
+
+class generalCallbacks_name : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        std::string rxData = characteristic->getValue();
+        String bluetoothName = rxData.c_str();
+        if (bluetoothName.length() > MAX_CHARACTERS_BTNAME){
+            generalCharacteristic_errorMsg->setValue("error= -1");
+            generalCharacteristic_errorMsg->notify();
+        }
+        bluetoothNameGlobal = bluetoothName;
+        romSetBluetoothName(bluetoothNameGlobal);
+        generalCharacteristic_errorMsg->setValue("ok");
+        generalCharacteristic_errorMsg->notify();
+    }
+};
+
+class generalCallbacks_pause : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        pauseModeGlobal = true;
+    }
+};
+
+class generalCallbacks_play : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        pauseModeGlobal = false;
+        suspensionModeGlobal = false;
+    }
+};
+
+class generalCallbacks_Sleep : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        suspensionModeGlobal = true;
+        pauseModeGlobal = false;
+    }
+};
+
+class generalCallbacks_speed : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        std::string rxData = characteristic->getValue();
+        String value = rxData.c_str();
+        int speed = value.toInt();
+        Sandsara.setSpeed(speed);
+        romSetSpeedMotor(speed);
+        speedChangedMain = true;
+    }
+};
+
+
+class generalCallbacks_restart : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        generalCharacteristic_errorMsg->setValue("ok");
+        generalCharacteristic_errorMsg->notify();
+        rebootWithMessage("Reiniciando");
+    }
+};
+
+class generalCallbacks_factoryReset : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
+        for (int i = 0; i < 512; i++){
+            EEPROM.write(i, -1);
+        }
+        EEPROM.commit();
+        generalCharacteristic_errorMsg->setValue("ok");
+        generalCharacteristic_errorMsg->notify();
+        delay(1000);
+        rebootWithMessage("Se hiso reset de fabrica, Reiniciando...");
     }
 };
 
@@ -695,11 +803,59 @@ int Bluetooth::init(String name){
     playlistCharacteristic_mode->setCallbacks(new playlistCallbacks_mode());
 
     //====Characteristics for General configuration====
-    characteristic_5 = pServiceGeneralConfig->createCharacteristic(
-        CHARACTERISTIC_UUID_5,
+    generalCharacteristic_version = pServiceGeneralConfig->createCharacteristic(
+        GENERAL_UUID_VERSION,
+        BLECharacteristic::PROPERTY_READ);
+
+    generalCharacteristic_name = pServiceGeneralConfig->createCharacteristic(
+        GENERAL_UUID_NAME,
         BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_WRITE);
+
+    generalCharacteristic_status= pServiceGeneralConfig->createCharacteristic(
+        GENERAL_UUID_STATUS,
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_NOTIFY);
+    generalCharacteristic_status->addDescriptor(new BLE2902());
+
+    generalCharacteristic_pause = pServiceGeneralConfig->createCharacteristic(
+        GENERAL_UUID_PAUSE,
+            BLECharacteristic::PROPERTY_WRITE);
+
+    generalCharacteristic_play = pServiceGeneralConfig->createCharacteristic(
+        GENERAL_UUID_PLAY,
+            BLECharacteristic::PROPERTY_WRITE);
+
+    generalCharacteristic_sleep = pServiceGeneralConfig->createCharacteristic(
+        GENERAL_UUID_SLEEP,
+            BLECharacteristic::PROPERTY_WRITE);
+
+    generalCharacteristic_speed = pServiceGeneralConfig->createCharacteristic(
+        GENERAL_UUID_SPEED,
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_WRITE);
+
+    generalCharacteristic_restart = pServiceGeneralConfig->createCharacteristic(
+        GENERAL_UUID_RESTART,
+            BLECharacteristic::PROPERTY_WRITE);
+
+    generalCharacteristic_factoryReset = pServiceGeneralConfig->createCharacteristic(
+        GENERAL_UUID_FACTORYRESET,
+            BLECharacteristic::PROPERTY_WRITE);
+
+    generalCharacteristic_errorMsg = pServiceGeneralConfig->createCharacteristic(
+        GENERAL_UUID_ERRORMSG,
             BLECharacteristic::PROPERTY_WRITE |
             BLECharacteristic::PROPERTY_NOTIFY);
+    generalCharacteristic_errorMsg->addDescriptor(new BLE2902());
+
+    generalCharacteristic_name->setCallbacks(new generalCallbacks_name());
+    generalCharacteristic_pause->setCallbacks(new generalCallbacks_pause());
+    generalCharacteristic_play->setCallbacks(new generalCallbacks_play());
+    generalCharacteristic_sleep->setCallbacks(new generalCallbacks_Sleep());
+    generalCharacteristic_speed->setCallbacks(new generalCallbacks_speed());
+    generalCharacteristic_restart->setCallbacks(new generalCallbacks_restart());
+    generalCharacteristic_factoryReset->setCallbacks(new generalCallbacks_factoryReset());
 
     //====Characteristics for File configuration====
     fileCharacteristic_receiveFlag = pServiceFile->createCharacteristic(
@@ -720,15 +876,28 @@ int Bluetooth::init(String name){
         FILE_UUID_DELETE,
             BLECharacteristic::PROPERTY_WRITE);
 
+    fileCharacteristic_sendFlag = pServiceFile->createCharacteristic(
+        FILE_UUID_SENDFLAG,
+            BLECharacteristic::PROPERTY_WRITE);
+
+    fileCharacteristic_send = pServiceFile->createCharacteristic(
+        FILE_UUID_SEND,
+            BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_NOTIFY);
+    fileCharacteristic_send->addDescriptor(new BLE2902());
+
     fileCharacteristic_errorMsg = pServiceFile->createCharacteristic(
         FILE_UUID_ERRORMSG,
             BLECharacteristic::PROPERTY_READ |
             BLECharacteristic::PROPERTY_NOTIFY);
     fileCharacteristic_errorMsg->addDescriptor(new BLE2902());
+
     fileCharacteristic_receiveFlag->setCallbacks(new FilesCallbacks_receiveFlag());
     fileCharacteristic_receive->setCallbacks(new FilesCallbacks_receive());
     fileCharacteristic_exists->setCallbacks(new FilesCallbacks_checkFile());
     fileCharacteristic_delete->setCallbacks(new FilesCallbacks_deleteFile());
+    fileCharacteristic_send->setCallbacks(new FilesCallbacks_send());
+    fileCharacteristic_sendFlag->setCallbacks(new FilesCallbacks_sendFlag());
 
     //ledCharacteristic_speed->addDescriptor(new BLE2902());
     
@@ -1103,4 +1272,17 @@ void Bluetooth::setLedDirection(int ledDirection){
 }
 void Bluetooth::setIndexPalette(int indexPalette){
     ledCharacteristic_indexPalette->setValue(String(indexPalette).c_str());
+}
+
+void Bluetooth::setVersion(String version){
+    generalCharacteristic_version->setValue(version.c_str());
+}
+void Bluetooth::setName(String name){
+    generalCharacteristic_name->setValue(name.c_str());
+}
+void Bluetooth::setStatus(int status){
+    generalCharacteristic_status->setValue(String(status).c_str());
+}
+void Bluetooth::setSpeed(int speed){
+    generalCharacteristic_speed->setValue(String(speed).c_str());
 }

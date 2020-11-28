@@ -30,19 +30,6 @@
 1a9a8ac4-2305-11eb-adc1-0242ac120002
 1a9a8b8c-2305-11eb-adc1-0242ac120002*/
 
-//Path config characteristics
-/*#define PATH_UUID_NAME          "ff9f243a-2851-11eb-adc1-0242ac120002"
-#define PATH_UUID_POSITION      "ff9f27b4-2851-11eb-adc1-0242ac120002"
-#define PATH_UUID_PERCENTAGE    "ff9f2a48-2851-11eb-adc1-0242ac120002"
-#define PATH_UUID_ERRORMSG      "ff9f2c50-2851-11eb-adc1-0242ac120002"
-/*ff9f2c50-2851-11eb-adc1-0242ac120002
-ff9f2d36-2851-11eb-adc1-0242ac120002
-ff9f2e08-2851-11eb-adc1-0242ac120002
-ff9f2ed0-2851-11eb-adc1-0242ac120002
-ff9f2f98-2851-11eb-adc1-0242ac120002
-ff9f3182-2851-11eb-adc1-0242ac120002
-ff9f3254-2851-11eb-adc1-0242ac120002*/
-
 //====File config====
 #define FILE_UUID_RECEIVEFLAG   "fcbff68e-2af1-11eb-adc1-0242ac120002" 
 #define FILE_UUID_RECEIVE       "fcbffa44-2af1-11eb-adc1-0242ac120002"
@@ -57,28 +44,12 @@ fcc0020a-2af1-11eb-adc1-0242ac120002
 fcc002c8-2af1-11eb-adc1-0242ac120002
 */
 
-#define CHARACTERISTIC_UUID_1 "903cfcc2-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_2 "903cfede-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_3 "903cffe2-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_4 "903d00be-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_5 "903d0190-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_6 "903d024e-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_7 "903d0316-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_8 "903d0596-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_9 "903d065e-22eb-11eb-adc1-0242ac120002"
-#define CHARACTERISTIC_UUID_10 "903d071c-22eb-11eb-adc1-0242ac120002"
-
 //====Playlist Config====
 #define PLAYLIST_UUID_NAME              "9b12a048-2c6e-11eb-adc1-0242ac120002"
 #define PLAYLIST_UUID_PATHAMOUNT        "9b12a26e-2c6e-11eb-adc1-0242ac120002"
 #define PLAYLIST_UUID_PATHNAME          "9b12a534-2c6e-11eb-adc1-0242ac120002"
 #define PLAYLIST_UUID_PATHPOSITION      "9b12a62e-2c6e-11eb-adc1-0242ac120002"
-
-//#define PLAYLIST_UUID_READPLAYLISTFLAG  ""
-//#define PLAYLIST_UUID_READPATH          "9b12a6f6-2c6e-11eb-adc1-0242ac120002"
-
 #define PLAYLIST_UUID_ADDPATH           "9b12a7be-2c6e-11eb-adc1-0242ac120002"
-
 #define PLAYLIST_UUID_MODE              "9b12a886-2c6e-11eb-adc1-0242ac120002"
 #define PLAYLIST_UUID_PATHPROGRESS      "9b12a944-2c6e-11eb-adc1-0242ac120002"
 #define PLAYLIST_UUID_ERRORMSG          "9b12aa02-2c6e-11eb-adc1-0242ac120002"
@@ -88,6 +59,24 @@ fcc002c8-2af1-11eb-adc1-0242ac120002
 9b12adb8-2c6e-11eb-adc1-0242ac120002
 */
 
+//====General Config====
+#define GENERAL_UUID_VERSION        "7b204278-30c3-11eb-adc1-0242ac120002"
+#define GENERAL_UUID_NAME           "7b204548-30c3-11eb-adc1-0242ac120002"
+#define GENERAL_UUID_STATUS         "7b204660-30c3-11eb-adc1-0242ac120002"
+#define GENERAL_UUID_PAUSE          "7b20473c-30c3-11eb-adc1-0242ac120002"
+#define GENERAL_UUID_PLAY           "7b20480e-30c3-11eb-adc1-0242ac120002"
+#define GENERAL_UUID_SLEEP          "7b204a3e-30c3-11eb-adc1-0242ac120002"
+#define GENERAL_UUID_SPEED          "7b204b10-30c3-11eb-adc1-0242ac120002"
+#define GENERAL_UUID_RESTART        "7b204bce-30c3-11eb-adc1-0242ac120002"
+#define GENERAL_UUID_FACTORYRESET   "7b204c8c-30c3-11eb-adc1-0242ac120002"
+#define GENERAL_UUID_ERRORMSG       "7b204d4a-30c3-11eb-adc1-0242ac120002"
+/*
+7b204f84-30c3-11eb-adc1-0242ac120002
+7b205056-30c3-11eb-adc1-0242ac120002
+7b205114-30c3-11eb-adc1-0242ac120002
+7b2051d2-30c3-11eb-adc1-0242ac120002
+7b205290-30c3-11eb-adc1-0242ac120002
+*/
 
 /**
  * @class Bluetooth
@@ -113,5 +102,10 @@ class Bluetooth {
         void setCycleMode(int);
         void setLedDirection(int);
         void setIndexPalette(int);
+
+        void setVersion(String);
+        void setName(String);
+        void setStatus(int);
+        void setSpeed(int);
 
 };

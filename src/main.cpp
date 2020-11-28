@@ -320,7 +320,7 @@ void setup()
     //====Restore cycleMode====
     bool cycleMode = romGetIncrementIndexPallete();
 
-    BluetoothSand.init("Sandsara BLE");
+    BluetoothSand.init(bluetoothNameGlobal);
     BluetoothSand.setPlaylistName(playListGlobal);
     BluetoothSand.setPathAmount(0);
     BluetoothSand.setPathName("");
@@ -339,6 +339,11 @@ void setup()
         BluetoothSand.setLedDirection(0);
     }
     BluetoothSand.setIndexPalette(ledModeGlobal);
+
+    BluetoothSand.setVersion(String(v1Current) + "." + String(v2Current) + "." + String(v3Current));
+    BluetoothSand.setName(bluetoothNameGlobal);
+    BluetoothSand.setStatus(1);
+    BluetoothSand.setSpeed(speedMotorGlobal);
 
     //====new task for leds====
     xTaskCreatePinnedToCore(
@@ -382,6 +387,7 @@ void setup()
     
     
     goEdgeSpiral(false);
+    Serial.println("termino espiral");
     delay(1000);
     firstExecution = true;
     
