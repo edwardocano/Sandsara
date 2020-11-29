@@ -4,12 +4,12 @@
 #include "config.h"
 
 
-#define SERVICE_UUID1 "fd31a2be-22e7-11eb-adc1-0242ac120002"
-#define SERVICE_UUID2 "fd31a58e-22e7-11eb-adc1-0242ac120002"
+#define SERVICE_UUID1 "fd31a2be-22e7-11eb-adc1-0242ac120002" //for led config
+#define SERVICE_UUID2 "fd31a58e-22e7-11eb-adc1-0242ac120002" //for 
 #define SERVICE_UUID3 "fd31a688-22e7-11eb-adc1-0242ac120002"
-#define SERVICE_UUID4 "fd31a778-22e7-11eb-adc1-0242ac120002"
-#define SERVICE_UUID5 "fd31a840-22e7-11eb-adc1-0242ac120002"
-#define SERVICE_UUID6 "fd31abc4-22e7-11eb-adc1-0242ac120002"
+#define SERVICE_UUID4 "fd31a778-22e7-11eb-adc1-0242ac120002" //for playlist config
+#define SERVICE_UUID5 "fd31a840-22e7-11eb-adc1-0242ac120002" //for general config
+#define SERVICE_UUID6 "fd31abc4-22e7-11eb-adc1-0242ac120002" //for file config
 
 
 //====Led configuration Characteristics====

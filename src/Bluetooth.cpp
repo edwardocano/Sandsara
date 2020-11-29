@@ -279,7 +279,7 @@ class genericCallbacks : public BLECharacteristicCallbacks
     } //onWrite
 };
 
-//===============================callbacks for playlist config==============================================
+//====================callbacks for playlist config==============================================
 //==========================================================================================================
 class playlistCallbacks_name : public BLECharacteristicCallbacks
 {
@@ -289,12 +289,14 @@ class playlistCallbacks_name : public BLECharacteristicCallbacks
         String value = rxValue.c_str();
         String playList = value + ".playlist";
         if (!sdExists(playList)){
-            playlistCharacteristic_errorMsg->setValue("error=-1");
+            playlistCharacteristic_errorMsg->setValue("error= -1");
             playlistCharacteristic_errorMsg->notify();
             return;
         }
         playListGlobal = "/" + playList;
         romSetPlaylist(playListGlobal);
+        orderModeGlobal = 1;
+        romSetOrderMode(orderModeGlobal);
         rewindPlaylist = true;
         playlistCharacteristic_errorMsg->setValue("ok");
         playlistCharacteristic_errorMsg->notify();
@@ -379,7 +381,8 @@ class playlistCallbacks_mode : public BLECharacteristicCallbacks
         std::string rxValue = characteristic->getValue();
         String value = rxValue.c_str();
         int mode = value.toInt();
-        if(mode < 1 || mode > 4){
+        if(mode < MIN_REPRODUCTION_MODE || mode > MAX_REPRODUCTION_MODE){
+            characteristic->setValue(String(orderModeGlobal).c_str());
             playlistCharacteristic_errorMsg->setValue("error= -5");
             playlistCharacteristic_errorMsg->notify();
             return;
@@ -408,13 +411,13 @@ class FilesCallbacks_receiveFlag : public BLECharacteristicCallbacks
             }
             readingSDFile = true;
             if (sdExists(name)){
-                fileCharacteristic_errorMsg->setValue("error=-1"); //archivo ya existe
+                fileCharacteristic_errorMsg->setValue("error= -1"); //archivo ya existe
                 fileCharacteristic_errorMsg->notify();
             }
             fileReceive = SD.open(name, FILE_WRITE);
             if (!fileReceive)
             {
-                fileCharacteristic_errorMsg->setValue("error=-2"); //file cannot be opened
+                fileCharacteristic_errorMsg->setValue("error= -2"); //file cannot be opened
                 fileCharacteristic_errorMsg->notify();
                 Serial.println("error= -2"); //file cannot be opened
             }
@@ -498,14 +501,14 @@ class FilesCallbacks_sendFlag : public BLECharacteristicCallbacks
             readingSDFile = true;
             if (!sdExists(name)){
                 Serial.println("no existe el archivo");
-                fileCharacteristic_errorMsg->setValue("error=-1"); //archivo no existe
+                fileCharacteristic_errorMsg->setValue("error= -1"); //archivo no existe
                 fileCharacteristic_errorMsg->notify();
                 return;
             }
             fileSend = SD.open(name, FILE_READ);
             if (!fileSend)
             {
-                fileCharacteristic_errorMsg->setValue("error=-2"); //file cannot be opened
+                fileCharacteristic_errorMsg->setValue("error= -2"); //file cannot be opened
                 fileCharacteristic_errorMsg->notify();
                 Serial.println("error al abrir el archivo"); //file cannot be opened
                 return;
@@ -604,7 +607,7 @@ class generalCallbacks_name : public BLECharacteristicCallbacks
         std::string rxData = characteristic->getValue();
         String bluetoothName = rxData.c_str();
         if (bluetoothName.length() > MAX_CHARACTERS_BTNAME){
-            generalCharacteristic_errorMsg->setValue("error= -1");
+            generalCharacteristic_errorMsg->setValue("error=  -1");
             generalCharacteristic_errorMsg->notify();
         }
         bluetoothNameGlobal = bluetoothName;
@@ -619,6 +622,8 @@ class generalCallbacks_pause : public BLECharacteristicCallbacks
     void onWrite(BLECharacteristic *characteristic)
     {
         pauseModeGlobal = true;
+        generalCharacteristic_errorMsg->setValue("ok");
+        generalCharacteristic_errorMsg->notify();
     }
 };
 
@@ -628,6 +633,8 @@ class generalCallbacks_play : public BLECharacteristicCallbacks
     {
         pauseModeGlobal = false;
         suspensionModeGlobal = false;
+        generalCharacteristic_errorMsg->setValue("ok");
+        generalCharacteristic_errorMsg->notify();
     }
 };
 
@@ -637,6 +644,8 @@ class generalCallbacks_Sleep : public BLECharacteristicCallbacks
     {
         suspensionModeGlobal = true;
         pauseModeGlobal = false;
+        generalCharacteristic_errorMsg->setValue("ok");
+        generalCharacteristic_errorMsg->notify();
     }
 };
 
@@ -647,9 +656,16 @@ class generalCallbacks_speed : public BLECharacteristicCallbacks
         std::string rxData = characteristic->getValue();
         String value = rxData.c_str();
         int speed = value.toInt();
+        if (speed > MAX_SPEED_MOTOR || speed < MIN_SPEED_MOTOR){
+            generalCharacteristic_errorMsg->setValue("error= -2");
+            generalCharacteristic_errorMsg->notify();
+            return;
+        }
         Sandsara.setSpeed(speed);
         romSetSpeedMotor(speed);
         speedChangedMain = true;
+        generalCharacteristic_errorMsg->setValue("ok");
+        generalCharacteristic_errorMsg->notify();
     }
 };
 
@@ -783,7 +799,6 @@ int Bluetooth::init(String name){
 
     playlistCharacteristic_mode = pServicePlaylist->createCharacteristic(
         PLAYLIST_UUID_MODE,
-        BLECharacteristic::PROPERTY_READ |
             BLECharacteristic::PROPERTY_WRITE);
 
     playlistCharacteristic_progress = pServicePlaylist->createCharacteristic(
@@ -845,7 +860,7 @@ int Bluetooth::init(String name){
 
     generalCharacteristic_errorMsg = pServiceGeneralConfig->createCharacteristic(
         GENERAL_UUID_ERRORMSG,
-            BLECharacteristic::PROPERTY_WRITE |
+            BLECharacteristic::PROPERTY_READ |
             BLECharacteristic::PROPERTY_NOTIFY);
     generalCharacteristic_errorMsg->addDescriptor(new BLE2902());
 
@@ -1242,6 +1257,13 @@ int stringToArray(String str, uint8_t* array, int n){
 }
 
 void Bluetooth::setPlaylistName(String playlistName){
+    if (playlistName.charAt(0) == '/'){
+        playlistName.remove(0,1);
+    }
+    int index = playlistName.lastIndexOf('.');
+    if (index > 0){
+        playlistName.remove(index);
+    }
     playlistCharacteristic_name->setValue(playlistName.c_str());
 }
 void Bluetooth::setPathAmount(int pathAmount){

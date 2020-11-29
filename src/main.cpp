@@ -492,6 +492,7 @@ int run_sandsara(String playList, int orderMode)
     if (numberOfFiles == 0){
         return -4;
     }
+    BluetoothSand.setPlaylistName(playList);
     BluetoothSand.setPathAmount(numberOfFiles);
     changePalette(romGetPallete());
     //====restore playlist====
