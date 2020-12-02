@@ -53,6 +53,7 @@ class SdFiles {
         uint8_t* dataBufferBin;
         String currentRow = "";
         String dataBuffer = "";
+        int fileSize;
     public:
         SdFiles(String , int = 1);
         ~SdFiles();

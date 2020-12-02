@@ -28,6 +28,7 @@ SdFiles::SdFiles(String nameF, int directionMode)
     }
     readingSDFile = true;
     file = SD.open(fileName);
+    fileSize = file.size();
     if (directionMode == 1)
     {
         pFile = 0;
@@ -100,6 +101,18 @@ int SdFiles::getNextComponents(double *component1, double *component2)
         {
             statusFile = resp;
             return resp;
+        }
+        if (directionMode == 1){
+            if (fileSize != 0){
+                int percentage = (pFile*100)/fileSize;
+                Bluetooth::setPercentage(percentage);
+            }
+        }
+        else{
+            if (fileSize != 0){ 
+                int percentage = ((fileSize - pFile)*100)/fileSize;
+                Bluetooth::setPercentage(percentage);
+            }
         }
         currentRow = nextRow();
     }

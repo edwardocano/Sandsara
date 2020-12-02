@@ -171,6 +171,7 @@
 #define MAX_STEPS_PER_INSTRUCTION 100.0
 #define SAMPLES 50
 #define CHUNKSIZE 512
+#define MAX_LED_SUM 538
 
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0
@@ -232,3 +233,12 @@
  * MAX_COLORSPERPALLETE representa el numero maximo de colores que hay por paleta
  */
 #define MAX_COLORSPERPALLETE 16
+
+/**
+ * 
+ */
+#define MODE_CALIBRATION    1
+#define MODE_PLAY           2
+#define MODE_PAUSE          3
+#define MODE_SLEEP          4
+#define MODE_BUSY           5

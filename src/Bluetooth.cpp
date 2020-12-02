@@ -74,9 +74,6 @@ int programming(String );
 void rebootWithMessage(String );
 int stringToArray(String , uint8_t* , int );
 
-
-
-
 //====BLE Characteristics======
 //=============================
 
@@ -622,6 +619,7 @@ class generalCallbacks_pause : public BLECharacteristicCallbacks
     void onWrite(BLECharacteristic *characteristic)
     {
         pauseModeGlobal = true;
+        Bluetooth::setStatus(MODE_PAUSE);
         generalCharacteristic_errorMsg->setValue("ok");
         generalCharacteristic_errorMsg->notify();
     }
@@ -633,6 +631,7 @@ class generalCallbacks_play : public BLECharacteristicCallbacks
     {
         pauseModeGlobal = false;
         suspensionModeGlobal = false;
+        Bluetooth::setStatus(MODE_PLAY);
         generalCharacteristic_errorMsg->setValue("ok");
         generalCharacteristic_errorMsg->notify();
     }
@@ -644,6 +643,7 @@ class generalCallbacks_Sleep : public BLECharacteristicCallbacks
     {
         suspensionModeGlobal = true;
         pauseModeGlobal = false;
+        Bluetooth::setStatus(MODE_SLEEP);
         generalCharacteristic_errorMsg->setValue("ok");
         generalCharacteristic_errorMsg->notify();
     }
@@ -803,8 +803,10 @@ int Bluetooth::init(String name){
 
     playlistCharacteristic_progress = pServicePlaylist->createCharacteristic(
         PLAYLIST_UUID_PATHPROGRESS,
-        BLECharacteristic::PROPERTY_READ);
-
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_NOTIFY);
+    playlistCharacteristic_progress->addDescriptor(new BLE2902());
+    
     playlistCharacteristic_errorMsg = pServicePlaylist->createCharacteristic(
         PLAYLIST_UUID_ERRORMSG,
         BLECharacteristic::PROPERTY_READ |
@@ -1307,4 +1309,14 @@ void Bluetooth::setStatus(int status){
 }
 void Bluetooth::setSpeed(int speed){
     generalCharacteristic_speed->setValue(String(speed).c_str());
+}
+void Bluetooth::setPercentage(int percentage){
+    if (percentage < 0 ){
+        percentage = 0;
+    }
+    if (percentage > 100){
+        percentage = 100;
+    }
+    playlistCharacteristic_progress->setValue(String(percentage).c_str());
+    playlistCharacteristic_progress->notify();
 }

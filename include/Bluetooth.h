@@ -91,21 +91,21 @@ class Bluetooth {
         Bluetooth(); 
         int init(String = "Sandsara");
 
-        void setPlaylistName(String );
-        void setPathAmount(int);
-        void setPathName(String);
-        void setPathPosition(int);
-        void setPlayMode(int);
-        void setPathProgress(int);
+        static void setPlaylistName(String );
+        static void setPathAmount(int);
+        static void setPathName(String);
+        static void setPathPosition(int);
+        static void setPlayMode(int);
+        static void setPathProgress(int);
 
-        void setLedSpeed(int);
-        void setCycleMode(int);
-        void setLedDirection(int);
-        void setIndexPalette(int);
+        static void setLedSpeed(int);
+        static void setCycleMode(int);
+        static void setLedDirection(int);
+        static void setIndexPalette(int);
 
-        void setVersion(String);
-        void setName(String);
-        void setStatus(int);
-        void setSpeed(int);
-
+        static void setVersion(String);
+        static void setName(String);
+        static void setStatus(int);
+        static void setSpeed(int);
+        static void setPercentage(int);
 };

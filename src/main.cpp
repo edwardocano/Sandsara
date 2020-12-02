@@ -446,6 +446,7 @@ void loop()
  */
 int run_sandsara(String playList, int orderMode)
 {
+    BluetoothSand.setStatus(MODE_BUSY);
     if (firstExecution){
         pListFileGlobal = romGetPositionList();
     }
@@ -500,6 +501,7 @@ int run_sandsara(String playList, int orderMode)
     //====
     while (true)
     {
+        BluetoothSand.setStatus(MODE_PLAY);
         //====Save the current position in playlist====
         romSetPositionList(pListFileGlobal);
         //====
@@ -1563,6 +1565,13 @@ void ledsFunc( void * pvParameters ){
             leds[i].red = gamma8[leds[i].red];
             leds[i].green = gamma8[leds[i].green];
             leds[i].blue = gamma8[leds[i].blue];
+            int sum = leds[i].red + leds[i].green + leds[i].blue;
+            if (sum > MAX_LED_SUM){
+                double factor = double(MAX_LED_SUM)/double(sum);
+                leds[i].red *= factor;
+                leds[i].green *= factor;
+                leds[i].blue *= factor;
+            }
         }      
         FastLED.show();
         if (ledsDirection){
