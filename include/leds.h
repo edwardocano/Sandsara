@@ -23,7 +23,11 @@ DEFINE_GRADIENT_PALETTE( breathYellow ) {
 DEFINE_GRADIENT_PALETTE( breathOrange ) {
         0,     0,   0,  0,   //black
         128,   255, 60,  0,   //orange
-        255,   0,   0,  0};                    
+        255,   0,   0,  0};          
+
+DEFINE_GRADIENT_PALETTE( solidWhite ) {
+        0,     255,   255,  255,   //white
+        255,   255,   255,  255};          
 //====
 //====Paleta dinamica====
 byte bytes[12];

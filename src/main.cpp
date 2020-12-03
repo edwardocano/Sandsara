@@ -214,7 +214,7 @@ void setup()
     //====Palletes initialization====
     NO_SD_PALLETE= breathRed;
     UPTADATING_PALLETE = breathYellow;
-    CALIBRATING_PALLETE = breathBlue;
+    CALIBRATING_PALLETE = solidWhite;
     SDEMPTY_PALLETE = breathOrange;
     rgb2Interpolation(pallette1, palletteColors1);
     rgb2Interpolation(pallette2, palletteColors2);
@@ -235,7 +235,8 @@ void setup()
     //====EEPROM Initialization====
     EEPROM.begin(EEPROM_SIZE);
     delay(500);
-    
+    //====Restoring bluetooth name====
+    bluetoothNameGlobal = romGetBluetoothName();
     //====Configure the halo and bluetooth====
     BluetoothSand.init(bluetoothNameGlobal);
     Sandsara.init();
@@ -258,7 +259,7 @@ void setup()
         ledModeGlobal = PALLETE_DEFAULT;
         romSetPallete(PALLETE_DEFAULT);
     }
-    changePalette(ledModeGlobal);
+    changePalette(CODE_CALIBRATING_PALLETE);
     //====new task for leds====
     xTaskCreatePinnedToCore(
                     ledsFunc,
@@ -287,7 +288,8 @@ void setup()
     digitalWrite(EN_PIN, LOW);
     digitalWrite(EN_PIN2, LOW);
 
-    BluetoothSand.setStatus(MODE_BUSY); //set status 
+    BluetoothSand.setStatus(MODE_BUSY); //set status
+    changePalette(CODE_NOSD_PALLETE); 
 	while(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
     {
         changePalette(CODE_NOSD_PALLETE);
@@ -317,8 +319,7 @@ void setup()
         romSetPeriodLed(PERIOD_LED_DEFAULT);
     }
     
-    //====Restoring bluetooth name====
-    bluetoothNameGlobal = romGetBluetoothName();
+    
     //====Restore playlist name and orderMode====
     playListGlobal = romGetPlaylist();
     orderModeGlobal = romGetOrderMode();

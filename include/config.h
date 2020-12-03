@@ -172,7 +172,7 @@
 #define SAMPLES 50
 #define CHUNKSIZE 512
 #define MAX_LED_SUM 538
-#define TIME_WAITFORSD 3000
+#define TIME_WAITFORSD 1000
 
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0
