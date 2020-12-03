@@ -168,22 +168,49 @@ void setup()
     //====Serial configuration====
     Serial.begin(115200);
     //====
+    //====Testing====
+	int dat_pin;
+	dat_pin = analogRead(PIN_ProducType);
+	if(dat_pin > 682 && dat_pin < 2047)
+	{
+		haloTest.Test();	
+	}
+    if(dat_pin > 2047 && dat_pin < 3413)
+	{
+		for(int x = 0; x < 512; x++)
+        {
+            EEPROM.write(x,-1);
+            EEPROM.commit();
+            delay(20);
+        }	
+	}
+    
     //====SD initialization====
-    while(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
+    long timeSdCard = millis();
+    bool sdDetected = SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD);
+    while(!sdDetected)
     {
         //changePalette(CODE_NOSD_PALLETE);
         #ifdef DEBUGGING_DATA
             Serial.println("Card failed, or not present");
         #endif
-        delay(200); 
+        if (millis() - timeSdCard > TIME_WAITFORSD){
+            #ifdef DEBUGGING_DATA
+                Serial.println("TIME_WAITFORSD is exceeded");
+            #endif
+            break;
+        }
+        delay(200);
+        sdDetected = SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD);
     }
     //====
-    #ifdef DEBUGGING_DATA
-        Serial.println("Card present");
-    #endif
-    //====
-    //changePalette(ledModeGlobal);
-    findUpdate();
+    if(sdDetected){
+        #ifdef DEBUGGING_DATA
+            Serial.println("Card present");
+        #endif
+        findUpdate();
+    }
+    
     //====Palletes initialization====
     NO_SD_PALLETE= breathRed;
     UPTADATING_PALLETE = breathYellow;
@@ -205,44 +232,26 @@ void setup()
     rgb2Interpolation(pallette14, palletteColors14);
     rgb2Interpolation(pallette15, palletteColors15);
 
-    //====
     //====EEPROM Initialization====
     EEPROM.begin(EEPROM_SIZE);
     delay(500);
-	//====Testing====
-	int dat_pin;
-	dat_pin = analogRead(PIN_ProducType);
-	if(dat_pin > 682 && dat_pin < 2047)
-	{
-		haloTest.Test();	
-	}
-    if(dat_pin > 2047 && dat_pin < 3413)
-	{
-		for(int x = 0; x < 512; x++)
-        {
-            EEPROM.write(x,-1);
-            EEPROM.commit();
-            delay(20);
-        }	
-	}
-    //====restore the value intermediateCalibration====
-    intermediateCalibration = romGetIntermediateCalibration();
-    //====
-    //====Restore speedMotor====
-    speedMotorGlobal = romGetSpeedMotor();
-    if (speedMotorGlobal > MAX_SPEED_MOTOR || speedMotorGlobal < MIN_SPEED_MOTOR){
-        speedMotorGlobal = SPEED_MOTOR_DEFAULT;
-        romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
+    
+    //====Configure the halo and bluetooth====
+    BluetoothSand.init(bluetoothNameGlobal);
+    Sandsara.init();
+    BluetoothSand.setVersion(String(v1Current) + "." + String(v2Current) + "." + String(v3Current));
+    BluetoothSand.setName(bluetoothNameGlobal);
+    BluetoothSand.setStatus(MODE_CALIBRATION);
+    //====Select type of product====
+    if (analogRead(PIN_ProducType) < 1000){
+        productType = false;
+        NUM_LEDS = LEDS_OF_HALO;
     }
-    Sandsara.setSpeed(speedMotorGlobal);
-    //====
-    //====Restoring of refreshing time of leds====
-    periodLedsGlobal = romGetPeriodLed();
-    if (periodLedsGlobal > MAX_PERIOD_LED || periodLedsGlobal < MIN_PERIOD_LED){
-        periodLedsGlobal = PERIOD_LED_DEFAULT;
-        romSetPeriodLed(PERIOD_LED_DEFAULT);
+    else{
+        productType = true;
+        NUM_LEDS = LEDS_OF_STELLE;
     }
-    //====
+    delay(1000);
     //====Restoring of the latest pallete choosed====
     ledModeGlobal = romGetPallete();
     if (ledModeGlobal > MAX_PALLETE || ledModeGlobal < MIN_PALLETE){
@@ -250,11 +259,66 @@ void setup()
         romSetPallete(PALLETE_DEFAULT);
     }
     changePalette(ledModeGlobal);
-    //====
+    //====new task for leds====
+    xTaskCreatePinnedToCore(
+                    ledsFunc,
+                    "Task1",
+                    5000,
+                    NULL,
+                    5,
+                    &Task1,
+                    1);
+    delay(500); 
+    
+    //====Cablibrating====
+    haloCalib.init();
+    #ifdef DEBUGGING_DATA
+        Serial.println("Calibrando...");
+    #endif
+    haloCalib.start();
+    #ifdef DEBUGGING_DATA
+        Serial.println("calibrado");
+    #endif
+    //====After calibration current has to be set up====
+    driver.rms_current(NORMAL_CURRENT);
+    driver2.rms_current(NORMAL_CURRENT);
+    pinMode(EN_PIN, OUTPUT);
+    pinMode(EN_PIN2, OUTPUT);
+    digitalWrite(EN_PIN, LOW);
+    digitalWrite(EN_PIN2, LOW);
+
+    BluetoothSand.setStatus(MODE_BUSY); //set status 
+	while(!SD.begin(SD_CS_PIN, SPI_SPEED_TO_SD))
+    {
+        changePalette(CODE_NOSD_PALLETE);
+        #ifdef DEBUGGING_DATA
+            Serial.println("Card failed, or not present");
+        #endif
+        delay(200); 
+    }
+    changePalette(ledModeGlobal);
+    #ifdef DEBUGGING_DATA
+        Serial.println("Card present");
+    #endif
+
+    //====restore the value intermediateCalibration====
+    intermediateCalibration = romGetIntermediateCalibration();
+    //====Restore speedMotor====
+    speedMotorGlobal = romGetSpeedMotor();
+    if (speedMotorGlobal > MAX_SPEED_MOTOR || speedMotorGlobal < MIN_SPEED_MOTOR){
+        speedMotorGlobal = SPEED_MOTOR_DEFAULT;
+        romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
+    }
+    Sandsara.setSpeed(speedMotorGlobal);
+    //====Restoring of refreshing time of leds====
+    periodLedsGlobal = romGetPeriodLed();
+    if (periodLedsGlobal > MAX_PERIOD_LED || periodLedsGlobal < MIN_PERIOD_LED){
+        periodLedsGlobal = PERIOD_LED_DEFAULT;
+        romSetPeriodLed(PERIOD_LED_DEFAULT);
+    }
     
     //====Restoring bluetooth name====
     bluetoothNameGlobal = romGetBluetoothName();
-    //====
     //====Restore playlist name and orderMode====
     playListGlobal = romGetPlaylist();
     orderModeGlobal = romGetOrderMode();
@@ -287,10 +351,6 @@ void setup()
         Serial.print("orderMode guardado: ");
         Serial.println(orderModeGlobal);
     #endif
-    //====
-    //====Searching for an update====
-    //findUpdate();
-    //====
     #ifdef PROCESSING_SIMULATOR
         Serial.println("inicia");
     #endif
@@ -299,28 +359,13 @@ void setup()
         playListGlobal = "/playlist.playlist";
         orderModeGlobal = 1;
     }
-    //=====
-    //====Configure the halo and bluetooth====
-    Sandsara.init();
-    //====
-    //====Select type of product====
-    if (analogRead(PIN_ProducType) < 1000){
-        productType = false;
-        NUM_LEDS = LEDS_OF_HALO;
-    }
-    else{
-        productType = true;
-        NUM_LEDS = LEDS_OF_STELLE;
-    }
-    //====
     
-    delay(1000);
     //====Restore leds direction====
     ledsDirection = romGetLedsDirection();
     //====Restore cycleMode====
     bool cycleMode = romGetIncrementIndexPallete();
-
-    BluetoothSand.init(bluetoothNameGlobal);
+    //====bluetooth configuration====
+    
     BluetoothSand.setPlaylistName(playListGlobal);
     BluetoothSand.setPathAmount(0);
     BluetoothSand.setPathName("");
@@ -340,23 +385,8 @@ void setup()
     }
     BluetoothSand.setIndexPalette(ledModeGlobal);
 
-    BluetoothSand.setVersion(String(v1Current) + "." + String(v2Current) + "." + String(v3Current));
-    BluetoothSand.setName(bluetoothNameGlobal);
-    BluetoothSand.setStatus(1);
     BluetoothSand.setSpeed(speedMotorGlobal);
 
-    //====new task for leds====
-    xTaskCreatePinnedToCore(
-                    ledsFunc,
-                    "Task1",
-                    5000,
-                    NULL,
-                    5,
-                    &Task1,
-                    1);
-    delay(500); 
-    //====
-    
     xTaskCreatePinnedToCore(
                     moveSteps,   
                     "motorsTasks",     
@@ -366,31 +396,11 @@ void setup()
                     &motorsTask,
                     0);
     delay(500); 
-    //====
-    //====Cablibrating====
-    
-    haloCalib.init();
-    #ifdef DEBUGGING_DATA
-        Serial.println("Calibrando...");
-    #endif
-    haloCalib.start();
-    #ifdef DEBUGGING_DATA
-        Serial.println("calibrado");
-    #endif
-    //====After calibration current has to be set up====
-    driver.rms_current(NORMAL_CURRENT);
-    driver2.rms_current(NORMAL_CURRENT);
-    pinMode(EN_PIN, OUTPUT);
-    pinMode(EN_PIN2, OUTPUT);
-    digitalWrite(EN_PIN, LOW);
-    digitalWrite(EN_PIN2, LOW);
-    
     
     goEdgeSpiral(false);
     Serial.println("termino espiral");
     delay(1000);
     firstExecution = true;
-    
 }
 
 void loop()

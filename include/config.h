@@ -159,7 +159,7 @@
 #define MAX_NUMBERLEDS          100
 #define LEDS_OF_HALO            60
 #define LEDS_OF_STELLE          72
-#define MAX_STEPS_PER_SECOND    190
+#define MAX_STEPS_PER_SECOND    150
 #define MAX_CHARACTER_PER_LINE  1000
 #define OUTOFTIME_BLUETOOTH     20000
 #define OUTOFTIME_BLUETOOTH_LINE 1000
@@ -172,6 +172,7 @@
 #define SAMPLES 50
 #define CHUNKSIZE 512
 #define MAX_LED_SUM 538
+#define TIME_WAITFORSD 3000
 
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0
