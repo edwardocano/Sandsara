@@ -171,6 +171,9 @@ void setup()
     delay(1000); // power-up safety delay
     //====Serial configuration====
     Serial.begin(115200);
+    //====EEPROM Initialization====
+    EEPROM.begin(EEPROM_SIZE);
+    delay(500);
     //====Init watchdog====
     esp_task_wdt_init(15,false);
     //====Testing====
@@ -187,7 +190,8 @@ void setup()
             EEPROM.write(x,-1);
             EEPROM.commit();
             delay(20);
-        }	
+        }
+        Serial.println("EEprom");	
 	}
     
     //====SD initialization====
@@ -237,9 +241,7 @@ void setup()
     rgb2Interpolation(pallette14, palletteColors14);
     rgb2Interpolation(pallette15, palletteColors15);
 
-    //====EEPROM Initialization====
-    EEPROM.begin(EEPROM_SIZE);
-    delay(500);
+    
     //====Restoring bluetooth name====
     bluetoothNameGlobal = romGetBluetoothName();
     //====Configure the halo and bluetooth====
