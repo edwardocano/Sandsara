@@ -7,6 +7,8 @@
 #include <FastLED.h>
 #include "Calibration.h"
 #include "Testing.h"
+#include "esp_int_wdt.h"
+#include "esp_task_wdt.h"
 
 #include "SPI.h"
 #include "SdFat.h"
@@ -169,7 +171,8 @@ void setup()
     delay(1000); // power-up safety delay
     //====Serial configuration====
     Serial.begin(115200);
-    //====
+    //====Init watchdog====
+    esp_task_wdt_init(15,false);
     //====Testing====
 	int dat_pin;
 	dat_pin = analogRead(PIN_ProducType);
