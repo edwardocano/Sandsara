@@ -532,7 +532,7 @@ int run_sandsara(String playList, int orderMode)
             delay(1000);
             return errorCode;
         }
-        errorCode = SdFiles::getLineNumber(pListFileGlobal + 1, playList, nextProgramGlobal);
+        SdFiles::getLineNumber(pListFileGlobal + 1, playList, nextProgramGlobal);
         if (errorCode < 0)
         {
             nextProgramGlobal = "none";
