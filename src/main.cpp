@@ -1507,11 +1507,9 @@ int romSetBrightness(uint8_t brightness){
     EEPROM.commit();
     return 0;
 }
-
 /**
- * @brief stored the brightness of the led strip in ROM.
- * @param brightness is the value to be stored.
- * @return an error code.
+ * @brief to get the brightness of the led strip from ROM.
+ * @return the brightness of the led strip.
  */
 int romGetBrightness(){
     int brightness = EEPROM.read(ADDRESSBRIGHTNESS);
