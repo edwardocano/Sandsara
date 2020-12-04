@@ -117,6 +117,8 @@ int     romSetIncrementIndexPallete(bool );
 bool    romGetIncrementIndexPallete();
 int     romSetLedsDirection(bool );
 bool    romGetLedsDirection();
+int     romSetBrightness(uint8_t );
+int     romGetBrightness();
 
 void    findUpdate();
 int     orderRandom(String ,int);
@@ -260,6 +262,7 @@ void setup()
         romSetPallete(PALLETE_DEFAULT);
     }
     changePalette(CODE_CALIBRATING_PALLETE);
+    BluetoothSand.setBrightness(romGetBrightness());
     //====new task for leds====
     xTaskCreatePinnedToCore(
                     ledsFunc,
@@ -1494,7 +1497,26 @@ int romSetLedsDirection(bool direction){
     EEPROM.commit();
     return 0;
 }
+/**
+ * @brief stored the brightness of the led strip in ROM.
+ * @param brightness is the value to be stored.
+ * @return an error code.
+ */
+int romSetBrightness(uint8_t brightness){
+    EEPROM.write(ADDRESSBRIGHTNESS, brightness);
+    EEPROM.commit();
+    return 0;
+}
 
+/**
+ * @brief stored the brightness of the led strip in ROM.
+ * @param brightness is the value to be stored.
+ * @return an error code.
+ */
+int romGetBrightness(){
+    int brightness = EEPROM.read(ADDRESSBRIGHTNESS);
+    return brightness;
+}
 /**
  * @brief restored the direction of leds saved in ROM.
  * @return true or false depending on the stored value.
@@ -1561,7 +1583,7 @@ void changePalette(int pallet)
 void ledsFunc( void * pvParameters ){
     //====Configurar fastled====
     FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
-    FastLED.setBrightness( BRIGHTNESS );
+    FastLED.setBrightness( romGetBrightness() );
     //====
     for(;;){
         if (ledsOffGlobal){

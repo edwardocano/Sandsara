@@ -8,6 +8,7 @@
 #include <BLE2902.h>
 #include "Motors.h"
 #include <EEPROM.h>
+#include <FastLED.h>
 
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
@@ -35,6 +36,8 @@ extern  bool    romSetIncrementIndexPallete(bool );
 extern  int     romGetIncrementIndexPallete();
 extern  bool    romSetLedsDirection(bool );
 extern  bool    romGetLedsDirection();
+extern  int     romSetBrightness(uint8_t );
+extern  int     romGetBrightness();
 extern  bool    incrementIndexGlobal;
 extern  bool    ledsDirection;
 extern  int     ledModeGlobal;
@@ -55,6 +58,7 @@ extern  String  bluetoothNameGlobal;
 extern  bool    suspensionModeGlobal;
 extern  Motors Sandsara;
 extern  bool    speedChangedMain;
+
 
 //====variables====
 extern  String      changedProgram;
@@ -82,6 +86,7 @@ BLECharacteristic *ledCharacteristic_speed;
 BLECharacteristic *ledCharacteristic_update;
 BLECharacteristic *ledCharacteristic_cycleMode;
 BLECharacteristic *ledCharacteristic_direction;
+BLECharacteristic *ledCharacteristic_brightness;
 BLECharacteristic *ledCharacteristic_amountColors;
 BLECharacteristic *ledCharacteristic_positions;
 BLECharacteristic *ledCharacteristic_red;
@@ -187,11 +192,31 @@ class directionCallbacks : public BLECharacteristicCallbacks
     } //onWrite
 };
 
-class selectedPaletteCallbacks : public BLECharacteristicCallbacks
+class setBrightnessCallbacks : public BLECharacteristicCallbacks
 {
     void onWrite(BLECharacteristic *characteristic)
     {
         //retorna ponteiro para o registrador contendo o valor atual da caracteristica
+        std::string rxValue = characteristic->getValue();
+        String value = rxValue.c_str();
+        int brightness = value.toInt();
+        if(brightness < 0 || brightness > 255){
+            characteristic->setValue(String(romGetBrightness()).c_str());
+            ledCharacteristic_errorMsg->setValue("error = -1");
+            ledCharacteristic_errorMsg->notify();
+            return;
+        }
+        FastLED.setBrightness(brightness);
+        romSetBrightness(brightness);
+        ledCharacteristic_errorMsg->setValue("ok");
+        ledCharacteristic_errorMsg->notify();
+    } //onWrite
+};
+
+class selectedPaletteCallbacks : public BLECharacteristicCallbacks
+{
+    void onWrite(BLECharacteristic *characteristic)
+    {
         std::string rxValue = characteristic->getValue();
         String value = rxValue.c_str();
         int valueInt = value.toInt();
@@ -201,7 +226,6 @@ class selectedPaletteCallbacks : public BLECharacteristicCallbacks
             return;
         }
         ledModeGlobal = valueInt;
-        //verifica se existe dados (tamanho maior que zero)
         changePalette(ledModeGlobal);
         romSetPallete(ledModeGlobal);
         ledCharacteristic_errorMsg->setValue("ok");
@@ -727,6 +751,10 @@ int Bluetooth::init(String name){
         CHARACTERISTIC_UUID_DIRECTION,
         BLECharacteristic::PROPERTY_READ |
             BLECharacteristic::PROPERTY_WRITE);
+    ledCharacteristic_brightness = pServiceLedConfig->createCharacteristic(
+        CHARACTERISTIC_UUID_BRIGHTNESS,
+        BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_WRITE);
     ledCharacteristic_amountColors = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_AMOUNTCOLORS,
             BLECharacteristic::PROPERTY_WRITE);
@@ -754,6 +782,7 @@ int Bluetooth::init(String name){
     ledCharacteristic_speed->setCallbacks(new speedLedCallbacks());
     ledCharacteristic_cycleMode->setCallbacks(new cycleModeCallbacks());
     ledCharacteristic_direction->setCallbacks(new directionCallbacks());
+    ledCharacteristic_brightness->setCallbacks(new setBrightnessCallbacks());
     ledCharacteristic_amountColors->setCallbacks(new genericCallbacks());
     ledCharacteristic_positions->setCallbacks(new genericCallbacks);
     ledCharacteristic_red->setCallbacks(new genericCallbacks);
@@ -1296,6 +1325,9 @@ void Bluetooth::setCycleMode(int cycleMode){
 }
 void Bluetooth::setLedDirection(int ledDirection){
     ledCharacteristic_direction->setValue(String(ledDirection).c_str());
+}
+void Bluetooth::setBrightness(int brightness){
+    ledCharacteristic_brightness->setValue(String(brightness).c_str());
 }
 void Bluetooth::setIndexPalette(int indexPalette){
     ledCharacteristic_indexPalette->setValue(String(indexPalette).c_str());

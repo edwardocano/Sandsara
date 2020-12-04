@@ -16,6 +16,7 @@
 #define CHARACTERISTIC_UUID_LEDSPEED        "1a9a7b7e-2305-11eb-adc1-0242ac120002"
 #define CHARACTERISTIC_UUID_CYCLEMODE       "1a9a7dea-2305-11eb-adc1-0242ac120002"
 #define CHARACTERISTIC_UUID_DIRECTION       "1a9a8042-2305-11eb-adc1-0242ac120002"
+#define CHARACTERISTIC_UUID_BRIGHTNESS      "1a9a8948-2305-11eb-adc1-0242ac120002"
 #define CHARACTERISTIC_UUID_SELECTEDPALETTE "1a9a813c-2305-11eb-adc1-0242ac120002"
 #define CHARACTERISTIC_UUID_AMOUNTCOLORS    "1a9a820e-2305-11eb-adc1-0242ac120002"
 #define CHARACTERISTIC_UUID_POSITIONS       "1a9a82d6-2305-11eb-adc1-0242ac120002"
@@ -25,7 +26,6 @@
 #define CHARACTERISTIC_UUID_UPDATECPALETTE  "1a9a87b8-2305-11eb-adc1-0242ac120002"
 #define CHARACTERISTIC_UUID_MSGERRORLEDS    "1a9a8880-2305-11eb-adc1-0242ac120002"
 /*
-1a9a8948-2305-11eb-adc1-0242ac120002
 1a9a8a06-2305-11eb-adc1-0242ac120002
 1a9a8ac4-2305-11eb-adc1-0242ac120002
 1a9a8b8c-2305-11eb-adc1-0242ac120002*/
@@ -101,6 +101,7 @@ class Bluetooth {
         static void setLedSpeed(int);
         static void setCycleMode(int);
         static void setLedDirection(int);
+        static void setBrightness(int);
         static void setIndexPalette(int);
 
         static void setVersion(String);
