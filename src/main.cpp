@@ -534,8 +534,6 @@ int run_sandsara(String playList, int orderMode)
             delay(1000);
             return errorCode;
         }
-        Serial.print("filenae ");
-        Serial.println(fileName);
         SdFiles::getLineNumber(pListFileGlobal + 1, playList, nextProgramGlobal);
         if (errorCode < 0)
         {
@@ -546,11 +544,9 @@ int run_sandsara(String playList, int orderMode)
             delay(1000);
             break;
         }
-        Serial.println("salio de getline  2");
         while (readingSDFile){
             delay(1);
         }
-        Serial.println("salio de while");
         readingSDFile = true;
         File current_file = SD.open("/" + fileName);
         if (!current_file)
@@ -573,9 +569,7 @@ int run_sandsara(String playList, int orderMode)
         current_file.close();
         readingSDFile = false;
         //====run program====
-        Serial.println("iniciara runFIle");
         errorCode = runFile(fileName);
-        Serial.println("termino runFIle");
         //====
         if (errorCode == -70)   {continue;}
         else if (errorCode == -71)   {break;}
