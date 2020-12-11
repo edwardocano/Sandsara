@@ -62,7 +62,6 @@ Calibration::Calibration()
 {
 }
 
-long t_old = 0;
 /**
  * @brief Esta funcion activa y desactiva los pines de salida STEP mediante interrupciones. 
  * @param flag Es la variable para determinar que brazo es el que gira.
@@ -71,25 +70,6 @@ long t_old = 0;
  * 2 representa el giro de ambos brazos de manera simultanea.
  * 3 representa el giro del brazo 3.
  */
-void IRAM_ATTR onTimer()
-{
-
-	if (flag == 0)
-	{
-        //Serial.println(micros() - t_old);
-        t_old = micros();
-		digitalWrite(STEP_PIN, !digitalRead(STEP_PIN));
-	}
-	if (flag == 2)
-	{
-		digitalWrite(STEP_PIN, !digitalRead(STEP_PIN));
-		digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2));
-	}
-	if (flag == 3)
-	{
-		digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2));
-	}
-}
 
 void Calibration::init()
 {
@@ -186,6 +166,24 @@ void Calibration::init()
         driver2.microsteps(MICROSTEPPING);
         delay(100);
     }
+}
+
+void IRAM_ATTR onTimer()
+{
+
+	if (flag == 0)
+	{
+		digitalWrite(STEP_PIN, !digitalRead(STEP_PIN));
+	}
+	if (flag == 2)
+	{
+		digitalWrite(STEP_PIN, !digitalRead(STEP_PIN));
+		digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2));
+	}
+	if (flag == 3)
+	{
+		digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2));
+	}
 }
 
 int Calibration::start()
@@ -286,6 +284,7 @@ int Calibration::start()
 	flag = 0;
 	digitalWrite(EN_PIN, LOW);
 	digitalWrite(DIR_PIN, HIGH);
+	driver.rms_current(800);
 	normal_turn();
 	delay(100);
 	while (true)
@@ -706,7 +705,7 @@ void slow_Calibration_hall1()
     //=====
 	while (read_hall1 < max_hall1)
 	{
-		move(1, 1, 8000);
+		move(1, 1, 1000);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall1 = (analogRead(hall1)) / 4;
@@ -727,7 +726,7 @@ void slow_Calibration_hall1()
 			value_f = meanFilter2.AddValue(analogRead(hall1));
 		}
 		read_hall1 = value_f / 4;
-		move(1, 1, 8000);
+		move(1, 1, 1000);
 
 		ind_2 = 79 - t;
 		value_r[ind_2] = read_hall1;
@@ -753,7 +752,7 @@ void slow_Calibration_hall1()
 
 	while (val_sens < max_hall1)
 	{
-		move(1, 1, 8000);
+		move(1, 1, 1000);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall1 = (analogRead(hall1)) / 4;
@@ -763,7 +762,7 @@ void slow_Calibration_hall1()
 
 	while (k < 80)
 	{
-		move(1, 1, 8000);
+		move(1, 1, 1000);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall1 = (analogRead(hall1)) / 4;
@@ -859,7 +858,7 @@ void slow_Calibration_hall1()
 	read_hall1 = value_f / 4;
 	while (read_hall1 < max_hall1)
 	{
-		move(1, 1, 8000);
+		move(1, 1, 1000);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall1 = (analogRead(hall1)) / 4;
@@ -868,7 +867,7 @@ void slow_Calibration_hall1()
 	}
 	//delay(1000);
 	pas = half1 + 2;
-	move(pas, 1, 8000);
+	move(pas, 1, 1000);
 }
 
 /**
@@ -932,7 +931,7 @@ void slow_Calibration_hall2()
 	read_hall2 = value2_f / 4;
 	while (read_hall2 < max_hall2)
 	{
-		move(1, 2, 8000);
+		move(1, 2, 500);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall2 = (analogRead(hall2)) / 4;
@@ -954,7 +953,7 @@ void slow_Calibration_hall2()
 			value2_f = meanFilter2.AddValue(analogRead(hall2));
 		}
 		read_hall2 = value2_f / 4;
-		move(1, 2, 8000);
+		move(1, 2, 500);
 
 		ind_2 = 299 - t;
 		value2_r[ind_2] = read_hall2;
@@ -980,7 +979,7 @@ void slow_Calibration_hall2()
 
 	while (val_sens < max_hall2)
 	{
-		move(1, 2, 8000);
+		move(1, 2, 500);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall2 = (analogRead(hall2)) / 4;
@@ -991,7 +990,7 @@ void slow_Calibration_hall2()
 
 	while (k < 300)
 	{
-		move(1, 2, 8000);
+		move(1, 2, 500);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall2 = (analogRead(hall2)) / 4;
@@ -1087,7 +1086,7 @@ void slow_Calibration_hall2()
 	read_hall2 = value2_f / 4;
 	while (read_hall2 < max_hall2)
 	{
-		move(1, 2, 8000);
+		move(1, 2, 500);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall2 = (analogRead(hall2)) / 4;
@@ -1096,7 +1095,7 @@ void slow_Calibration_hall2()
 	}
 	//delay(1000);
 	pas = half1;
-	move(pas, 2, 8000);
+	move(pas, 2, 500);
 }
 
 /**
@@ -1154,7 +1153,7 @@ void slow_Calibration_hall1_negative()
 	//======================================================
 	while (read_hall1 > min_hall1)
 	{
-		move(1, 1, 8000);
+		move(1, 1, 1000);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall1 = (analogRead(hall1)) / 4;
@@ -1176,7 +1175,7 @@ void slow_Calibration_hall1_negative()
 			value1_f = meanFilter2.AddValue(analogRead(hall1));
 		}
 		read_hall1 = value1_f / 4;
-		move(1, 1, 8000);
+		move(1, 1, 1000);
 
 		ind_2 = 79 - t;
 		value_r[ind_2] = read_hall1;
@@ -1202,7 +1201,7 @@ void slow_Calibration_hall1_negative()
 
 	while (val_sens > min_hall1)
 	{
-		move(1, 1, 8000);
+		move(1, 1, 1000);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall1 = (analogRead(hall1)) / 4;
@@ -1212,7 +1211,7 @@ void slow_Calibration_hall1_negative()
 
 	while (k < 80)
 	{
-		move(1, 1, 8000);
+		move(1, 1, 1000);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall1 = (analogRead(hall1)) / 4;
@@ -1309,7 +1308,7 @@ void slow_Calibration_hall1_negative()
 	read_hall1 = value1_f / 4;
 	while (read_hall1 > min_hall1)
 	{
-		move(1, 1, 8000);
+		move(1, 1, 1000);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall1 = (analogRead(hall1)) / 4;
@@ -1317,7 +1316,7 @@ void slow_Calibration_hall1_negative()
 		}
 	}
 	pas = half1 + 2;
-	move(pas, 1, 8000);
+	move(pas, 1, 1000);
 }
 
 /**
@@ -1380,7 +1379,7 @@ void slow_Calibration_hall2_negative()
 	read_hall2 = value2_f / 4;
 	while (read_hall2 > min_hall2)
 	{
-		move(1, 2, 8000);
+		move(1, 2, 500);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall2 = (analogRead(hall2)) / 4;
@@ -1402,7 +1401,7 @@ void slow_Calibration_hall2_negative()
 			value2_f = meanFilter2.AddValue(analogRead(hall2));
 		}
 		read_hall2 = value2_f / 4;
-		move(1, 2, 8000);
+		move(1, 2, 500);
 
 		ind_2 = 299 - t;
 		value2_r[ind_2] = read_hall2;
@@ -1428,7 +1427,7 @@ void slow_Calibration_hall2_negative()
 
 	while (val_sens > min_hall2)
 	{
-		move(1, 2, 8000);
+		move(1, 2, 500);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall2 = (analogRead(hall2)) / 4;
@@ -1439,7 +1438,7 @@ void slow_Calibration_hall2_negative()
 
 	while (k < 300)
 	{
-		move(1, 2, 8000);
+		move(1, 2, 500);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall2 = (analogRead(hall2)) / 4;
@@ -1536,7 +1535,7 @@ void slow_Calibration_hall2_negative()
 	read_hall2 = value2_f / 4;
 	while (read_hall2 > min_hall2)
 	{
-		move(1, 2, 8000);
+		move(1, 2, 500);
 		for (int y = 0; y < 40; y++)
 		{
 			read_hall2 = (analogRead(hall2)) / 4;
@@ -1544,7 +1543,7 @@ void slow_Calibration_hall2_negative()
 		}
 	}
 	pas = half1;
-	move(pas, 2, 8000);
+	move(pas, 2, 500);
 }
 
 /**
