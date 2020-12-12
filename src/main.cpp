@@ -368,7 +368,11 @@ void setup()
         playListGlobal = "/playlist.playlist";
         orderModeGlobal = 1;
     }
-    
+    if (sdExists("/SandsaraTesting.playlist")){
+        playListGlobal = "/SandsaraTesting.playlist";
+        orderModeGlobal = 1;
+        romSetPositionList(1);
+    }
     //====Restore leds direction====
     ledsDirection = romGetLedsDirection();
     //====Restore cycleMode====
@@ -466,6 +470,10 @@ void loop()
 int run_sandsara(String playList, int orderMode)
 {
     BluetoothSand.setStatus(MODE_BUSY);
+    #ifdef DEBUGGING_DATA
+        Serial.print("playlist a reproducir: ");
+        Serial.println(playList);
+    #endif
     if (firstExecution){
         pListFileGlobal = romGetPositionList();
     }
