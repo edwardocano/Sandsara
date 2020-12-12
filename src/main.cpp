@@ -364,12 +364,12 @@ void setup()
         Serial.println("inicia");
     #endif
     //=====if the file playlist.playlist exits it will be executed====
-    if (sdExists("/playlist.playlist")){
-        playListGlobal = "/playlist.playlist";
+    if (sdExists(DEFAULTPLAYLIST)){
+        playListGlobal = DEFAULTPLAYLIST;
         orderModeGlobal = 1;
     }
-    if (sdExists("/SandsaraTesting.playlist")){
-        playListGlobal = "/SandsaraTesting.playlist";
+    if (sdExists(TESTINGPLAYLIST)){
+        playListGlobal = TESTINGPLAYLIST;
         orderModeGlobal = 1;
         romSetPositionList(1);
     }
@@ -409,9 +409,10 @@ void setup()
                     &motorsTask,
                     0);
     delay(500); 
-    
-    goEdgeSpiral(false);
-    Serial.println("termino espiral");
+    if (!playListGlobal.equals(TESTINGPLAYLIST)){
+        goEdgeSpiral(false);
+        Serial.println("termino espiral");
+    }
     delay(1000);
     firstExecution = true;
 }

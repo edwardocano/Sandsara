@@ -8,6 +8,12 @@
 #define v3Current 0
 
 /**
+ * Playlist priority
+ * the next playlist names will be reproduce if are in the SD card
+ */
+#define TESTINGPLAYLIST "/SandsaraTesting.playlist"
+#define DEFAULTPLAYLIST "/playlist.playlist"
+/**
  * Status de sandsara
  * 1 calibrating
  * 2
