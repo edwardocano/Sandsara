@@ -244,9 +244,10 @@ void setup()
     
     //====Restoring bluetooth name====
     bluetoothNameGlobal = romGetBluetoothName();
-    //====Configure the halo and bluetooth====
+    //====Configure the halo and bluetooth and files====
     BluetoothSand.init(bluetoothNameGlobal);
     Sandsara.init();
+    SdFiles::DISTANCIA_MAX = MAX_RADIO;
     BluetoothSand.setVersion(String(v1Current) + "." + String(v2Current) + "." + String(v3Current));
     BluetoothSand.setName(bluetoothNameGlobal);
     BluetoothSand.setStatus(MODE_CALIBRATION);
@@ -327,7 +328,6 @@ void setup()
         romSetPeriodLed(PERIOD_LED_DEFAULT);
     }
     
-    
     //====Restore playlist name and orderMode====
     playListGlobal = romGetPlaylist();
     orderModeGlobal = romGetOrderMode();
@@ -372,6 +372,7 @@ void setup()
         playListGlobal = TESTINGPLAYLIST;
         orderModeGlobal = 1;
         romSetPositionList(1);
+        SdFiles::DISTANCIA_MAX = l1 + l2;
     }
     //====Restore leds direction====
     ledsDirection = romGetLedsDirection();
@@ -838,7 +839,7 @@ int runFile(String fileName){
     //====
     posisionCase = Sandsara.position();
     if (posisionCase == 2){
-        movePolarTo(DISTANCIA_MAX, 0, 0, true);
+        movePolarTo(SdFiles::DISTANCIA_MAX, 0, 0, true);
     }
     else if (posisionCase == 0){
         #ifdef DEBUGGING_DATA
@@ -869,7 +870,7 @@ void goHomeSpiral(){
     Sandsara.stopAndResetPositions();
     float currentModule = Sandsara.getCurrentModule();
     availableDeceleration = true;
-    if (currentModule < DISTANCIA_MAX / 2){//sqrt(2)){
+    if (currentModule < SdFiles::DISTANCIA_MAX / 2){//sqrt(2)){
         goCenterSpiral(false);
     }
     else
@@ -894,13 +895,13 @@ void goCenterSpiral(bool stop){
 }
 
 /**
- * @brief returns to the outer end (DISTANCIA_MAX,0) on a spiral path.
+ * @brief returns to the outer end (SdFiles::DISTANCIA_MAX,0) on a spiral path.
  * 
  */
 void goEdgeSpiral(bool stop){
     Sandsara.setSpeed(SPEED_TO_CENTER);
     stopProgramChangeGlobal = stop;
-    spiralGoTo(DISTANCIA_MAX,0);
+    spiralGoTo(SdFiles::DISTANCIA_MAX,0);
     stopProgramChangeGlobal = true;
     Sandsara.setSpeed(romGetSpeedMotor());
     Sandsara.completePath();

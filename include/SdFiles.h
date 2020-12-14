@@ -42,6 +42,7 @@ class SdFiles {
         int fileType;//1 for txt 2 for thr and 3 for bin
         int directionMode; //1 for fordward and 0 for backwards
         File file;
+        static int DISTANCIA_MAX; //distance in millimeters
     private:
         int16_t xbin, ybin;
         int pFileBin;

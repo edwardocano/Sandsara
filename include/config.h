@@ -16,14 +16,10 @@
 /**
  * Status de sandsara
  * 1 calibrating
- * 2
- * 3
- * 4
- * 5
- * 6
- * 7
- * 8
- * 9
+ * 2 running
+ * 3 pause
+ * 4 sleep
+ * 5 busy
  */
 
 //Es el valor de la resistencia colocada en los drivers, por ejemplo 0.11f representa 0.11 ohms.
@@ -49,7 +45,7 @@
  * DISTANCIA_MAX es el radio maximo, desde el centro, que va a dibujar el robot
  * RESOLUCION_MAX es el numero que representa la DISTANCIA_MAX
  */
-#define DISTANCIA_MAX 144
+#define MAX_RADIO 144
 #define RESOLUCION_MAX 32768.0
 
 /**

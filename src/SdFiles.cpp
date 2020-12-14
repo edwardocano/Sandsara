@@ -7,7 +7,7 @@ extern bool readingSDFile;
 bool sdExists(String );
 bool sdRemove(String );
 //====
-
+int SdFiles::DISTANCIA_MAX = MAX_RADIO;
 /**
  * @brief es el contructor de la clase SdFiles
  * @param nameF es el nombre del archivo que se va a leer desde la SD
@@ -16,6 +16,7 @@ bool sdRemove(String );
  */
 SdFiles::SdFiles(String nameF, int directionMode)
 {
+    //DISTANCIA_MAX = MAX_RADIO;
     fileName = nameF;
     fileType = getType(fileName);
     this->directionMode = directionMode;
