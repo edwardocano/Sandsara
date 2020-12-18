@@ -103,6 +103,11 @@ class Bluetooth {
         static void setLedDirection(int);
         static void setBrightness(int);
         static void setIndexPalette(int);
+        static void setRed();
+        static void setGreen();
+        static void setBlue();
+        static void setPositions();
+        static void setAmountOfColors();
 
         static void setVersion(String);
         static void setName(String);

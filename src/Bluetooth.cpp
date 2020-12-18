@@ -167,6 +167,8 @@ class cycleModeCallbacks : public BLECharacteristicCallbacks
             romSetIncrementIndexPallete(false);
         }
         incrementIndexGlobal = romGetIncrementIndexPallete();
+        Serial.print("cycle mode: ");
+        Serial.println(incrementIndexGlobal);
         ledCharacteristic_errorMsg->setValue("ok");
         ledCharacteristic_errorMsg->notify();
     } //onWrite
@@ -206,6 +208,8 @@ class setBrightnessCallbacks : public BLECharacteristicCallbacks
             ledCharacteristic_errorMsg->notify();
             return;
         }
+        Serial.print("brightness: ");
+        Serial.println(brightness);
         FastLED.setBrightness(brightness);
         romSetBrightness(brightness);
         ledCharacteristic_errorMsg->setValue("ok");
@@ -700,7 +704,7 @@ class generalCallbacks_restart : public BLECharacteristicCallbacks
     {
         generalCharacteristic_errorMsg->setValue("ok");
         generalCharacteristic_errorMsg->notify();
-        rebootWithMessage("Reiniciando");
+        rebootWithMessage("Reiniciando por medio de callback restart");
     }
 };
 
@@ -726,7 +730,7 @@ Bluetooth::Bluetooth(){
 int Bluetooth::init(String name){
     BLEDevice::init(name.c_str());
     BLEServer *pServer = BLEDevice::createServer();    
-    BLEService *pServiceLedConfig = pServer->createService(BLEUUID(SERVICE_UUID1), 30);
+    BLEService *pServiceLedConfig = pServer->createService(BLEUUID(SERVICE_UUID1), 40);
     //BLEService *pServicePath = pServer->createService(BLEUUID(SERVICE_UUID2), 30);
     //BLEService *pServiceSphere = pServer->createService(BLEUUID(SERVICE_UUID3), 30);
     BLEService *pServicePlaylist = pServer->createService(BLEUUID(SERVICE_UUID4), 30);
@@ -757,19 +761,24 @@ int Bluetooth::init(String name){
             BLECharacteristic::PROPERTY_WRITE);
     ledCharacteristic_amountColors = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_AMOUNTCOLORS,
-            BLECharacteristic::PROPERTY_WRITE);
+            BLECharacteristic::PROPERTY_WRITE |
+            BLECharacteristic::PROPERTY_READ);
     ledCharacteristic_positions = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_POSITIONS,
-            BLECharacteristic::PROPERTY_WRITE);
+            BLECharacteristic::PROPERTY_WRITE |
+            BLECharacteristic::PROPERTY_READ);
     ledCharacteristic_red = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_RED,
-            BLECharacteristic::PROPERTY_WRITE);
+            BLECharacteristic::PROPERTY_WRITE |
+            BLECharacteristic::PROPERTY_READ);
     ledCharacteristic_green = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_GREEN,
-            BLECharacteristic::PROPERTY_WRITE);
+            BLECharacteristic::PROPERTY_WRITE |
+            BLECharacteristic::PROPERTY_READ);
     ledCharacteristic_blue = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_BLUE,
-            BLECharacteristic::PROPERTY_WRITE);
+            BLECharacteristic::PROPERTY_WRITE |
+            BLECharacteristic::PROPERTY_READ);
     ledCharacteristic_update = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_UPDATECPALETTE,
         BLECharacteristic::PROPERTY_WRITE);
@@ -801,6 +810,12 @@ int Bluetooth::init(String name){
     else{
         ledCharacteristic_direction->setValue("0");}
     ledCharacteristic_indexPalette->setValue(String(romGetPallete()).c_str());
+
+    setRed();
+    setGreen();
+    setBlue();
+    setPositions();
+    setAmountOfColors();
 
     //====Characteristics for playlist configuration====
     playlistCharacteristic_name = pServicePlaylist->createCharacteristic(
@@ -952,6 +967,7 @@ int Bluetooth::init(String name){
     pServiceGeneralConfig->start();
     pServiceFile->start();
     //pService3->start();
+
 
     // BLEAdvertising *pAdvertising = pServer->getAdvertising();  // this still is working for backward compatibility
     BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
@@ -1354,4 +1370,59 @@ void Bluetooth::setPercentage(int percentage){
     }
     playlistCharacteristic_progress->setValue(String(percentage).c_str());
     playlistCharacteristic_progress->notify();
+}
+
+void Bluetooth::setRed(){
+    uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
+    uint8_t red[numberOfColors];
+    String reds = "";
+    for (int i = 0; i < numberOfColors; i++){
+        red[i] = EEPROM.read(ADDRESSCUSTOMPALLETE_RED + i);
+        reds.concat(red[i]);
+        reds.concat(",");
+    }
+    reds.remove(reds.length() - 1);
+    ledCharacteristic_red->setValue(reds.c_str());
+}
+void Bluetooth::setGreen(){
+    uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
+    uint8_t green[numberOfColors];
+    String greens = "";
+    for (int i = 0; i < numberOfColors; i++){
+        green[i] = EEPROM.read(ADDRESSCUSTOMPALLETE_GREEN + i);
+        greens.concat(green[i]);
+        greens.concat(",");
+    }
+    greens.remove(greens.length() - 1);
+    ledCharacteristic_green->setValue(greens.c_str());
+}
+void Bluetooth::setBlue(){
+    uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
+    uint8_t blue[numberOfColors];
+    String blues = "";
+    for (int i = 0; i < numberOfColors; i++){
+        blue[i] = EEPROM.read(ADDRESSCUSTOMPALLETE_BLUE + i);
+        blues.concat(blue[i]);
+        blues.concat(",");
+    }
+    blues.remove(blues.length() - 1);
+    ledCharacteristic_blue->setValue(blues.c_str());
+}
+void Bluetooth::setPositions(){
+    uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
+    uint8_t position[numberOfColors];
+    String positions = "";
+    for (int i = 0; i < numberOfColors; i++){
+        position[i] = EEPROM.read(ADDRESSCUSTOMPALLETE_POSITIONS + i);
+        positions.concat(position[i]);
+        positions.concat(",");
+    }
+    positions.remove(positions.length() - 1);
+    ledCharacteristic_positions->setValue(positions.c_str());
+}
+void Bluetooth::setAmountOfColors(){
+    uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
+    String amount;
+    amount.concat(numberOfColors);
+    ledCharacteristic_amountColors->setValue(amount.c_str());
 }
