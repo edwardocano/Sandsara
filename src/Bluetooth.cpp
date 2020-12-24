@@ -6,6 +6,7 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 #include <BLE2902.h>
+#include <BLEAdvertisedDevice.h>
 #include "Motors.h"
 #include <EEPROM.h>
 #include <FastLED.h>
@@ -143,8 +144,10 @@ class speedLedCallbacks : public BLECharacteristicCallbacks
             ledCharacteristic_errorMsg->notify();
             return;
         }
-        Serial.print("speed led was changed to: ");
-        Serial.println(periodLed);
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("speed led was changed to: ");
+            Serial.println(periodLed);
+        #endif
         periodLedsGlobal = periodLed;
         delayLeds = periodLed;
         romSetPeriodLed(periodLedsGlobal);
@@ -167,8 +170,10 @@ class cycleModeCallbacks : public BLECharacteristicCallbacks
             romSetIncrementIndexPallete(false);
         }
         incrementIndexGlobal = romGetIncrementIndexPallete();
-        Serial.print("cycle mode: ");
-        Serial.println(incrementIndexGlobal);
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("cycle mode: ");
+            Serial.println(incrementIndexGlobal);
+        #endif
         ledCharacteristic_errorMsg->setValue("ok");
         ledCharacteristic_errorMsg->notify();
     } //onWrite
@@ -208,8 +213,10 @@ class setBrightnessCallbacks : public BLECharacteristicCallbacks
             ledCharacteristic_errorMsg->notify();
             return;
         }
-        Serial.print("brightness: ");
-        Serial.println(brightness);
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("brightness: ");
+            Serial.println(brightness);
+        #endif
         FastLED.setBrightness(brightness);
         romSetBrightness(brightness);
         ledCharacteristic_errorMsg->setValue("ok");
@@ -250,10 +257,12 @@ class CallbacksToUpdate : public BLECharacteristicCallbacks
         String redString = ledCharacteristic_red->getValue().c_str();
         String greenString = ledCharacteristic_green->getValue().c_str();
         String blueString = ledCharacteristic_blue->getValue().c_str();
-        Serial.println(positionsString);
-        Serial.println(redString);
-        Serial.println(greenString);
-        Serial.println(blueString);
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.println(positionsString);
+            Serial.println(redString);
+            Serial.println(greenString);
+            Serial.println(blueString);
+        #endif
         if (amountOfColors < 2 || amountOfColors > 16){
             ledCharacteristic_errorMsg->setValue("error= -181");
             ledCharacteristic_errorMsg->notify();
@@ -277,7 +286,9 @@ class CallbacksToUpdate : public BLECharacteristicCallbacks
         romSetCustomPallete(positions, red, green, blue, amountOfColors);
         ledCharacteristic_errorMsg->setValue("ok");
         ledCharacteristic_errorMsg->notify();
-        Serial.println("Se actualizo custom Pallete");
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.println("Se actualizo custom Pallete");
+        #endif
     } //onWrite
 };
 
@@ -290,17 +301,21 @@ class genericCallbacks : public BLECharacteristicCallbacks
         std::string uuid = characteristic->getUUID().toString();
         String value = rxValue.c_str();
         double valueDouble = value.toDouble();
-        for (int i = 0; i < uuid.length(); i++)
-        {
-            Serial.print(uuid[i]);
-        }
+        #ifdef DEBUGGING_BLUETOOTH
+            for (int i = 0; i < uuid.length(); i++)
+            {
+                Serial.print(uuid[i]);
+            }
+        #endif
         //verifica se existe dados (tamanho maior que zero)
-        Serial.print(" Value was changed to: ");
-        for (int i = 0; i < rxValue.length(); i++)
-        {
-            Serial.print(rxValue[i]);
-        }
-        Serial.println();
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print(" Value was changed to: ");
+            for (int i = 0; i < rxValue.length(); i++)
+            {
+                Serial.print(rxValue[i]);
+            }
+            Serial.println();
+        #endif
     } //onWrite
 };
 
@@ -334,9 +349,10 @@ class playlistCallbacks_pathName : public BLECharacteristicCallbacks
     {
         std::string rxValue = characteristic->getValue();
         String name = rxValue.c_str();
-        
-        Serial.print("name: ");
-        Serial.println(name);
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("name: ");
+            Serial.println(name);
+        #endif
         if (SdFiles::getType(name) < 0){
             playlistCharacteristic_errorMsg->setValue("error= -2");
             playlistCharacteristic_errorMsg->notify();
@@ -362,9 +378,10 @@ class playlistCallbacks_pathPosition : public BLECharacteristicCallbacks
         std::string rxValue = characteristic->getValue();
         String value = rxValue.c_str();
         int position = value.toInt();
-
-        Serial.print("position: ");
-        Serial.println(position);
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("position: ");
+            Serial.println(position);
+        #endif
         
         changedPosition = position;
         playlistCharacteristic_errorMsg->setValue("ok");
@@ -429,7 +446,9 @@ class FilesCallbacks_receiveFlag : public BLECharacteristicCallbacks
     {
         if (!receiveFlag){
             std::string rxData = characteristic->getValue();
-            Serial.println("BeginOTA");
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.println("Inicia transferencia de archivo");
+            #endif
             String name = rxData.c_str();
             while (readingSDFile){
                 delay(1);
@@ -444,9 +463,13 @@ class FilesCallbacks_receiveFlag : public BLECharacteristicCallbacks
             {
                 fileCharacteristic_errorMsg->setValue("error= -2"); //file cannot be opened
                 fileCharacteristic_errorMsg->notify();
-                Serial.println("error= -2"); //file cannot be opened
+                #ifdef DEBUGGING_BLUETOOTH
+                    Serial.println("error= -2"); //file cannot be opened
+                #endif
             }
-            Serial.println("se creo archivo");
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.println("se creo archivo");
+            #endif
             pointerB = buffer;
             bufferSize = 0;
             receiveFlag = true;
@@ -463,11 +486,15 @@ class FilesCallbacks_receiveFlag : public BLECharacteristicCallbacks
             readingSDFile = true;
             fileReceive.write(buffer, bufferSize);
             readingSDFile = false;
-            Serial.print("buffer size: ");
-            Serial.println(bufferSize);
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.print("buffer size: ");
+                Serial.println(bufferSize);
+            #endif
             bufferSize = 0;
             fileReceive.close();
-            Serial.println("EndOTA");
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.println("termino archivo");
+            #endif
             receiveFlag = false;
             pauseModeGlobal = false;
             fileCharacteristic_errorMsg->setValue("done");
@@ -518,14 +545,18 @@ class FilesCallbacks_sendFlag : public BLECharacteristicCallbacks
     {
         if (!sendFlag){
             std::string rxData = characteristic->getValue();
-            Serial.println("Begin sending...");
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.println("Begin sending...");
+            #endif
             String name = rxData.c_str();
             while (readingSDFile){
                 delay(1);
             }
             readingSDFile = true;
             if (!sdExists(name)){
-                Serial.println("no existe el archivo");
+                #ifdef DEBUGGING_BLUETOOTH
+                    Serial.println("no existe el archivo");
+                #endif
                 fileCharacteristic_errorMsg->setValue("error= -1"); //archivo no existe
                 fileCharacteristic_errorMsg->notify();
                 return;
@@ -535,11 +566,15 @@ class FilesCallbacks_sendFlag : public BLECharacteristicCallbacks
             {
                 fileCharacteristic_errorMsg->setValue("error= -2"); //file cannot be opened
                 fileCharacteristic_errorMsg->notify();
-                Serial.println("error al abrir el archivo"); //file cannot be opened
+                #ifdef DEBUGGING_BLUETOOTH
+                    Serial.println("error al abrir el archivo"); //file cannot be opened
+                #endif
                 return;
             }
             readingSDFile = false;
-            Serial.println("se abrio el archivo");
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.println("se abrio el archivo");
+            #endif
             /*uint8_t data[CHUNKSIZE];
             int dataSize = fileSend.read(data, CHUNKSIZE);
             readingSDFile = false;
@@ -553,7 +588,9 @@ class FilesCallbacks_sendFlag : public BLECharacteristicCallbacks
             fileCharacteristic_errorMsg->notify();
         }
         else{
-            Serial.println("entro en el else");
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.println("sendflag puesta a false");
+            #endif
             sendFlag = false;
             fileSend.close();
         }
@@ -581,7 +618,9 @@ class FilesCallbacks_send : public BLECharacteristicCallbacks
             if(dataSize < CHUNKSIZE){
                 fileSend.close();
                 sendFlag = false;
-                Serial.println("done");
+                #ifdef DEBUGGING_BLUETOOTH
+                    Serial.println("done");
+                #endif
             }
         }
     }
@@ -787,7 +826,7 @@ int Bluetooth::init(String name){
         BLECharacteristic::PROPERTY_READ |
             BLECharacteristic::PROPERTY_NOTIFY);
     ledCharacteristic_errorMsg->addDescriptor(new BLE2902());
-
+    
     ledCharacteristic_speed->setCallbacks(new speedLedCallbacks());
     ledCharacteristic_cycleMode->setCallbacks(new cycleModeCallbacks());
     ledCharacteristic_direction->setCallbacks(new directionCallbacks());

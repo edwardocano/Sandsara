@@ -91,6 +91,7 @@
 //#define DEBUGGIN_LED2
 #define IMPLEMENT_ACCELERATION
 #define RESQUEST_ANSWER
+#define DEBUGGING_BLUETOOTH
 
 /**
  * encoder es el pin para la senal del encoder

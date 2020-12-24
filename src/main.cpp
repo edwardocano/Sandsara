@@ -1554,7 +1554,7 @@ void FillLEDsFromPaletteColors( uint8_t colorIndex)
     startIndex = colorIndex;
     for( int i = 0; i < NUM_LEDS; i++) {
         leds[i] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
-        if (incrementIndexGlobal){
+        if (!incrementIndexGlobal){
             colorIndex =startIndex + float(i+1)*(255.0/float(NUM_LEDS));
         }
     }
