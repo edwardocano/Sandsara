@@ -338,6 +338,10 @@ class playlistCallbacks_name : public BLECharacteristicCallbacks
         orderModeGlobal = 1;
         romSetOrderMode(orderModeGlobal);
         rewindPlaylist = true;
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("BLE playlist: ");
+            Serial.println(playListGlobal);
+        #endif
         playlistCharacteristic_errorMsg->setValue("ok");
         playlistCharacteristic_errorMsg->notify();
     } //onWrite
@@ -350,7 +354,7 @@ class playlistCallbacks_pathName : public BLECharacteristicCallbacks
         std::string rxValue = characteristic->getValue();
         String name = rxValue.c_str();
         #ifdef DEBUGGING_BLUETOOTH
-            Serial.print("name: ");
+            Serial.print("BLE name: ");
             Serial.println(name);
         #endif
         if (SdFiles::getType(name) < 0){
@@ -379,7 +383,7 @@ class playlistCallbacks_pathPosition : public BLECharacteristicCallbacks
         String value = rxValue.c_str();
         int position = value.toInt();
         #ifdef DEBUGGING_BLUETOOTH
-            Serial.print("position: ");
+            Serial.print("BLE position: ");
             Serial.println(position);
         #endif
         
@@ -411,6 +415,10 @@ class playlistCallbacks_addPath : public BLECharacteristicCallbacks
         file.print(pathName);
         file.close();
         readingSDFile = false;
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("path name added: ");
+            Serial.println(pathName);
+        #endif
         playlistCharacteristic_errorMsg->setValue("ok");
         playlistCharacteristic_errorMsg->notify();
     } //onWrite
@@ -432,6 +440,10 @@ class playlistCallbacks_mode : public BLECharacteristicCallbacks
         orderModeGlobal = mode;
         romSetOrderMode(orderModeGlobal);
         rewindPlaylist = true;
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("BLE mode: ");
+            Serial.println(mode);
+        #endif
         playlistCharacteristic_errorMsg->setValue("ok");
         playlistCharacteristic_errorMsg->notify();
 
@@ -446,10 +458,11 @@ class FilesCallbacks_receiveFlag : public BLECharacteristicCallbacks
     {
         if (!receiveFlag){
             std::string rxData = characteristic->getValue();
-            #ifdef DEBUGGING_BLUETOOTH
-                Serial.println("Inicia transferencia de archivo");
-            #endif
             String name = rxData.c_str();
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.print("Inicia recepcion de archivo: ");
+                Serial.println(name);
+            #endif
             while (readingSDFile){
                 delay(1);
             }
@@ -457,18 +470,27 @@ class FilesCallbacks_receiveFlag : public BLECharacteristicCallbacks
             if (sdExists(name)){
                 fileCharacteristic_errorMsg->setValue("error= -1"); //archivo ya existe
                 fileCharacteristic_errorMsg->notify();
+                readingSDFile = false;
+                #ifdef DEBUGGING_BLUETOOTH
+                    Serial.println("error -1 ");
+                #endif
+                return;
             }
             fileReceive = SD.open(name, FILE_WRITE);
             if (!fileReceive)
             {
-                fileCharacteristic_errorMsg->setValue("error= -2"); //file cannot be opened
+                fileCharacteristic_errorMsg->setValue("error= -2"); //file cannot be opened 
                 fileCharacteristic_errorMsg->notify();
                 #ifdef DEBUGGING_BLUETOOTH
                     Serial.println("error= -2"); //file cannot be opened
                 #endif
+                readingSDFile = false;
+                return;
             }
             #ifdef DEBUGGING_BLUETOOTH
-                Serial.println("se creo archivo");
+                Serial.print("se creo archivo: ");
+                Serial.println(name);
+                Serial.println("recibiendo bytes...");
             #endif
             pointerB = buffer;
             bufferSize = 0;
@@ -487,7 +509,7 @@ class FilesCallbacks_receiveFlag : public BLECharacteristicCallbacks
             fileReceive.write(buffer, bufferSize);
             readingSDFile = false;
             #ifdef DEBUGGING_BLUETOOTH
-                Serial.print("buffer size: ");
+                Serial.print("ultimo buffer size: ");
                 Serial.println(bufferSize);
             #endif
             bufferSize = 0;
@@ -545,10 +567,12 @@ class FilesCallbacks_sendFlag : public BLECharacteristicCallbacks
     {
         if (!sendFlag){
             std::string rxData = characteristic->getValue();
-            #ifdef DEBUGGING_BLUETOOTH
-                Serial.println("Begin sending...");
-            #endif
+            
             String name = rxData.c_str();
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.print("Begin sending... ");
+                Serial.println(name);
+            #endif
             while (readingSDFile){
                 delay(1);
             }
@@ -573,7 +597,7 @@ class FilesCallbacks_sendFlag : public BLECharacteristicCallbacks
             }
             readingSDFile = false;
             #ifdef DEBUGGING_BLUETOOTH
-                Serial.println("se abrio el archivo");
+                Serial.println("se abrio el archivo\enviando archivo...");
             #endif
             /*uint8_t data[CHUNKSIZE];
             int dataSize = fileSend.read(data, CHUNKSIZE);
@@ -635,10 +659,18 @@ class FilesCallbacks_checkFile : public BLECharacteristicCallbacks
         String filename = rxData.c_str();
 
         if (!sdExists(filename)){
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.print("no existe el archivo : ");
+                Serial.println(filename);
+            #endif
             fileCharacteristic_errorMsg->setValue("0");
             fileCharacteristic_errorMsg->notify();
             return;
         }
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("Si existe el archivo : ");
+            Serial.println(filename);
+        #endif
         fileCharacteristic_errorMsg->setValue("1");
         fileCharacteristic_errorMsg->notify();
     }
@@ -652,10 +684,18 @@ class FilesCallbacks_deleteFile : public BLECharacteristicCallbacks
         String filename = rxData.c_str();
 
         if (!sdRemove(filename)){
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.print("no se pudo eliminar el archivo : ");
+                Serial.println(filename);
+            #endif
             fileCharacteristic_errorMsg->setValue("0");
             fileCharacteristic_errorMsg->notify();
             return;
         }
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("se elimino el archivo : ");
+            Serial.println(filename);
+        #endif
         fileCharacteristic_errorMsg->setValue("1");
         fileCharacteristic_errorMsg->notify();
     }
@@ -731,6 +771,10 @@ class generalCallbacks_speed : public BLECharacteristicCallbacks
         Sandsara.setSpeed(speed);
         romSetSpeedMotor(speed);
         speedChangedMain = true;
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("speedball : ");
+            Serial.println(speed);
+        #endif
         generalCharacteristic_errorMsg->setValue("ok");
         generalCharacteristic_errorMsg->notify();
     }
