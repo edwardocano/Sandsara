@@ -154,6 +154,15 @@ class speedLedCallbacks : public BLECharacteristicCallbacks
         ledCharacteristic_errorMsg->setValue("ok");
         ledCharacteristic_errorMsg->notify();
     } //onWrite
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ ledSpeed: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 class cycleModeCallbacks : public BLECharacteristicCallbacks
@@ -177,6 +186,16 @@ class cycleModeCallbacks : public BLECharacteristicCallbacks
         ledCharacteristic_errorMsg->setValue("ok");
         ledCharacteristic_errorMsg->notify();
     } //onWrite
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ cycleMode: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 class directionCallbacks : public BLECharacteristicCallbacks
@@ -197,6 +216,16 @@ class directionCallbacks : public BLECharacteristicCallbacks
         ledCharacteristic_errorMsg->setValue("ok");
         ledCharacteristic_errorMsg->notify();
     } //onWrite
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ ledDirection: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 class setBrightnessCallbacks : public BLECharacteristicCallbacks
@@ -222,6 +251,16 @@ class setBrightnessCallbacks : public BLECharacteristicCallbacks
         ledCharacteristic_errorMsg->setValue("ok");
         ledCharacteristic_errorMsg->notify();
     } //onWrite
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ brightness: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 class selectedPaletteCallbacks : public BLECharacteristicCallbacks
@@ -242,6 +281,16 @@ class selectedPaletteCallbacks : public BLECharacteristicCallbacks
         ledCharacteristic_errorMsg->setValue("ok");
         ledCharacteristic_errorMsg->notify();
     } //onWrite
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ presetPalette: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 class CallbacksToUpdate : public BLECharacteristicCallbacks
@@ -290,6 +339,16 @@ class CallbacksToUpdate : public BLECharacteristicCallbacks
             Serial.println("Se actualizo custom Pallete");
         #endif
     } //onWrite
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ toUpdate: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 class genericCallbacks : public BLECharacteristicCallbacks
@@ -317,6 +376,43 @@ class genericCallbacks : public BLECharacteristicCallbacks
             Serial.println();
         #endif
     } //onWrite
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string uuid = characteristic->getUUID().toString();
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ ");
+            String uuidString = characteristic->getUUID().toString().c_str();
+            if (uuidString.equals(CHARACTERISTIC_UUID_AMOUNTCOLORS)){
+                Serial.print("READ amountColors: ");
+                Serial.println(value);
+            }
+            else if(uuidString.equals(CHARACTERISTIC_UUID_POSITIONS)){
+                Serial.print("READ positions: ");
+                Serial.println(value);
+            }
+            else if(uuidString.equals(CHARACTERISTIC_UUID_RED)){
+                Serial.print("READ red: ");
+                Serial.println(value);
+            }
+            else if(uuidString.equals(CHARACTERISTIC_UUID_GREEN)){
+                Serial.print("READ green: ");
+                Serial.println(value);
+            }
+            else if(uuidString.equals(CHARACTERISTIC_UUID_BLUE)){
+                Serial.print("READ blue: ");
+                Serial.println(value);
+            }
+            else{
+                Serial.print("READ ");
+                Serial.print(uuidString);
+                Serial.print(": ");
+                Serial.println(value);
+            }
+        }
+    #endif
 };
 
 //====================callbacks for playlist config==============================================
@@ -345,6 +441,16 @@ class playlistCallbacks_name : public BLECharacteristicCallbacks
         playlistCharacteristic_errorMsg->setValue("ok");
         playlistCharacteristic_errorMsg->notify();
     } //onWrite
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ playlistName: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 class playlistCallbacks_pathName : public BLECharacteristicCallbacks
@@ -373,6 +479,16 @@ class playlistCallbacks_pathName : public BLECharacteristicCallbacks
         changeProgram = true;
         changePositionList = false;
     } //onWrite
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ pathName: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 class playlistCallbacks_pathPosition : public BLECharacteristicCallbacks
@@ -393,6 +509,16 @@ class playlistCallbacks_pathPosition : public BLECharacteristicCallbacks
         changePositionList = true;
         changeProgram = false;
     } //onWrite
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ pathPosition: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 class playlistCallbacks_addPath : public BLECharacteristicCallbacks
@@ -422,6 +548,16 @@ class playlistCallbacks_addPath : public BLECharacteristicCallbacks
         playlistCharacteristic_errorMsg->setValue("ok");
         playlistCharacteristic_errorMsg->notify();
     } //onWrite
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ addPath: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 class playlistCallbacks_mode : public BLECharacteristicCallbacks
@@ -448,6 +584,16 @@ class playlistCallbacks_mode : public BLECharacteristicCallbacks
         playlistCharacteristic_errorMsg->notify();
 
     } //onWrite
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ playlistMode: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 //================================Sending files=====================================
@@ -674,6 +820,16 @@ class FilesCallbacks_checkFile : public BLECharacteristicCallbacks
         fileCharacteristic_errorMsg->setValue("1");
         fileCharacteristic_errorMsg->notify();
     }
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ checkFile: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 class FilesCallbacks_deleteFile : public BLECharacteristicCallbacks
@@ -699,6 +855,16 @@ class FilesCallbacks_deleteFile : public BLECharacteristicCallbacks
         fileCharacteristic_errorMsg->setValue("1");
         fileCharacteristic_errorMsg->notify();
     }
+    
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ deleteFile: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 //===========================Callbacks for general config==========================
@@ -719,6 +885,16 @@ class generalCallbacks_name : public BLECharacteristicCallbacks
         generalCharacteristic_errorMsg->setValue("ok");
         generalCharacteristic_errorMsg->notify();
     }
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ SandsaraName: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 class generalCallbacks_pause : public BLECharacteristicCallbacks
@@ -727,9 +903,22 @@ class generalCallbacks_pause : public BLECharacteristicCallbacks
     {
         pauseModeGlobal = true;
         Bluetooth::setStatus(MODE_PAUSE);
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("BLE pause");
+        #endif
         generalCharacteristic_errorMsg->setValue("ok");
         generalCharacteristic_errorMsg->notify();
     }
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ pause: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 class generalCallbacks_play : public BLECharacteristicCallbacks
@@ -739,9 +928,22 @@ class generalCallbacks_play : public BLECharacteristicCallbacks
         pauseModeGlobal = false;
         suspensionModeGlobal = false;
         Bluetooth::setStatus(MODE_PLAY);
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("BLE play");
+        #endif
         generalCharacteristic_errorMsg->setValue("ok");
         generalCharacteristic_errorMsg->notify();
     }
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ play: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 class generalCallbacks_Sleep : public BLECharacteristicCallbacks
@@ -751,9 +953,21 @@ class generalCallbacks_Sleep : public BLECharacteristicCallbacks
         suspensionModeGlobal = true;
         pauseModeGlobal = false;
         Bluetooth::setStatus(MODE_SLEEP);
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("BLE sleep");
+        #endif
         generalCharacteristic_errorMsg->setValue("ok");
         generalCharacteristic_errorMsg->notify();
     }
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ Sleep: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 class generalCallbacks_speed : public BLECharacteristicCallbacks
@@ -778,6 +992,16 @@ class generalCallbacks_speed : public BLECharacteristicCallbacks
         generalCharacteristic_errorMsg->setValue("ok");
         generalCharacteristic_errorMsg->notify();
     }
+
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic)
+        {
+            std::string rxValue = characteristic->getValue();
+            String value = rxValue.c_str();
+            Serial.print("READ speed: ");
+            Serial.println(value);
+        }
+    #endif
 };
 
 
