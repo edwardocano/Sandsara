@@ -177,6 +177,7 @@
 #define CHUNKSIZE 512
 #define MAX_LED_SUM 538
 #define TIME_WAITFORSD 1000
+#define FILENAME_BASE "Sandsara-trackNumber-"
 
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0
