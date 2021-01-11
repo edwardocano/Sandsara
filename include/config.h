@@ -248,3 +248,11 @@
 #define MODE_PAUSE          3
 #define MODE_SLEEP          4
 #define MODE_BUSY           5
+
+//App Variables
+#define MIN_SLIDER_MSPEED       1
+#define MAX_SLIDER_MSPEED       10
+#define MIN_SLIDER_BRIGHTNESS   0
+#define MAX_SLIDER_BRIGHTNESS   100
+#define MIN_SLIDER_LEDSPEED     1
+#define MAX_SLIDER_LEDSPEED     100

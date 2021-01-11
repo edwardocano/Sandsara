@@ -139,6 +139,8 @@ class speedLedCallbacks : public BLECharacteristicCallbacks
         std::string rxValue = characteristic->getValue();
         String value = rxValue.c_str();
         int periodLed = value.toInt();
+        periodLed = map(periodLed, MIN_SLIDER_LEDSPEED,MAX_SLIDER_LEDSPEED,MAX_PERIOD_LED,MIN_PERIOD_LED);
+        
         if(periodLed < MIN_PERIOD_LED || periodLed > MAX_PERIOD_LED){
             ledCharacteristic_errorMsg->setValue("error = -70");
             ledCharacteristic_errorMsg->notify();
@@ -245,16 +247,19 @@ class setBrightnessCallbacks : public BLECharacteristicCallbacks
         std::string rxValue = characteristic->getValue();
         String value = rxValue.c_str();
         int brightness = value.toInt();
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("WRITE brightness: ");
+            Serial.println(brightness);
+        #endif
+        brightness = map(brightness,MIN_SLIDER_BRIGHTNESS,MAX_SLIDER_BRIGHTNESS,0,255);
+        
         if(brightness < 0 || brightness > 255){
             characteristic->setValue(String(romGetBrightness()).c_str());
             ledCharacteristic_errorMsg->setValue("error = -1");
             ledCharacteristic_errorMsg->notify();
             return;
         }
-        #ifdef DEBUGGING_BLUETOOTH
-            Serial.print("WRITE brightness: ");
-            Serial.println(brightness);
-        #endif
+        
         FastLED.setBrightness(brightness);
         romSetBrightness(brightness);
         ledCharacteristic_errorMsg->setValue("ok");
@@ -1059,6 +1064,12 @@ class generalCallbacks_speed : public BLECharacteristicCallbacks
         std::string rxData = characteristic->getValue();
         String value = rxData.c_str();
         int speed = value.toInt();
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("WRITE speedball : ");
+            Serial.println(speed);
+        #endif
+        //remap the speed acoording to the range of the ball speed
+        speed = map(speed,MIN_SLIDER_MSPEED,MAX_SLIDER_MSPEED,MIN_SPEED_MOTOR,MAX_SPEED_MOTOR);
         if (speed > MAX_SPEED_MOTOR || speed < MIN_SPEED_MOTOR){
             generalCharacteristic_errorMsg->setValue("error= -2");
             generalCharacteristic_errorMsg->notify();
@@ -1070,10 +1081,7 @@ class generalCallbacks_speed : public BLECharacteristicCallbacks
         Sandsara.setSpeed(speed);
         romSetSpeedMotor(speed);
         speedChangedMain = true;
-        #ifdef DEBUGGING_BLUETOOTH
-            Serial.print("WRITE speedball : ");
-            Serial.println(speed);
-        #endif
+        
         generalCharacteristic_errorMsg->setValue("ok");
         generalCharacteristic_errorMsg->notify();
     }
@@ -1726,6 +1734,7 @@ void Bluetooth::setPathProgress(int progress){
 
 
 void Bluetooth::setLedSpeed(int speed){
+    speed = map(speed,MIN_PERIOD_LED,MAX_PERIOD_LED,MIN_SLIDER_LEDSPEED,MAX_SLIDER_LEDSPEED);
     ledCharacteristic_speed->setValue(String(speed).c_str());
 }
 void Bluetooth::setCycleMode(int cycleMode){
@@ -1735,6 +1744,7 @@ void Bluetooth::setLedDirection(int ledDirection){
     ledCharacteristic_direction->setValue(String(ledDirection).c_str());
 }
 void Bluetooth::setBrightness(int brightness){
+    brightness = map(brightness,0,255,MIN_SLIDER_BRIGHTNESS,MAX_SLIDER_BRIGHTNESS);
     ledCharacteristic_brightness->setValue(String(brightness).c_str());
 }
 void Bluetooth::setIndexPalette(int indexPalette){
@@ -1751,6 +1761,7 @@ void Bluetooth::setStatus(int status){
     generalCharacteristic_status->setValue(String(status).c_str());
 }
 void Bluetooth::setSpeed(int speed){
+    speed = map(speed,MIN_SPEED_MOTOR,MAX_SPEED_MOTOR,MIN_SLIDER_MSPEED,MAX_SLIDER_MSPEED);
     generalCharacteristic_speed->setValue(String(speed).c_str());
 }
 void Bluetooth::setPercentage(int percentage){
