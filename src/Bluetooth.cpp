@@ -442,11 +442,15 @@ class CallbacksToUpdate : public BLECharacteristicCallbacks
         //     ledCharacteristic_errorMsg->notify();
         //     return;}
         romSetCustomPallete(positions, red, green, blue, n);
-        ledCharacteristic_errorMsg->setValue("ok");
+        
+        ledModeGlobal = 16;
+        changePalette(ledModeGlobal);
+        romSetPallete(ledModeGlobal);
         ledCharacteristic_errorMsg->notify();
         #ifdef DEBUGGING_BLUETOOTH
             Serial.println("Custom palette was updated");
         #endif
+        ledCharacteristic_errorMsg->setValue("ok");
     } //onWrite
 
     #ifdef DEBUGGING_BLUETOOTH
