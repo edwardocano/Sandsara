@@ -150,7 +150,7 @@
  * Restricciones
  */
 #define MAX_CHARS_PLAYLIST      40
-#define MAX_SPEED_MOTOR         150
+#define MAX_SPEED_MOTOR         80
 #define MIN_SPEED_MOTOR         1
 #define MAX_PERIOD_LED          500
 #define MIN_PERIOD_LED          10
@@ -163,7 +163,7 @@
 #define MAX_NUMBERLEDS          100
 #define LEDS_OF_HALO            60
 #define LEDS_OF_STELLE          72
-#define MAX_STEPS_PER_SECOND    150
+#define MAX_STEPS_PER_SECOND    100
 #define MAX_CHARACTER_PER_LINE  1000
 #define OUTOFTIME_BLUETOOTH     20000
 #define OUTOFTIME_BLUETOOTH_LINE 1000

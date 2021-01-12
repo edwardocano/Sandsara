@@ -322,52 +322,130 @@ class CallbacksToUpdate : public BLECharacteristicCallbacks
         std::string rxValue = characteristic->getValue();
         String value = rxValue.c_str();
         //=====
-        int n = rxValue.length();
-        uint8_t data[n];
-
-        //amountOfColors = 0;
-
-        //=====
-        int amountOfColors = String(ledCharacteristic_amountColors->getValue().c_str()).toInt();
-        uint8_t positions[amountOfColors];
-        uint8_t red[amountOfColors];
-        uint8_t green[amountOfColors];
-        uint8_t blue[amountOfColors];
-        String positionsString = ledCharacteristic_positions->getValue().c_str();
-        String redString = ledCharacteristic_red->getValue().c_str();
-        String greenString = ledCharacteristic_green->getValue().c_str();
-        String blueString = ledCharacteristic_blue->getValue().c_str();
-        #ifdef DEBUGGING_BLUETOOTH
-            Serial.println(positionsString);
-            Serial.println(redString);
-            Serial.println(greenString);
-            Serial.println(blueString);
+        int sizeData = rxValue.length();
+        #ifdef DEBUGGING_DATA
+            Serial.print("data size: ");
+            Serial.println(sizeData);
         #endif
-        if (amountOfColors < 2 || amountOfColors > 16){
-            ledCharacteristic_errorMsg->setValue("error= -181");
+        if (sizeData <= 0){
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.println("Write null data for palette");
+            #endif
+            ledCharacteristic_errorMsg->setValue("error= -1"); //null data
+            ledCharacteristic_errorMsg->notify();
+            return;
+        }
+        char data[sizeData+1];
+        rxValue.copy(data,sizeData,0);
+        
+        int n = data[0]; //amount of colors
+        //check if the amuont of colors is valid
+        if (n < 2 || n > 16){
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.println("not a valid number of colors");
+            #endif
+            ledCharacteristic_errorMsg->setValue("error= -2"); //not a valid number of colors
             ledCharacteristic_errorMsg->notify();
             return;}
-        if (stringToArray(positionsString, positions, amountOfColors) < 0){
-            ledCharacteristic_errorMsg->setValue("error= -182");
+        // check for incomplete data
+        if (n*4 != sizeData - 1){
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.println("WRITE incomplete data");
+            #endif
+            ledCharacteristic_errorMsg->setValue("error= -3"); //incomplete data
             ledCharacteristic_errorMsg->notify();
-            return;}
-        if (stringToArray(redString, red, amountOfColors) < 0){
-            ledCharacteristic_errorMsg->setValue("error= -183");
-            ledCharacteristic_errorMsg->notify();
-            return;}
-        if (stringToArray(greenString, green, amountOfColors) < 0){
-            ledCharacteristic_errorMsg->setValue("error= -184");
-            ledCharacteristic_errorMsg->notify();
-            return;}
-        if (stringToArray(blueString, blue, amountOfColors) < 0){
-            ledCharacteristic_errorMsg->setValue("error= -185");
-            ledCharacteristic_errorMsg->notify();
-            return;}
-        romSetCustomPallete(positions, red, green, blue, amountOfColors);
+            return;
+        }
+
+        uint8_t positions[n];
+        uint8_t red[n];
+        uint8_t green[n];
+        uint8_t blue[n];
+        
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("Positions: ");
+        #endif
+        for(int i=0; i<n; i++){
+            positions[i] = data[i + 1];
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.print(positions[i]);
+                Serial.print(",");
+            #endif
+        }
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("\nred: ");
+        #endif
+        for(int i=0; i<n; i++){
+            red[i] = data[n + i + 1];
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.print(red[i]);
+                Serial.print(",");
+            #endif
+        }
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("\ngreen: ");
+        #endif
+        for(int i=0; i<n; i++){
+            green[i] = data[2*n + i + 1];
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.print(green[i]);
+                Serial.print(",");
+            #endif
+        }
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.print("\nblue: ");
+        #endif
+        for(int i=0; i<n; i++){
+            blue[i] = data[3*n + i + 1];
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.print(blue[i]);
+                Serial.print(",");
+            #endif
+        }
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.println("");
+        #endif
+        //=====
+        // int amountOfColors = String(ledCharacteristic_amountColors->getValue().c_str()).toInt();
+        // uint8_t positions[amountOfColors];
+        // uint8_t red[amountOfColors];
+        // uint8_t green[amountOfColors];
+        // uint8_t blue[amountOfColors];
+        // String positionsString = ledCharacteristic_positions->getValue().c_str();
+        // String redString = ledCharacteristic_red->getValue().c_str();
+        // String greenString = ledCharacteristic_green->getValue().c_str();
+        // String blueString = ledCharacteristic_blue->getValue().c_str();
+        // #ifdef DEBUGGING_BLUETOOTH
+        //     Serial.println(positionsString);
+        //     Serial.println(redString);
+        //     Serial.println(greenString);
+        //     Serial.println(blueString);
+        // #endif
+        // if (amountOfColors < 2 || amountOfColors > 16){
+        //     ledCharacteristic_errorMsg->setValue("error= -181");
+        //     ledCharacteristic_errorMsg->notify();
+        //     return;}
+        //if (stringToArray(positionsString, positions, amountOfColors) < 0){
+        //     ledCharacteristic_errorMsg->setValue("error= -182");
+        //     ledCharacteristic_errorMsg->notify();
+        //     return;}
+        // if (stringToArray(redString, red, amountOfColors) < 0){
+        //     ledCharacteristic_errorMsg->setValue("error= -183");
+        //     ledCharacteristic_errorMsg->notify();
+        //     return;}
+        // if (stringToArray(greenString, green, amountOfColors) < 0){
+        //     ledCharacteristic_errorMsg->setValue("error= -184");
+        //     ledCharacteristic_errorMsg->notify();
+        //     return;}
+        // if (stringToArray(blueString, blue, amountOfColors) < 0){
+        //     ledCharacteristic_errorMsg->setValue("error= -185");
+        //     ledCharacteristic_errorMsg->notify();
+        //     return;}
+        romSetCustomPallete(positions, red, green, blue, n);
         ledCharacteristic_errorMsg->setValue("ok");
         ledCharacteristic_errorMsg->notify();
         #ifdef DEBUGGING_BLUETOOTH
-            Serial.println("Se actualizo custom Pallete");
+            Serial.println("Custom palette was updated");
         #endif
     } //onWrite
 
