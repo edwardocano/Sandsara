@@ -441,8 +441,14 @@ class CallbacksToUpdate : public BLECharacteristicCallbacks
         //     ledCharacteristic_errorMsg->setValue("error= -185");
         //     ledCharacteristic_errorMsg->notify();
         //     return;}
+
         romSetCustomPallete(positions, red, green, blue, n);
-        
+        Bluetooth::setRed();
+        Bluetooth::setGreen();
+        Bluetooth::setBlue();
+        Bluetooth::setPositions();
+        Bluetooth::setAmountOfColors();
+
         ledModeGlobal = 16;
         changePalette(ledModeGlobal);
         romSetPallete(ledModeGlobal);
@@ -1281,8 +1287,7 @@ int Bluetooth::init(String name){
     ledCharacteristic_blue->setCallbacks(new genericCallbacks);
     ledCharacteristic_update->setCallbacks(new CallbacksToUpdate());
     ledCharacteristic_indexPalette->setCallbacks(new selectedPaletteCallbacks());
-
-    ledCharacteristic_speed->setValue(String(periodLedsGlobal).c_str());
+    setLedSpeed(periodLedsGlobal);
     if(romGetIncrementIndexPallete()){
         ledCharacteristic_cycleMode->setValue("1");}
     else{
@@ -1816,7 +1821,7 @@ void Bluetooth::setPathProgress(int progress){
 
 
 void Bluetooth::setLedSpeed(int speed){
-    speed = map(speed,MIN_PERIOD_LED,MAX_PERIOD_LED,MIN_SLIDER_LEDSPEED,MAX_SLIDER_LEDSPEED);
+    speed = map(speed,MIN_PERIOD_LED,MAX_PERIOD_LED,MAX_SLIDER_LEDSPEED,MIN_SLIDER_LEDSPEED);
     ledCharacteristic_speed->setValue(String(speed).c_str());
 }
 void Bluetooth::setCycleMode(int cycleMode){
@@ -1859,6 +1864,9 @@ void Bluetooth::setPercentage(int percentage){
 
 void Bluetooth::setRed(){
     uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
+    if (numberOfColors > MAX_COLORSPERPALLETE || numberOfColors < 2){
+        return;
+    }
     uint8_t red[numberOfColors];
     String reds = "";
     for (int i = 0; i < numberOfColors; i++){
@@ -1871,6 +1879,9 @@ void Bluetooth::setRed(){
 }
 void Bluetooth::setGreen(){
     uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
+    if (numberOfColors > MAX_COLORSPERPALLETE || numberOfColors < 2){
+        return;
+    }
     uint8_t green[numberOfColors];
     String greens = "";
     for (int i = 0; i < numberOfColors; i++){
@@ -1883,6 +1894,9 @@ void Bluetooth::setGreen(){
 }
 void Bluetooth::setBlue(){
     uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
+    if (numberOfColors > MAX_COLORSPERPALLETE || numberOfColors < 2){
+        return;
+    }
     uint8_t blue[numberOfColors];
     String blues = "";
     for (int i = 0; i < numberOfColors; i++){
@@ -1895,6 +1909,9 @@ void Bluetooth::setBlue(){
 }
 void Bluetooth::setPositions(){
     uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
+    if (numberOfColors > MAX_COLORSPERPALLETE || numberOfColors < 2){
+        return;
+    }
     uint8_t position[numberOfColors];
     String positions = "";
     for (int i = 0; i < numberOfColors; i++){

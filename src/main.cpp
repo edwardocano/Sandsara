@@ -243,12 +243,20 @@ void setup()
 
     
     //====Restoring bluetooth name====
-    bluetoothNameGlobal = romGetBluetoothName();
+    bluetoothNameGlobal = "Sandsara " + romGetBluetoothName();
+    //====Restoring of refreshing time of leds====
+    periodLedsGlobal = romGetPeriodLed();
+    if (periodLedsGlobal > MAX_PERIOD_LED || periodLedsGlobal < MIN_PERIOD_LED){
+        periodLedsGlobal = PERIOD_LED_DEFAULT;
+        romSetPeriodLed(PERIOD_LED_DEFAULT);
+    }
     //====Configure the halo and bluetooth and files====
     BluetoothSand.init(bluetoothNameGlobal);
     Sandsara.init();
     SdFiles::DISTANCIA_MAX = MAX_RADIO;
     BluetoothSand.setVersion(String(v1Current) + "." + String(v2Current) + "." + String(v3Current));
+    Serial.println("antes de setname");
+    Serial.println(bluetoothNameGlobal);
     BluetoothSand.setName(bluetoothNameGlobal);
     BluetoothSand.setStatus(MODE_CALIBRATION);
     //====Select type of product====
@@ -321,13 +329,6 @@ void setup()
         romSetSpeedMotor(SPEED_MOTOR_DEFAULT);
     }
     Sandsara.setSpeed(speedMotorGlobal);
-    //====Restoring of refreshing time of leds====
-    periodLedsGlobal = romGetPeriodLed();
-    if (periodLedsGlobal > MAX_PERIOD_LED || periodLedsGlobal < MIN_PERIOD_LED){
-        periodLedsGlobal = PERIOD_LED_DEFAULT;
-        romSetPeriodLed(PERIOD_LED_DEFAULT);
-    }
-    
     //====Restore playlist name and orderMode====
     playListGlobal = romGetPlaylist();
     orderModeGlobal = romGetOrderMode();
@@ -1251,6 +1252,11 @@ int romGetPallete(){
     uint8_t* p = (uint8_t* ) &pallete;
     for (int i = 0; i < sizeof(pallete); i++){
         *(p + i) = EEPROM.read(ADDRESSPALLETE + i);
+    }
+    if (pallete>MAX_PALLETE || pallete < MIN_PALLETE){
+        Serial.print("pallete excedido por ");
+        Serial.println(pallete);
+        pallete = 16;
     }
     return pallete;
 }
