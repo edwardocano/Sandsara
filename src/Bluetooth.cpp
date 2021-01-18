@@ -135,11 +135,15 @@ BLECharacteristic *generalCharacteristic_errorMsg;
 class bleServerCallback : public BLEServerCallbacks
 {
     void onConnect(BLEServer *pServer){
-        Serial.print("BLE Server connected");
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.println("BLE Server connected");
+        #endif
     }
 
     void onDisconnect(BLEServer *pServer){
-        Serial.print("BLE Server disconnected");
+        #ifdef DEBUGGING_BLUETOOTH
+            Serial.println("BLE Server disconnected");
+        #endif
     }
 };
 
