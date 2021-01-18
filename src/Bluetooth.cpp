@@ -132,6 +132,17 @@ BLECharacteristic *generalCharacteristic_errorMsg;
 //================================Callbacks=============================
 //======================================================================
 
+class bleServerCallback : public BLEServerCallbacks
+{
+    void onConnect(BLEServer *pServer){
+        Serial.print("BLE Server connected");
+    }
+
+    void onDisconnect(BLEServer *pServer){
+        Serial.print("BLE Server disconnected");
+    }
+};
+
 class speedLedCallbacks : public BLECharacteristicCallbacks
 {
     void onWrite(BLECharacteristic *characteristic)
@@ -1224,7 +1235,7 @@ int Bluetooth::init(String name){
     BLEService *pServicePlaylist = pServer->createService(BLEUUID(SERVICE_UUID4), 30);
     BLEService *pServiceGeneralConfig = pServer->createService(BLEUUID(SERVICE_UUID5), 30);
     BLEService *pServiceFile = pServer->createService(BLEUUID(SERVICE_UUID6), 30);
-
+    pServer->setCallbacks(new bleServerCallback());
     //====Characteristics for LEDs configuration====
     
     ledCharacteristic_indexPalette = pServiceLedConfig->createCharacteristic(
