@@ -38,14 +38,14 @@
  * el eslabon 1 es el eslabon que se encuentra acoplado al eje central del mecanismo
  * el eslabon 2 es el eslabon que se encuentra acoplado la eslabon 1.
  */
-#define l1 76
-#define l2 76
+#define l1 150
+#define l2 150
 
 /**
  * DISTANCIA_MAX es el radio maximo, desde el centro, que va a dibujar el robot
  * RESOLUCION_MAX es el numero que representa la DISTANCIA_MAX
  */
-#define MAX_RADIO 144
+#define MAX_RADIO 300
 #define RESOLUCION_MAX 32768.0
 
 /**
@@ -56,7 +56,7 @@
  * por ejemplo si bigPulleySize es de 40 dientes y littlePulleySize 20 dientes
  * se puede hacer bigPulleySize = 4.0 y littlePulleySize = 2.0
  */
-#define bigPulleySize 4.0
+#define bigPulleySize 5.0
 #define littlePulleySize 2.0
 
 /**
@@ -150,7 +150,7 @@
  * Restricciones
  */
 #define MAX_CHARS_PLAYLIST      40
-#define MAX_SPEED_MOTOR         80
+#define MAX_SPEED_MOTOR         200
 #define MIN_SPEED_MOTOR         1
 #define MAX_PERIOD_LED          500
 #define MIN_PERIOD_LED          10
@@ -163,11 +163,11 @@
 #define MAX_NUMBERLEDS          100
 #define LEDS_OF_HALO            60
 #define LEDS_OF_STELLE          72
-#define MAX_STEPS_PER_SECOND    100
+#define MAX_STEPS_PER_SECOND    150
 #define MAX_CHARACTER_PER_LINE  1000
 #define OUTOFTIME_BLUETOOTH     20000
 #define OUTOFTIME_BLUETOOTH_LINE 1000
-#define NORMAL_CURRENT          600
+#define NORMAL_CURRENT          700
 #define CURRENT_IN_CALIBRATION  600
 //#define ACCELERATION            400.0
 #define ACCEL_THRESHOLD         500.0

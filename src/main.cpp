@@ -169,6 +169,7 @@ Testing haloTest;
 void setup()
 {
     delay(1000); // power-up safety delay
+    pinMode(LED_PIN, OUTPUT);
     //====Serial configuration====
     Serial.begin(115200);
     //====EEPROM Initialization====
@@ -251,7 +252,7 @@ void setup()
         romSetPeriodLed(PERIOD_LED_DEFAULT);
     }
     //====Configure the halo and bluetooth and files====
-    BluetoothSand.init(bluetoothNameGlobal);
+    BluetoothSand.init("sandsara tavo");
     Sandsara.init();
     SdFiles::DISTANCIA_MAX = MAX_RADIO;
     BluetoothSand.setVersion(String(v1Current) + "." + String(v2Current) + "." + String(v3Current));
@@ -277,6 +278,7 @@ void setup()
     }
     changePalette(CODE_CALIBRATING_PALLETE);
     BluetoothSand.setBrightness(romGetBrightness());
+    /*
     //====new task for leds====
     xTaskCreatePinnedToCore(
                     ledsFunc,
@@ -287,7 +289,7 @@ void setup()
                     &Task1,
                     1);
     delay(500); 
-    
+    */
     //====Cablibrating====
     haloCalib.init();
     #ifdef DEBUGGING_DATA
@@ -535,9 +537,14 @@ int run_sandsara(String playList, int orderMode)
         //====Save the current position in playlist====
         romSetPositionList(pListFileGlobal);
         //====
+        digitalWrite(LED_PIN,LOW);
+        delay(3000);
         #ifdef DEBUGGING_DATA
             Serial.println("Abrira el siguiente archivo disponible");
+            
         #endif
+        digitalWrite(LED_PIN,HIGH);
+        
         errorCode = SdFiles::getLineNumber(pListFileGlobal, playList, fileName);
         if (errorCode < 0)
         {
@@ -1602,6 +1609,9 @@ void changePalette(int pallet)
  * @brief ledsFunc es una tarea que se corre en paralelo y que se encarga de encender los leds.
  */
 void ledsFunc( void * pvParameters ){
+    
+
+    
     //====Configurar fastled====
     FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness( romGetBrightness() );
@@ -1637,6 +1647,7 @@ void ledsFunc( void * pvParameters ){
         //vTaskDelay(delayLeds);
         FastLED.delay(delayLeds);
     } 
+    
 }
 
 /**
