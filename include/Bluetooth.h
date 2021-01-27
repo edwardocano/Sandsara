@@ -112,6 +112,6 @@ class Bluetooth {
         static void setVersion(String);
         static void setName(String);
         static void setStatus(int);
-        static void setSpeed(int);
+        static void setMotorSpeed(int);
         static void setPercentage(int);
 };

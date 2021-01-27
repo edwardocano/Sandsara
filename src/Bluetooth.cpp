@@ -136,7 +136,9 @@ class bleServerCallback : public BLEServerCallbacks
 {
     void onConnect(BLEServer *pServer){
         #ifdef DEBUGGING_BLUETOOTH
-            Serial.println("BLE Server connected");
+            Serial.print("BLE Server connected to: ");
+            Serial.println(pServer->getConnId());
+            Serial.println();
         #endif
     }
 
@@ -352,7 +354,12 @@ class CallbacksToUpdate : public BLECharacteristicCallbacks
         }
         char data[sizeData+1];
         rxValue.copy(data,sizeData,0);
-        
+        Serial.print("data 0x ");
+        for (int i = 0; i < sizeData; i++){
+            Serial.print(data[i],HEX);
+            Serial.print("-");
+        }
+        Serial.println("");
         int n = data[0]; //amount of colors
         //check if the amuont of colors is valid
         if (n < 2 || n > 16){
@@ -493,7 +500,6 @@ class genericCallbacks : public BLECharacteristicCallbacks
         std::string rxValue = characteristic->getValue();
         std::string uuid = characteristic->getUUID().toString();
         String value = rxValue.c_str();
-        double valueDouble = value.toDouble();
         #ifdef DEBUGGING_BLUETOOTH
             for (int i = 0; i < uuid.length(); i++)
             {
@@ -776,9 +782,7 @@ class FilesCallbacks_receiveFlag : public BLECharacteristicCallbacks
                 return;
             }
             #ifdef DEBUGGING_BLUETOOTH
-                Serial.print("se creo archivo: ");
-                Serial.println(name);
-                Serial.println("recibiendo bytes...");
+                //Serial.println("recibiendo bytes...");
             #endif
             pointerB = buffer;
             bufferSize = 0;
@@ -797,8 +801,8 @@ class FilesCallbacks_receiveFlag : public BLECharacteristicCallbacks
             fileReceive.write(buffer, bufferSize);
             readingSDFile = false;
             #ifdef DEBUGGING_BLUETOOTH
-                Serial.print("ultimo buffer size: ");
-                Serial.println(bufferSize);
+                //Serial.print("ultimo buffer size: ");
+                //Serial.println(bufferSize);
             #endif
             bufferSize = 0;
             fileReceive.close();
@@ -823,11 +827,8 @@ class FilesCallbacks_receive : public BLECharacteristicCallbacks
             int len = rxData.length();
             if (len > 0)
             {
-                //rxData.c_str();
                 size_t lens = rxData.copy(pointerB, len, 0);
-                //memcpy(pointerB, rxData.c_str(),);
                 pointerB = pointerB + lens;
-                //Serial.print(rxData.c_str());
                 bufferSize += lens;
                 if (bufferSize >= 9000){
                     pointerB = buffer;
@@ -837,8 +838,6 @@ class FilesCallbacks_receive : public BLECharacteristicCallbacks
                     readingSDFile = true;
                     fileReceive.write(buffer, bufferSize);
                     readingSDFile = false;
-                    //Serial.print("buffer size: ");
-                    //Serial.println(bufferSize);
                     bufferSize = 0;
                 }
                 characteristic->setValue("1");
@@ -885,7 +884,7 @@ class FilesCallbacks_sendFlag : public BLECharacteristicCallbacks
             }
             readingSDFile = false;
             #ifdef DEBUGGING_BLUETOOTH
-                Serial.println("se abrio el archivo\enviando archivo...");
+                Serial.println("Enviando archivo...");
             #endif
             /*uint8_t data[CHUNKSIZE];
             int dataSize = fileSend.read(data, CHUNKSIZE);
@@ -1777,7 +1776,7 @@ void rebootWithMessage(String reason){
     #ifdef DEBUGGING_DATA
         Serial.println(reason);
     #endif
-    delay(1000);
+    delay(2000);
     ESP.restart();
 }
 
@@ -1817,54 +1816,114 @@ void Bluetooth::setPlaylistName(String playlistName){
         playlistName.remove(index);
     }
     playlistCharacteristic_name->setValue(playlistName.c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET Playlist Name: ");
+        Serial.println(playlistName.c_str());
+    #endif
 }
 void Bluetooth::setPathAmount(int pathAmount){
     playlistCharacteristic_pathAmount->setValue(String(pathAmount).c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET pathAmount: ");
+        Serial.println(String(pathAmount).c_str());
+    #endif
 }
 void Bluetooth::setPathName(String pathName){
     playlistCharacteristic_pathName->setValue(pathName.c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET pathName: ");
+        Serial.println(pathName.c_str());
+    #endif
 }
 void Bluetooth::setPathPosition(int pathPosition){
     playlistCharacteristic_pathPosition->setValue(String(pathPosition).c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET pathPosition: ");
+        Serial.println(String(pathPosition).c_str());
+    #endif
 }
 void Bluetooth::setPlayMode(int mode){
     playlistCharacteristic_mode->setValue(String(mode).c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET PlaylistMode: ");
+        Serial.println(String(mode).c_str());
+    #endif
 }
-void Bluetooth::setPathProgress(int progress){
-    playlistCharacteristic_progress->setValue(String(progress).c_str());
-}
+// void Bluetooth::setPathProgress(int progress){
+//     playlistCharacteristic_progress->setValue(String(progress).c_str());
+//     #ifdef DEBUGGING_BLUETOOTH
+//         Serial.print("SET progress: ");
+//         Serial.println(String(progress).c_str());
+//     #endif
+// }
 
 
 void Bluetooth::setLedSpeed(int speed){
     speed = map(speed,MIN_PERIOD_LED,MAX_PERIOD_LED,MAX_SLIDER_LEDSPEED,MIN_SLIDER_LEDSPEED);
     ledCharacteristic_speed->setValue(String(speed).c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET ledSoeed: ");
+        Serial.println(String(speed).c_str());
+    #endif
 }
 void Bluetooth::setCycleMode(int cycleMode){
     ledCharacteristic_cycleMode->setValue(String(cycleMode).c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET cycleMode: ");
+        Serial.println(String(cycleMode).c_str());
+    #endif
 }
 void Bluetooth::setLedDirection(int ledDirection){
     ledCharacteristic_direction->setValue(String(ledDirection).c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET ledDirection: ");
+        Serial.println(String(ledDirection).c_str());
+    #endif
 }
 void Bluetooth::setBrightness(int brightness){
     brightness = map(brightness,0,255,MIN_SLIDER_BRIGHTNESS,MAX_SLIDER_BRIGHTNESS);
     ledCharacteristic_brightness->setValue(String(brightness).c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET brightness: ");
+        Serial.println(String(brightness).c_str());
+    #endif
 }
 void Bluetooth::setIndexPalette(int indexPalette){
     ledCharacteristic_indexPalette->setValue(String(indexPalette).c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET indexPalette: ");
+        Serial.println(String(indexPalette).c_str());
+    #endif
 }
 
 void Bluetooth::setVersion(String version){
     generalCharacteristic_version->setValue(version.c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET version: ");
+        Serial.println(version.c_str());
+    #endif
 }
 void Bluetooth::setName(String name){
     generalCharacteristic_name->setValue(name.c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET ble name: ");
+        Serial.println(name.c_str());
+    #endif
 }
 void Bluetooth::setStatus(int status){
     generalCharacteristic_status->setValue(String(status).c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET status: ");
+        Serial.println(String(status).c_str());
+    #endif
 }
-void Bluetooth::setSpeed(int speed){
+void Bluetooth::setMotorSpeed(int speed){
     speed = map(speed,MIN_SPEED_MOTOR,MAX_SPEED_MOTOR,MIN_SLIDER_MSPEED,MAX_SLIDER_MSPEED);
     generalCharacteristic_speed->setValue(String(speed).c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET motor Speed: ");
+        Serial.println(String(speed).c_str());
+    #endif
 }
 void Bluetooth::setPercentage(int percentage){
     if (percentage < 0 ){
@@ -1875,6 +1934,10 @@ void Bluetooth::setPercentage(int percentage){
     }
     playlistCharacteristic_progress->setValue(String(percentage).c_str());
     playlistCharacteristic_progress->notify();
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET percentage: ");
+        Serial.println(String(percentage).c_str());
+    #endif
 }
 
 void Bluetooth::setRed(){
@@ -1891,6 +1954,10 @@ void Bluetooth::setRed(){
     }
     reds.remove(reds.length() - 1);
     ledCharacteristic_red->setValue(reds.c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET red: ");
+        Serial.println(reds.c_str());
+    #endif
 }
 void Bluetooth::setGreen(){
     uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
@@ -1906,6 +1973,10 @@ void Bluetooth::setGreen(){
     }
     greens.remove(greens.length() - 1);
     ledCharacteristic_green->setValue(greens.c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET green: ");
+        Serial.println(greens.c_str());
+    #endif
 }
 void Bluetooth::setBlue(){
     uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
@@ -1921,6 +1992,10 @@ void Bluetooth::setBlue(){
     }
     blues.remove(blues.length() - 1);
     ledCharacteristic_blue->setValue(blues.c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET blue: ");
+        Serial.println(blues.c_str());
+    #endif
 }
 void Bluetooth::setPositions(){
     uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
@@ -1936,10 +2011,18 @@ void Bluetooth::setPositions(){
     }
     positions.remove(positions.length() - 1);
     ledCharacteristic_positions->setValue(positions.c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET pathPositions: ");
+        Serial.println(positions.c_str());
+    #endif
 }
 void Bluetooth::setAmountOfColors(){
     uint8_t numberOfColors = EEPROM.read(ADDRESSCUSTOMPALLETE_COLORS);
     String amount;
     amount.concat(numberOfColors);
     ledCharacteristic_amountColors->setValue(amount.c_str());
+    #ifdef DEBUGGING_BLUETOOTH
+        Serial.print("SET amount: ");
+        Serial.println(amount.c_str());
+    #endif
 }

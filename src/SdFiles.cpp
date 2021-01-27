@@ -7,6 +7,9 @@ extern bool readingSDFile;
 bool sdExists(String );
 bool sdRemove(String );
 //====
+// Variables globales de SdFiles
+int pathPercentage = -1;
+
 int SdFiles::DISTANCIA_MAX = MAX_RADIO;
 /**
  * @brief es el contructor de la clase SdFiles
@@ -105,14 +108,18 @@ int SdFiles::getNextComponents(double *component1, double *component2)
         }
         if (directionMode == 1){
             if (fileSize != 0){
-                int percentage = (pFile*100)/fileSize;
-                Bluetooth::setPercentage(percentage);
+                if ((pFile*100)/fileSize != pathPercentage){
+                    pathPercentage = (pFile*100)/fileSize;
+                    Bluetooth::setPercentage(pathPercentage);
+                }
             }
         }
         else{
             if (fileSize != 0){ 
-                int percentage = ((fileSize - pFile)*100)/fileSize;
-                Bluetooth::setPercentage(percentage);
+                if (((fileSize - pFile)*100)/fileSize != pathPercentage){
+                    pathPercentage = ((fileSize - pFile)*100)/fileSize;
+                    Bluetooth::setPercentage(pathPercentage);
+                }
             }
         }
         currentRow = nextRow();

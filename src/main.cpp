@@ -385,7 +385,7 @@ void setup()
     BluetoothSand.setPathAmount(0);
     BluetoothSand.setPathName("");
     BluetoothSand.setPlayMode(orderModeGlobal);
-    BluetoothSand.setPathProgress(0);
+    BluetoothSand.setPercentage(0);
 
     BluetoothSand.setLedSpeed(periodLedsGlobal);
     if(cycleMode){
@@ -400,7 +400,7 @@ void setup()
     }
     BluetoothSand.setIndexPalette(ledModeGlobal);
 
-    BluetoothSand.setSpeed(speedMotorGlobal);
+    BluetoothSand.setMotorSpeed(speedMotorGlobal);
 
     xTaskCreatePinnedToCore(
                     moveSteps,   
