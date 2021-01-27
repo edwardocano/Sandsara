@@ -140,12 +140,23 @@ class bleServerCallback : public BLEServerCallbacks
             Serial.println(pServer->getConnId());
             Serial.println();
         #endif
+        Sandsara.setSpeed(SPEED_WHEN_IS_CONNECTED_TO_BLE);
+        romSetSpeedMotor(SPEED_WHEN_IS_CONNECTED_TO_BLE);
+        speedChangedMain = true;
     }
 
     void onDisconnect(BLEServer *pServer){
         #ifdef DEBUGGING_BLUETOOTH
             Serial.println("BLE Server disconnected");
         #endif
+        int speed = String(generalCharacteristic_speed->getValue().c_str()).toInt();
+        speed = map(speed,MIN_SLIDER_MSPEED,MAX_SLIDER_MSPEED,MIN_SPEED_MOTOR,MAX_SPEED_MOTOR);
+        if (speed > MAX_SPEED_MOTOR || speed < MIN_SPEED_MOTOR){
+            speed = SPEED_MOTOR_DEFAULT;
+        }
+        Sandsara.setSpeed(speed);
+        romSetSpeedMotor(speed);
+        speedChangedMain = true;
     }
 };
 
@@ -1180,9 +1191,9 @@ class generalCallbacks_speed : public BLECharacteristicCallbacks
             #endif
             return;
         }
-        Sandsara.setSpeed(speed);
-        romSetSpeedMotor(speed);
-        speedChangedMain = true;
+        // Sandsara.setSpeed(speed);
+        // romSetSpeedMotor(speed);
+        // speedChangedMain = true;
         
         generalCharacteristic_errorMsg->setValue("ok");
         generalCharacteristic_errorMsg->notify();
