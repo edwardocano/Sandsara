@@ -534,7 +534,7 @@ class genericCallbacks : public BLECharacteristicCallbacks
             std::string uuid = characteristic->getUUID().toString();
             std::string rxValue = characteristic->getValue();
             String value = rxValue.c_str();
-            Serial.print("READ ");
+            // Serial.print("READ ");
             String uuidString = characteristic->getUUID().toString().c_str();
             if (uuidString.equals(CHARACTERISTIC_UUID_AMOUNTCOLORS)){
                 Serial.print("READ amountColors: ");
@@ -932,6 +932,11 @@ class FilesCallbacks_send : public BLECharacteristicCallbacks
             readingSDFile = true;
             int dataSize = fileSend.read(data, CHUNKSIZE);
             readingSDFile = false;
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.print("data sent: ");
+                Serial.print(dataSize);
+                Serial.println(" bytes");
+            #endif
             if (dataSize == 0){
                 characteristic->setValue("");
             }else {
@@ -962,7 +967,7 @@ class FilesCallbacks_checkFile : public BLECharacteristicCallbacks
                 String nameBase = filename.substring(0,indexDot);
                 if (indexDot < 0){
                     #ifdef DEBUGGING_BLUETOOTH
-                        Serial.print("no existe el archivo: ");
+                        Serial.print("the file does NOT exist: ");
                         Serial.println(filename);
                     #endif
                     fileCharacteristic_errorMsg->setValue("0");
@@ -971,7 +976,7 @@ class FilesCallbacks_checkFile : public BLECharacteristicCallbacks
                 }
                 if (sdExists(nameBase + ".bin")){
                     #ifdef DEBUGGING_BLUETOOTH
-                        Serial.print("Si existe el archivo pero con extension .bin: ");
+                        Serial.print("the file exists but with .bin extension: ");
                         Serial.println(filename);
                     #endif
                     fileCharacteristic_errorMsg->setValue("1");
@@ -980,7 +985,7 @@ class FilesCallbacks_checkFile : public BLECharacteristicCallbacks
                 }
                 if (sdExists(nameBase + ".txt")){
                     #ifdef DEBUGGING_BLUETOOTH
-                        Serial.print("Si existe el archivo pero con extension .txt: ");
+                        Serial.print("the file exists but with .txt extension: ");
                         Serial.println(filename);
                     #endif
                     fileCharacteristic_errorMsg->setValue("1");
@@ -989,7 +994,7 @@ class FilesCallbacks_checkFile : public BLECharacteristicCallbacks
                 }
                 if (sdExists(nameBase + ".thr")){
                     #ifdef DEBUGGING_BLUETOOTH
-                        Serial.print("Si existe el archivo pero con extension .thr: ");
+                        Serial.print("the file exists but with .thr extension: ");
                         Serial.println(filename);
                     #endif
                     fileCharacteristic_errorMsg->setValue("1");
@@ -998,7 +1003,7 @@ class FilesCallbacks_checkFile : public BLECharacteristicCallbacks
                 }
             }
             #ifdef DEBUGGING_BLUETOOTH
-                Serial.print("no existe el archivo: ");
+                Serial.print("the file does NOT exist: ");
                 Serial.println(filename);
             #endif
             fileCharacteristic_errorMsg->setValue("0");
@@ -1006,7 +1011,7 @@ class FilesCallbacks_checkFile : public BLECharacteristicCallbacks
             return;
         }
         #ifdef DEBUGGING_BLUETOOTH
-            Serial.print("Si existe el archivo : ");
+            Serial.print("the file exists: ");
             Serial.println(filename);
         #endif
         fileCharacteristic_errorMsg->setValue("1");
@@ -1274,23 +1279,18 @@ int Bluetooth::init(String name){
             BLECharacteristic::PROPERTY_WRITE);
     ledCharacteristic_amountColors = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_AMOUNTCOLORS,
-            BLECharacteristic::PROPERTY_WRITE |
             BLECharacteristic::PROPERTY_READ);
     ledCharacteristic_positions = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_POSITIONS,
-            BLECharacteristic::PROPERTY_WRITE |
             BLECharacteristic::PROPERTY_READ);
     ledCharacteristic_red = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_RED,
-            BLECharacteristic::PROPERTY_WRITE |
             BLECharacteristic::PROPERTY_READ);
     ledCharacteristic_green = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_GREEN,
-            BLECharacteristic::PROPERTY_WRITE |
             BLECharacteristic::PROPERTY_READ);
     ledCharacteristic_blue = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_BLUE,
-            BLECharacteristic::PROPERTY_WRITE |
             BLECharacteristic::PROPERTY_READ);
     ledCharacteristic_update = pServiceLedConfig->createCharacteristic(
         CHARACTERISTIC_UUID_UPDATECPALETTE,
