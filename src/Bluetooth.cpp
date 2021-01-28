@@ -136,9 +136,7 @@ class bleServerCallback : public BLEServerCallbacks
 {
     void onConnect(BLEServer *pServer){
         #ifdef DEBUGGING_BLUETOOTH
-            Serial.print("BLE Server connected to: ");
-            Serial.println(pServer->getConnId());
-            Serial.println();
+            Serial.println("BLE Server connected");
         #endif
         Sandsara.setSpeed(SPEED_WHEN_IS_CONNECTED_TO_BLE);
         romSetSpeedMotor(SPEED_WHEN_IS_CONNECTED_TO_BLE);
@@ -149,6 +147,7 @@ class bleServerCallback : public BLEServerCallbacks
         #ifdef DEBUGGING_BLUETOOTH
             Serial.println("BLE Server disconnected");
         #endif
+        //Set motor speed
         int speed = String(generalCharacteristic_speed->getValue().c_str()).toInt();
         speed = map(speed,MIN_SLIDER_MSPEED,MAX_SLIDER_MSPEED,MIN_SPEED_MOTOR,MAX_SPEED_MOTOR);
         if (speed > MAX_SPEED_MOTOR || speed < MIN_SPEED_MOTOR){
@@ -157,6 +156,47 @@ class bleServerCallback : public BLEServerCallbacks
         Sandsara.setSpeed(speed);
         romSetSpeedMotor(speed);
         speedChangedMain = true;
+        //END
+        //recieving and sending process
+        if (receiveFlag)
+        {
+            char namePointer [100];
+            fileReceive.getName(namePointer, 100);
+            String name  = namePointer;
+            fileReceive.close();
+            if (sdRemove(name)){
+                #ifdef DEBUGGING_BLUETOOTH
+                    Serial.print("receiving transmision was canceled, file: ");
+                    Serial.print(name);
+                    Serial.println(" was deleted");
+                #endif
+            }
+            else
+            {
+                #ifdef DEBUGGING_BLUETOOTH
+                Serial.print("receiving transmision was canceled, but file: ");
+                Serial.print(name);
+                Serial.println(" was not deleted");
+                #endif
+            }
+            pauseModeGlobal = false;
+            receiveFlag = false;
+        }
+        if (sendFlag){
+            char namePointer [100];
+            fileSend.getName(namePointer, 100);
+            String name  = namePointer;
+            fileSend.close();
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.print("sending transmision was canceled, file: ");
+                Serial.print(name);
+                Serial.println(" was no sent");
+            #endif
+            pauseModeGlobal = false;
+            sendFlag = false;
+        }
+        
+
     }
 };
 
