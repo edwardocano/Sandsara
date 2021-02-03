@@ -179,6 +179,7 @@
 #define TIME_WAITFORSD 1000
 #define FILENAME_BASE "Sandsara-trackNumber-"
 #define SPEED_WHEN_IS_CONNECTED_TO_BLE 25
+#define THREAD_LEDS_TIME 10 //in milliseconds
 
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0

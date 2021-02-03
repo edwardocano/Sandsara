@@ -319,7 +319,7 @@ class setBrightnessCallbacks : public BLECharacteristicCallbacks
             Serial.print("WRITE brightness: ");
             Serial.println(brightness);
         #endif
-        brightness = map(brightness,MIN_SLIDER_BRIGHTNESS,MAX_SLIDER_BRIGHTNESS,0,255);
+        brightness = map(brightness,MIN_SLIDER_BRIGHTNESS,MAX_SLIDER_BRIGHTNESS,48,255);
         
         if(brightness < 0 || brightness > 255){
             characteristic->setValue(String(romGetBrightness()).c_str());
@@ -328,7 +328,7 @@ class setBrightnessCallbacks : public BLECharacteristicCallbacks
             return;
         }
         
-        FastLED.setBrightness(brightness);
+        //FastLED.setBrightness(brightness);
         romSetBrightness(brightness);
         ledCharacteristic_errorMsg->setValue("ok");
         ledCharacteristic_errorMsg->notify();

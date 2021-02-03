@@ -1520,14 +1520,20 @@ int romSetLedsDirection(bool direction){
     EEPROM.commit();
     return 0;
 }
+bool readingBrightness = false;
 /**
  * @brief stored the brightness of the led strip in ROM.
  * @param brightness is the value to be stored.
  * @return an error code.
  */
 int romSetBrightness(uint8_t brightness){
+    while (readingBrightness){
+        delay(1);
+    }
+    readingBrightness = true;
     EEPROM.write(ADDRESSBRIGHTNESS, brightness);
     EEPROM.commit();
+    readingBrightness = false;
     return 0;
 }
 /**
@@ -1535,7 +1541,12 @@ int romSetBrightness(uint8_t brightness){
  * @return the brightness of the led strip.
  */
 int romGetBrightness(){
+    while (readingBrightness){
+        delay(1);
+    }
+    readingBrightness = true;
     int brightness = EEPROM.read(ADDRESSBRIGHTNESS);
+    readingBrightness = false;
     return brightness;
 }
 /**
@@ -1554,12 +1565,12 @@ bool romGetLedsDirection(){
 
 //====Funciones de Leds====
 
-void FillLEDsFromPaletteColors( uint8_t colorIndex)
+void FillLEDsFromPaletteColors(CRGBPalette256 palette, uint8_t colorIndex)
 {
     uint8_t brightness = 255;
     startIndex = colorIndex;
     for( int i = 0; i < NUM_LEDS; i++) {
-        leds[i] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
+        leds[i] = ColorFromPalette( palette, colorIndex, brightness, currentBlending);
         if (!incrementIndexGlobal){
             colorIndex =startIndex + float(i+1)*(255.0/float(NUM_LEDS));
         }
@@ -1605,6 +1616,9 @@ void ledsFunc( void * pvParameters ){
     //====Configurar fastled====
     FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
     FastLED.setBrightness( romGetBrightness() );
+    // FastLED.setBrightness( 255 );
+    int currentBrightness = 0;
+    int indexTime = 0;
     //====
     for(;;){
         if (ledsOffGlobal){
@@ -1614,7 +1628,26 @@ void ledsFunc( void * pvParameters ){
                 vTaskDelay(100);
             }
         }
-        FillLEDsFromPaletteColors(startIndex);
+        int romBrightness = romGetBrightness();
+        if (romBrightness <= 48){ //valores menores a 48 son menores o iguales a 2 al remapearlos con gama8
+            romBrightness = 0;
+        }
+        
+        if (currentBrightness < romBrightness){
+            currentBrightness += 3;
+            if (currentBrightness > romBrightness){
+                currentBrightness = romBrightness;
+            }
+            FastLED.setBrightness(gamma8[currentBrightness]);
+        }
+        if (currentBrightness > romBrightness){
+            currentBrightness -= 3;
+            if (currentBrightness < romBrightness){
+                currentBrightness = romBrightness;
+            }
+            FastLED.setBrightness(gamma8[currentBrightness]);
+        }
+        FillLEDsFromPaletteColors(currentPalette, startIndex);
         for (int i = 0; i < NUM_LEDS; i++){
             leds[i].red = gamma8[leds[i].red];
             leds[i].green = gamma8[leds[i].green];
@@ -1628,15 +1661,19 @@ void ledsFunc( void * pvParameters ){
             }
         }      
         FastLED.show();
-        if (ledsDirection){
-            startIndex += 1;
-        }
-        else{
-            startIndex -= 1;
+        if (indexTime >= delayLeds/THREAD_LEDS_TIME){
+            if (ledsDirection){
+                startIndex += 1;
+            }
+            else{
+                startIndex -= 1;
+            }
+            indexTime = 0;
         }
         //vTaskDelay(delayLeds);
-        FastLED.delay(delayLeds);
-    } 
+        FastLED.delay(THREAD_LEDS_TIME);
+        indexTime ++;
+    }
 }
 
 /**
