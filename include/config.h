@@ -150,7 +150,7 @@
  * Restricciones
  */
 #define MAX_CHARS_PLAYLIST      40
-#define MAX_SPEED_MOTOR         200
+#define MAX_SPEED_MOTOR         400
 #define MIN_SPEED_MOTOR         1
 #define MAX_PERIOD_LED          500
 #define MIN_PERIOD_LED          10
@@ -167,8 +167,8 @@
 #define MAX_CHARACTER_PER_LINE  1000
 #define OUTOFTIME_BLUETOOTH     20000
 #define OUTOFTIME_BLUETOOTH_LINE 1000
-#define NORMAL_CURRENT          700
-#define CURRENT_IN_CALIBRATION  600
+#define NORMAL_CURRENT          900
+#define CURRENT_IN_CALIBRATION  800
 //#define ACCELERATION            400.0
 #define ACCEL_THRESHOLD         500.0
 #define SAFE_SPEED              1.0

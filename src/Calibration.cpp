@@ -460,6 +460,11 @@ int Calibration::start()
 				driver2.rms_current(CURRENT_IN_CALIBRATION);
 				digitalWrite(EN_PIN, LOW);
 				digitalWrite(EN_PIN2, LOW);
+                
+				delay(3000);
+				digitalWrite(DIR_PIN2, HIGH);
+				move(2000, 2, 500);              /////Para mandar brazo a cero
+				delay(5000);
 				avoid = 1;
 				return 0;
 			}
@@ -629,6 +634,14 @@ int Calibration::start()
 				}
 				driver.rms_current(CURRENT_IN_CALIBRATION);
 				driver2.rms_current(CURRENT_IN_CALIBRATION);
+
+                digitalWrite(EN_PIN, LOW);
+				digitalWrite(EN_PIN2, LOW);
+
+                delay(3000);
+				digitalWrite(DIR_PIN2, HIGH);
+				move(2000, 2, 500);              /////Para mandar brazo a cero
+                delay(5000);
 				avoid = 1;
 				return 0;
 			}
@@ -866,7 +879,7 @@ void slow_Calibration_hall1()
 		}
 	}
 	//delay(1000);
-	pas = half1 + 2;
+	pas = half1;
 	move(pas, 1, 1000);
 }
 
@@ -923,7 +936,7 @@ void slow_Calibration_hall2()
 
 	//digitalWrite(DIR_PIN2, HIGH);
 	//move(100, 2, 8000);
-	digitalWrite(DIR_PIN2, LOW);
+	digitalWrite(DIR_PIN2, HIGH);
 	for (int i = 0; i < 40; i++)
 	{
 		value2_f = meanFilter2.AddValue(analogRead(hall2));
@@ -940,7 +953,7 @@ void slow_Calibration_hall2()
 	}
 	//delay(1000);
 
-	digitalWrite(DIR_PIN2, LOW);
+	digitalWrite(DIR_PIN2, HIGH);
 	for (int i = 0; i < 40; i++)
 	{
 		value2_f = meanFilter2.AddValue(analogRead(hall2));
@@ -969,7 +982,7 @@ void slow_Calibration_hall2()
 		}
 	}
 
-	digitalWrite(DIR_PIN2, HIGH);
+	digitalWrite(DIR_PIN2, LOW);
 
 	for (int y = 0; y < 40; y++)
 	{
@@ -1067,7 +1080,7 @@ void slow_Calibration_hall2()
 		k--;
 	}
 
-	digitalWrite(DIR_PIN2, LOW);
+	digitalWrite(DIR_PIN2, HIGH);
 	int pas;
 	int half;
 	half = (cont_t1 + cont_t2) / 2;
@@ -1078,7 +1091,7 @@ void slow_Calibration_hall2()
 
 	offset = (steps_ini2 - steps_ini) / 2;
 
-	digitalWrite(DIR_PIN2, LOW);
+	digitalWrite(DIR_PIN2, HIGH);
 	for (int i = 0; i < 40; i++)
 	{
 		value2_f = meanFilter2.AddValue(analogRead(hall2));
@@ -1315,7 +1328,7 @@ void slow_Calibration_hall1_negative()
 			read_hall1 = meanFilter2.AddValue(read_hall1);
 		}
 	}
-	pas = half1 + 2;
+	pas = half1;
 	move(pas, 1, 1000);
 }
 
@@ -1371,7 +1384,7 @@ void slow_Calibration_hall2_negative()
 
 	//digitalWrite(DIR_PIN2, HIGH);
 	//move(100, 2, 8000);
-	digitalWrite(DIR_PIN2, LOW);
+	digitalWrite(DIR_PIN2, HIGH);
 	for (int i = 0; i < 40; i++)
 	{
 		value2_f = meanFilter2.AddValue(analogRead(hall2));
@@ -1388,7 +1401,7 @@ void slow_Calibration_hall2_negative()
 	}
 	//delay(1000);
 
-	digitalWrite(DIR_PIN2, LOW);
+	digitalWrite(DIR_PIN2, HIGH);
 	for (int i = 0; i < 40; i++)
 	{
 		value2_f = meanFilter2.AddValue(analogRead(hall2));
@@ -1417,7 +1430,7 @@ void slow_Calibration_hall2_negative()
 		}
 	}
 
-	digitalWrite(DIR_PIN2, HIGH);
+	digitalWrite(DIR_PIN2, LOW);
 
 	for (int y = 0; y < 40; y++)
 	{
@@ -1516,7 +1529,7 @@ void slow_Calibration_hall2_negative()
 		k--;
 	}
 
-	digitalWrite(DIR_PIN2, LOW);
+	digitalWrite(DIR_PIN2, HIGH);
 	int pas;
 	int half;
 	half = (cont_t1 + cont_t2) / 2;
@@ -1527,7 +1540,7 @@ void slow_Calibration_hall2_negative()
 
 	offset = (steps_ini2 - steps_ini) / 2;
 
-	digitalWrite(DIR_PIN2, LOW);
+	digitalWrite(DIR_PIN2, HIGH);
 	for (int i = 0; i < 40; i++)
 	{
 		value2_f = meanFilter2.AddValue(analogRead(hall2));

@@ -295,7 +295,7 @@ void setup()
     #ifdef DEBUGGING_DATA
         Serial.println("Calibrando...");
     #endif
-    //haloCalib.start();
+    haloCalib.start();
     #ifdef DEBUGGING_DATA
         Serial.println("calibrado");
     #endif
