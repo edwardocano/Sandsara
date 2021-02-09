@@ -61,8 +61,9 @@ bool    startMovement = false;
 long    q1StepsGlobal, q2StepsGlobal;
 double  distanceGlobal;
 bool    speedChangedMain = false;
-String      changedProgram;
-int         changedPosition;
+String  changedProgram;
+int     changedPosition;
+bool    lastPoint = false;
 //====
 //====Pallete Color Variables====
 CRGBPalette16   NO_SD_PALLETE;
@@ -293,7 +294,7 @@ void setup()
     #ifdef DEBUGGING_DATA
         Serial.println("Calibrando...");
     #endif
-    //haloCalib.start();
+    // haloCalib.start();
     #ifdef DEBUGGING_DATA
         Serial.println("calibrado");
     #endif
@@ -778,6 +779,9 @@ int runFile(String fileName){
         {
             break;
         }
+        if (working_status == 5){
+            lastPoint = true;
+        }
         //====According to type of file the functions moveTo or movePolarTo will be executed====
         if (file.fileType == 1 || file.fileType == 3)
         {
@@ -796,6 +800,9 @@ int runFile(String fileName){
             }
             else
             {
+                if (lastPoint){
+                    Sandsara.lastPoint = true;
+                }
                 Sandsara.moveTo(component_1, component_2);
             }
         }
@@ -952,6 +959,9 @@ int moveInterpolateTo(double x, double y, double distance)
         //====
         x_aux += delta_x;
         y_aux += delta_y;
+        if (i == intervals && lastPoint){
+            Sandsara.lastPoint = true;
+        }
         Sandsara.moveTo(x_aux, y_aux);
     }
     Sandsara.moveTo(x, y);

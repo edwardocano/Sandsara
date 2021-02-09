@@ -9,6 +9,7 @@ bool sdRemove(String );
 //====
 // Variables globales de SdFiles
 int pathPercentage = -1;
+bool noMoreData = false, lastRow = false;
 
 int SdFiles::DISTANCIA_MAX = MAX_RADIO;
 /**
@@ -101,6 +102,7 @@ int SdFiles::getNextComponents(double *component1, double *component2)
     if (currentRow == "")
     {
         resp = readFile();
+        lastRow = false;
         if (resp != 0)
         {
             statusFile = resp;
@@ -154,6 +156,11 @@ int SdFiles::getNextComponents(double *component1, double *component2)
         statusFile = -6;
         return -6;
     }
+    if (lastRow && noMoreData)
+    {
+        return 5;
+    }
+    
     return 0;
 }
 
@@ -284,6 +291,10 @@ String SdFiles::nextRow()
         if (fileType == 3)
         {
             pFileBin -= 1;
+            if (pFileBin == 0){
+                lastRow = true;
+            }
+            
             if (pFileBin < 0)
             {
                 return "";
@@ -322,6 +333,10 @@ String SdFiles::nextRow()
         if (fileType == 3)
         {
             pFileBin += 1;
+            if (pFileBin == charsToRead / 6 - 1){
+                lastRow = true;
+            }
+            
             if (pFileBin > charsToRead / 6 - 1)
             {
                 return "";
@@ -332,6 +347,7 @@ String SdFiles::nextRow()
         index_separator = this->dataBuffer.indexOf(this->lineSeparator);
         if (index_separator == -1 || index_separator == this->dataBuffer.length() - 1)
         {
+            lastRow = true;
             return_str = this->dataBuffer;
             this->dataBuffer = "";
             return return_str;
@@ -388,6 +404,9 @@ int SdFiles::readFile()
         //<BINCASE>
         if (fileType == 3)
         {
+            if (pFile == 0){
+                noMoreData = true;
+            }
             pFileBin = charsToRead / 6;
             readingSDFile = false;
             return 0;
@@ -397,6 +416,7 @@ int SdFiles::readFile()
         dataBuffer = String((char *)dataBufferBin);
         if (pFile == 0)
         {
+            noMoreData = true;
             readingSDFile = false;
             return 0;
         }
@@ -430,6 +450,9 @@ int SdFiles::readFile()
         if (fileType == 3)
         {
             pFile += charsToRead;
+            if (pFile == file.size()){
+                noMoreData = true;
+            }
             pFileBin = -1;
             readingSDFile = false;
             return 0;
@@ -439,6 +462,7 @@ int SdFiles::readFile()
         int index_nl = dataBuffer.lastIndexOf(this->lineSeparator);
         if (index_nl == -1)
         {
+            noMoreData = true;
             pFile = file.size();
             readingSDFile = false;
             return 0;

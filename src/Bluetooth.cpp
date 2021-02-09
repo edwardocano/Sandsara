@@ -618,6 +618,10 @@ class playlistCallbacks_name : public BLECharacteristicCallbacks
         if (!sdExists(playList)){
             playlistCharacteristic_errorMsg->setValue("error= -1");
             playlistCharacteristic_errorMsg->notify();
+            #ifdef DEBUGGING_BLUETOOTH
+                Serial.print("WRITE playlist not exists: ");
+                Serial.println(playList);
+            #endif
             return;
         }
         playListGlobal = "/" + playList;

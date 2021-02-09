@@ -39,6 +39,7 @@ class Motors {
         double  q2_current;
         double  millimeterSpeed = 15;
         double  _pathSpeed;
+        bool    lastPoint;
         
     private:
         double  zCurrent;

@@ -192,7 +192,10 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 info2 = "2:" + String(int(currentSpeed2)) + "," + String(positions[1]) + "," + String(int(_pathSpeed));
                 Serial.println(info1);
                 Serial.println(info2);*/
-
+                if (lastPoint && k == factorInt){
+                    accel1 = currentSpeed1;
+                    lastPoint = false;
+                }
                 if ((accel1 > ACCEL_THRESHOLD) || (accel2 > ACCEL_THRESHOLD)){
                     double maxAccel, safeSpeed;
                     maxAccel = greaterValue(accel1, accel2);
