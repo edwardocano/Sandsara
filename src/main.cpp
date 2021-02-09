@@ -775,11 +775,15 @@ int runFile(String fileName){
         {
             continue;
         }
-        if (working_status != 0)
+        if (working_status != 0 && working_status != 5)
         {
             break;
         }
         if (working_status == 5){
+            Serial.print("ultimo punto\nx = ");
+            Serial.print(component_1);
+            Serial.print("\ty = ");
+            Serial.println(component_2);
             lastPoint = true;
         }
         //====According to type of file the functions moveTo or movePolarTo will be executed====
@@ -794,6 +798,7 @@ int runFile(String fileName){
             if (distance > 1.1)
             {
                 errorCode = moveInterpolateTo(component_1, component_2, distance);
+                Sandsara.lastPoint = false;
                 if (errorCode != 0){
                     return errorCode;
                 }
@@ -804,6 +809,7 @@ int runFile(String fileName){
                     Sandsara.lastPoint = true;
                 }
                 Sandsara.moveTo(component_1, component_2);
+                Sandsara.lastPoint = false;
             }
         }
         else if (file.fileType == 2)
@@ -960,6 +966,7 @@ int moveInterpolateTo(double x, double y, double distance)
         x_aux += delta_x;
         y_aux += delta_y;
         if (i == intervals && lastPoint){
+            Serial.println("true en el ultimo movimiento");
             Sandsara.lastPoint = true;
         }
         Sandsara.moveTo(x_aux, y_aux);

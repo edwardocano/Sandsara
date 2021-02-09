@@ -37,6 +37,7 @@ Motors::Motors()
     stepper2 = AccelStepper(1, STEP_PIN2, DIR_PIN2);
     stepper1.setPinsInverted(true);
     stepper2.setPinsInverted(true);
+    lastPoint = false;
 }
 
 
@@ -192,9 +193,11 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 info2 = "2:" + String(int(currentSpeed2)) + "," + String(positions[1]) + "," + String(int(_pathSpeed));
                 Serial.println(info1);
                 Serial.println(info2);*/
-                if (lastPoint && k == factorInt){
+                if (lastPoint && posConstrained[0] == stepsQ1Og && posConstrained[1] == stepsQ2Og){
                     accel1 = currentSpeed1;
                     lastPoint = false;
+                    Serial.print("accel1 = ");
+                    Serial.println(accel1);
                 }
                 if ((accel1 > ACCEL_THRESHOLD) || (accel2 > ACCEL_THRESHOLD)){
                     double maxAccel, safeSpeed;
