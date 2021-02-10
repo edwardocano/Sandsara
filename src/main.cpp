@@ -625,6 +625,7 @@ int run_sandsara(String playList, int orderMode)
  */
 int runFile(String fileName){
     double component_1, component_2, distance;
+    // lastPoint = false;
     int working_status = 0;
     //====restore the path name and its position in the playlist.
     currentProgramGlobal = fileName;
@@ -798,7 +799,7 @@ int runFile(String fileName){
             if (distance > 1.1)
             {
                 errorCode = moveInterpolateTo(component_1, component_2, distance);
-                Sandsara.lastPoint = false;
+                lastPoint = false;
                 if (errorCode != 0){
                     return errorCode;
                 }
@@ -809,7 +810,7 @@ int runFile(String fileName){
                     Sandsara.lastPoint = true;
                 }
                 Sandsara.moveTo(component_1, component_2);
-                Sandsara.lastPoint = false;
+                lastPoint = false;
             }
         }
         else if (file.fileType == 2)
@@ -850,6 +851,8 @@ int runFile(String fileName){
     }
     //====
     Sandsara.completePath();
+    // Serial.println("se detendra 5 segundos...");
+    // delay(5000);
     //====
     posisionCase = Sandsara.position();
     if (posisionCase == 2){
@@ -857,9 +860,13 @@ int runFile(String fileName){
     }
     else if (posisionCase == 0){
         #ifdef DEBUGGING_DATA
-            Serial.println("Se mandara a cero");
+            Serial.println("Se mandara a cero...");
         #endif
+        // delay(3000);
+        // lastPoint = true;
         movePolarTo(0, 0, 0, true);
+        // lastPoint = false;
+        Sandsara.completePath();
 		if (intermediateCalibration == true)
 		{
             #ifdef DEBUGGING_DATA
@@ -929,7 +936,9 @@ void spiralGoTo(float module, float angle){
     Sandsara.setZCurrent(Sandsara.getCurrentModule());
     degreesToRotate = int((Sandsara.getCurrentModule() - module)/EVERY_MILIMITERS) * 2*PI;
     Sandsara.setThetaCurrent(Sandsara.getCurrentAngle() + degreesToRotate);
+    lastPoint = true;
     movePolarTo(module, angle, 0, true);
+    lastPoint = false;
 }
 
 //=========================================================
@@ -971,6 +980,10 @@ int moveInterpolateTo(double x, double y, double distance)
         }
         Sandsara.moveTo(x_aux, y_aux);
     }
+    if (lastPoint){
+        Serial.println("true en el ultimo movimiento");
+        Sandsara.lastPoint = true;
+    }
     Sandsara.moveTo(x, y);
     return 0;
 }
@@ -998,6 +1011,11 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     long slices;
     double deltaTheta, deltaZ;
     double thetaAuxiliar, zAuxliar, xAux, yAux;
+    bool lastPointInThisFunction = false;
+    if (lastPoint){
+        lastPointInThisFunction = true;
+        lastPoint = false;
+    }
     deltaTheta = thetaNext - thetaCurrent;
     deltaZ = zNext - zCurrent;
     slicesFactor = Sandsara.arcLength(deltaZ, deltaTheta, zCurrent);
@@ -1025,12 +1043,18 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
         distance = Sandsara.module(xAux, yAux, Sandsara.x_current, Sandsara.y_current);
         if (distance > 1.1)
         {
+            if (lastPointInThisFunction && i == (slices - 1)){
+                lastPoint = true;
+            }
             errorCode = moveInterpolateTo(xAux, yAux, distance);
             if (errorCode != 0){
                 return errorCode;
             }
         }
         else{
+            if (lastPointInThisFunction && i == (slices - 1)){
+                Sandsara.lastPoint = true;
+            }
             Sandsara.moveTo(xAux, yAux, littleMovement);
         }
     }

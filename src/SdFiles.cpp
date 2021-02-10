@@ -313,6 +313,7 @@ String SdFiles::nextRow()
             if (index_separator == -1)
             {
                 return_str = this->dataBuffer;
+                lastRow = true;
                 this->dataBuffer = "";
                 return return_str;
             }
@@ -647,6 +648,8 @@ void SdFiles::autoSetMode(double zCurrent)
         pFile = 0;
         pFileBin = charsToRead / 6;
     }
+    Serial.print("direction file: ");
+    Serial.println(directionMode);
 }
 
 /**
