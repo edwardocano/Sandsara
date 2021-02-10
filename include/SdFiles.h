@@ -54,7 +54,8 @@ class SdFiles {
         uint8_t* dataBufferBin;
         String currentRow = "";
         String dataBuffer = "";
-        int fileSize;        
+        int fileSize;
+        bool noMoreData = false, lastRow = false;        
     public:
         SdFiles(String , int = 1);
         ~SdFiles();

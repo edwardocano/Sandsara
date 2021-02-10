@@ -412,10 +412,10 @@ void setup()
                     &motorsTask,
                     0);
     delay(500); 
-    if (!playListGlobal.equals(TESTINGPLAYLIST)){
-        goEdgeSpiral(false);
-        Serial.println("termino espiral");
-    }
+    // if (!playListGlobal.equals(TESTINGPLAYLIST)){
+    //     goEdgeSpiral(false);
+    //     Serial.println("termino espiral");
+    // }
     delay(1000);
     firstExecution = true;
 }
@@ -625,7 +625,6 @@ int run_sandsara(String playList, int orderMode)
  */
 int runFile(String fileName){
     double component_1, component_2, distance;
-    // lastPoint = false;
     int working_status = 0;
     //====restore the path name and its position in the playlist.
     currentProgramGlobal = fileName;
@@ -851,8 +850,6 @@ int runFile(String fileName){
     }
     //====
     Sandsara.completePath();
-    // Serial.println("se detendra 5 segundos...");
-    // delay(5000);
     //====
     posisionCase = Sandsara.position();
     if (posisionCase == 2){
@@ -1047,6 +1044,7 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
                 lastPoint = true;
             }
             errorCode = moveInterpolateTo(xAux, yAux, distance);
+            lastPoint = false;
             if (errorCode != 0){
                 return errorCode;
             }
@@ -1066,138 +1064,6 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
     Sandsara.setZCurrent(zNext);
     return 0;
 }
-/**
- * @brief Este es una tarea en paralelo que revisa si hay algun mensaje por bluetooth.
- */
-/*void bluetoothThread(void * pvParameters ){
-    for(;;){
-        errorCode = SandsaraBt.checkBlueTooth();
-        executeCode(errorCode);
-        vTaskDelay(100);
-    }
-}*/
-
-/**
- * @brief Ejecuta los codigos que regresa la funcion checkBluetooth()
- */
-/*void executeCode(int errorCode){
-    if (errorCode == 10){
-        playListGlobal = "/" + SandsaraBt.getPlaylist();
-        romSetPlaylist(playListGlobal);
-    }
-    else if (errorCode == 20){
-        orderModeGlobal = SandsaraBt.getOrderMode();
-        romSetOrderMode(orderModeGlobal);
-    }
-    else if (errorCode == 30){
-        ledModeGlobal = SandsaraBt.getLedMode();
-        changePalette(ledModeGlobal);
-        romSetPallete(ledModeGlobal);
-    }
-    else if (errorCode == 50){
-        int speed = SandsaraBt.getSpeed();
-        Sandsara.setSpeed(speed);
-        romSetSpeedMotor(speed);
-        speedChangedMain = true;
-    }
-    else if (errorCode == 60){
-        int periodLed = SandsaraBt.getPeriodLed();
-        periodLedsGlobal = periodLed;
-        delayLeds = periodLed;
-        romSetPeriodLed(periodLedsGlobal);
-    }
-    else if (errorCode == 70){
-        String blueName = SandsaraBt.getBluetoothName();
-        bluetoothNameGlobal = blueName;
-        romSetBluetoothName(bluetoothNameGlobal);
-    }
-    else if (errorCode == 80){
-        suspensionModeGlobal = true;
-        pauseModeGlobal = false;
-        #ifdef DEBUGGING_DATA
-            Serial.println("Entro a modo suspencion");
-        #endif
-    }
-    else if (errorCode == 90){
-        pauseModeGlobal = true;
-        #ifdef DEBUGGING_DATA
-            Serial.println("Entro en modo pausa");
-        #endif
-    }
-    else if (errorCode == 100){
-        pauseModeGlobal = false;
-        suspensionModeGlobal = false;
-        #ifdef DEBUGGING_DATA
-            Serial.println("Reanudado");
-        #endif
-    }
-    else if (errorCode == 130){
-        SandsaraBt.writeBt("currentProgram= ");
-        SandsaraBt.writeBtln(currentProgramGlobal);
-    }
-    else if (errorCode == 140){
-        SandsaraBt.writeBt("nextProgram= ");
-        SandsaraBt.writeBtln(nextProgramGlobal);
-    }
-    else if (errorCode == 150){
-        String fileName;
-        int i = 1, errorCode;
-        SandsaraBt.writeBt("playlist: ");
-        SandsaraBt.writeBtln(currentPlaylistGlobal);
-        for (;;){
-            errorCode = SdFiles::getLineNumber(i,currentPlaylistGlobal, fileName);
-            if (errorCode < 0){
-                SandsaraBt.writeBtln("error");
-                break;
-            }
-            if (errorCode > 0){
-                if (!fileName.equals("")){
-                    SandsaraBt.writeBt(String(i) + ": ");
-                    SandsaraBt.writeBtln(fileName);
-                }
-                break;
-            }
-            SandsaraBt.writeBt(String(i) + ": ");
-            SandsaraBt.writeBtln(fileName);
-            i++;
-        }
-        SandsaraBt.writeBtln("ok");
-    }
-    else if (errorCode == 160){
-        changePositionList = true;
-        changeProgram = false;
-        #ifdef DEBUGGING_DATA
-            Serial.println("cambio de programa por su posicion en la lista");
-        #endif
-    }
-    else if (errorCode == 170){
-        changeProgram = true;
-        changePositionList = false;
-        #ifdef DEBUGGING_DATA
-            Serial.println("cambio de programa por su nombre en la memoria SD");
-        #endif
-    }
-    else if (errorCode == 190){
-        incrementIndexGlobal = romGetIncrementIndexPallete();
-    }
-    else if (errorCode == 200){
-        intermediateCalibration = romGetIntermediateCalibration();
-    }
-    else if(errorCode == 210){
-        rewindPlaylist = true;
-    }
-    else if(errorCode == 220){
-        ledsDirection = romGetLedsDirection();
-    }
-    else if (errorCode == 970){
-        for (int i = 0; i < 512; i++){
-            EEPROM.write(i, -1);
-        }
-        EEPROM.commit();
-        delay(1000);
-        rebootWithMessage("Se hiso reset de fabrica, Reiniciando...");
-    }
-}*/
 
 //====ROM functions Section====
 

@@ -196,12 +196,9 @@ void Motors::moveTo(double x, double y, bool littleMovement)
                 if (lastPoint && posConstrained[0] == stepsQ1Og && posConstrained[1] == stepsQ2Og){
                     accel1 = 2500;//greaterValue(fabs(currentSpeed1), fabs(currentSpeed2));
                     lastPoint = false;
-                    Serial.print("accel1 = ");
-                    Serial.println(accel1);
-                    Serial.print("k= ");
-                    Serial.println(k);
-                    Serial.print("intFactor= ");
-                    Serial.println(factorInt);
+                    #ifdef DEBBUGING_DATA
+                        Serial.println("last point in moveTo function");
+                    #endif
                 }
                 if ((accel1 > ACCEL_THRESHOLD) || (accel2 > ACCEL_THRESHOLD)){
                     double maxAccel, safeSpeed;

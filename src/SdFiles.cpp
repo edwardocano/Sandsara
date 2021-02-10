@@ -9,7 +9,7 @@ bool sdRemove(String );
 //====
 // Variables globales de SdFiles
 int pathPercentage = -1;
-bool noMoreData = false, lastRow = false;
+// bool noMoreData = false, lastRow = false;
 
 int SdFiles::DISTANCIA_MAX = MAX_RADIO;
 /**
