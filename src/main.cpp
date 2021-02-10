@@ -294,7 +294,7 @@ void setup()
     #ifdef DEBUGGING_DATA
         Serial.println("Calibrando...");
     #endif
-    // haloCalib.start();
+    haloCalib.start();
     #ifdef DEBUGGING_DATA
         Serial.println("calibrado");
     #endif
@@ -412,10 +412,10 @@ void setup()
                     &motorsTask,
                     0);
     delay(500); 
-    // if (!playListGlobal.equals(TESTINGPLAYLIST)){
-    //     goEdgeSpiral(false);
-    //     Serial.println("termino espiral");
-    // }
+    if (!playListGlobal.equals(TESTINGPLAYLIST)){
+        goEdgeSpiral(false);
+        Serial.println("termino espiral");
+    }
     delay(1000);
     firstExecution = true;
 }
