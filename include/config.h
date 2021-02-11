@@ -180,6 +180,7 @@
 #define FILENAME_BASE "Sandsara-trackNumber-"
 #define SPEED_WHEN_IS_CONNECTED_TO_BLE 25
 #define THREAD_LEDS_TIME 10 //in milliseconds
+#define MAX_DISTANCE_FOR_MOVEMENT 2.5 //this distance is in milimeters and it represents the max distance the ball will move per instrucicion in MoveTo function
 
 //Disable interrupts during updating leds
 //#define FASTLED_ALLOW_INTERRUPTS 0

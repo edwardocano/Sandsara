@@ -76,7 +76,9 @@ void Motors::moveTo(double x, double y, bool littleMovement)
     x = dkX(q1, q2);
     y = dkY(q1, q2);
     distance = module(x, y, x_current, y_current);
-    if (distance > 1.1)
+    // Serial.print("d= ");
+    // Serial.println(distance);
+    if (distance > MAX_DISTANCE_FOR_MOVEMENT)
     {
         moveInterpolateTo(x, y, distance, littleMovement);
     }

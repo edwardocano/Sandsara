@@ -795,7 +795,7 @@ int runFile(String fileName){
             }
             Motors::rotate(component_1, component_2, -couplingAngle);
             distance = Sandsara.module(component_1, component_2, Sandsara.x_current, Sandsara.y_current);
-            if (distance > 1.1)
+            if (distance > MAX_DISTANCE_FOR_MOVEMENT)
             {
                 errorCode = moveInterpolateTo(component_1, component_2, distance);
                 lastPoint = false;
@@ -1038,7 +1038,7 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
         xAux = zAuxliar * cos(thetaAuxiliar);
         yAux = zAuxliar * sin(thetaAuxiliar);
         distance = Sandsara.module(xAux, yAux, Sandsara.x_current, Sandsara.y_current);
-        if (distance > 1.1)
+        if (distance > MAX_DISTANCE_FOR_MOVEMENT)
         {
             if (lastPointInThisFunction && i == (slices - 1)){
                 lastPoint = true;
