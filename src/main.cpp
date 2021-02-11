@@ -1797,6 +1797,7 @@ void moveSteps(void* pvParameters)
     Sandsara.setRealQ1(q1Current);
     Sandsara.setRealQ2(q2Current);
     //double milimiterSpeed = romGetSpeedMotor();
+    unsigned long t = micros();
     for (;;){
         if (startMovement){
             q1Steps = q1StepsGlobal;
@@ -1804,6 +1805,7 @@ void moveSteps(void* pvParameters)
             distance = distanceGlobal;
             #ifdef IMPLEMENT_ACCELERATION
                 pathSpeed = maxPathSpeedGlobal;
+
                 maxSteps = maxStepsGlobal;
             #endif
             startMovement = false;

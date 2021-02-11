@@ -84,7 +84,7 @@
  * si DEBUGGING_DETAIL se define se mostraran mensajes por serial que ayudan a debuguear el codigo
  * si DISABLE_MOTORS se define, los motores no se moveran a la hora de dibujar los archivos.
  */
-//#define PROCESSING_SIMULATOR
+// #define PROCESSING_SIMULATOR
 #define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
 //#define DISABLE_MOTORS

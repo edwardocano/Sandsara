@@ -679,7 +679,8 @@ void Motors::ik(double x, double y, double *q1, double *q2)
     ///Delimiter module z
     if (productType){
         i = theta / (2 * PI / (2 * no_picos));
-        z_max = abs(b[i] / (tan(theta) - m[i]) * sqrt(1 + pow(tan(theta), 2)));
+        double tantheta = tan(theta);
+        z_max = abs(b[i] / (tantheta - m[i]) * sqrt(1 + tantheta*tantheta));
         if (z > z_max){
             z = z_max;
         }
