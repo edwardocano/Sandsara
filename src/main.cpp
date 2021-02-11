@@ -95,6 +95,8 @@ void    SetupBlackAndWhiteStripedPalette();
 void    SetupPurpleAndGreenPalette();
 void    ledsFunc( void * );
 int     run_sandsara(String ,int );
+void     run_ajedrez();
+void coordenadas(char, char, double *, double *);
 int     movePolarTo(double ,double ,double, bool = false);
 
 int     romSetPlaylist(String );
@@ -295,7 +297,7 @@ void setup()
     #ifdef DEBUGGING_DATA
         Serial.println("Calibrando...");
     #endif
-    haloCalib.start();
+    //haloCalib.start();
     #ifdef DEBUGGING_DATA
         Serial.println("calibrado");
     #endif
@@ -419,6 +421,7 @@ void setup()
     // }
     delay(1000);
     firstExecution = true;
+    run_ajedrez();
 }
 
 void loop()
@@ -426,7 +429,10 @@ void loop()
     #ifdef DEBUGGING_DATA
         Serial.println("Iniciara la funcion runSansara");
     #endif
+
+    
     errorCode = run_sandsara(playListGlobal, orderModeGlobal);
+
     #ifdef DEBUGGING_DATA
         Serial.print("errorCode de run: ");
         Serial.println(errorCode);
@@ -1927,4 +1933,152 @@ void moveSteps(void* pvParameters)
         }
         vTaskSuspend(motorsTask);
     }
+}
+
+void run_ajedrez()
+{
+    double comp_1,comp_2;
+    double *Ap_comp_1 = &comp_1;
+    double *Ap_comp_2 = &comp_2;
+    Serial.println("En funcion run_ajedrez");
+    
+        //====run program========================================================
+        //errorCode = runFile(fileName);
+
+        File myFile;
+
+        myFile = SD.open("movimiento.pgn", FILE_WRITE);
+
+        
+        // re-open the file for reading:
+        myFile = SD.open("movimiento.pgn");
+        if (myFile)
+        {
+            Serial.println("movimiento.pgn:");
+
+            // read from the file until there's nothing else in it:
+            while (myFile.available())
+            {
+                //Serial.write(myFile.read());
+                char char_x_ini, char_y_ini, char_x_fin, char_y_fin;
+                char caracter = (myFile.read());
+
+                if(caracter == '.')
+                {
+                    Serial.println("Coordenada inicio");
+                    char_x_ini = (myFile.read());
+                    char_y_ini = (myFile.read());
+                    Serial.print(char_x_ini);
+                    Serial.println(char_y_ini);
+                    coordenadas(char_x_ini,char_y_ini,Ap_comp_1,Ap_comp_2);
+                    Serial.println(comp_1);
+                    Serial.println(comp_2);
+                    Sandsara.moveTo(comp_1, comp_2);
+                    digitalWrite(LED_PIN,HIGH);
+                }
+                
+                
+                if(caracter == ' ')
+                {
+                    Serial.println("Coordenada final");
+                    char_x_fin = (myFile.read());
+                    char_y_fin = (myFile.read());
+                    Serial.print(char_x_fin);
+                    Serial.println(char_y_fin);
+                    coordenadas(char_x_fin,char_y_fin,Ap_comp_1,Ap_comp_2);
+                    Serial.println(comp_1);
+                    Serial.println(comp_2);
+                    Sandsara.moveTo(comp_1, comp_2);
+                    digitalWrite(LED_PIN,LOW);
+                }
+
+            }
+            // close the file:
+            myFile.close();
+        }
+        else
+        {
+            // if the file didn't open, print an error:
+            Serial.println("error opening movimiento.pgn");
+        }
+
+        //====
+        
+        //====Increment pListFileGlobal====
+        pListFileGlobal += 1;
+        //====
+    
+
+}
+void coordenadas(char caract_1, char caract_2, double *c_1, double *c_2)
+{
+    //20833/3.5
+    double longitud = 5952;
+
+    if(caract_1 == 'a')
+    {
+        *c_1 = -3.5*longitud;
+    }
+    if(caract_1 == 'b')
+    {
+        *c_1 = -2.5*longitud;
+    }
+    if(caract_1 == 'c')
+    {
+        *c_1 = -1.5*longitud;
+    }
+    if(caract_1 == 'd')
+    {
+        *c_1 = -0.5*longitud;
+    }
+    if(caract_1 == 'e')
+    {
+        *c_1 = 0.5*longitud;
+    }
+    if(caract_1 == 'f')
+    {
+        *c_1 = 1.5*longitud;
+    }
+    if(caract_1 == 'g')
+    {
+        *c_1 = 2.5*longitud;
+    }
+    if(caract_1 == 'h')
+    {
+        *c_1 = 3.5*longitud;
+    }
+
+    if(caract_2 == '1')
+    {
+        *c_2 = -3.5*longitud;
+    }
+    if(caract_2 == '2')
+    {
+        *c_2 = -2.5*longitud;
+    }
+    if(caract_2 == '3')
+    {
+        *c_2 = -1.5*longitud;
+    }
+    if(caract_2 == '4')
+    {
+        *c_2 = -0.5*longitud;
+    }
+    if(caract_2 == '5')
+    {
+        *c_2 = 0.5*longitud;
+    }
+    if(caract_2 == '6')
+    {
+        *c_2 = 1.5*longitud;
+    }
+    if(caract_2 == '7')
+    {
+        *c_2 = 2.5*longitud;
+    }
+    if(caract_2 == '8')
+    {
+        *c_2 = 3.5*longitud;
+    }
+
 }

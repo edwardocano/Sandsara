@@ -38,8 +38,8 @@
  * el eslabon 1 es el eslabon que se encuentra acoplado al eje central del mecanismo
  * el eslabon 2 es el eslabon que se encuentra acoplado la eslabon 1.
  */
-#define l1 150
-#define l2 150
+#define l1 76    //150 para ajedrez
+#define l2 76    //150 para ajedrez
 
 /**
  * DISTANCIA_MAX es el radio maximo, desde el centro, que va a dibujar el robot
@@ -56,7 +56,7 @@
  * por ejemplo si bigPulleySize es de 40 dientes y littlePulleySize 20 dientes
  * se puede hacer bigPulleySize = 4.0 y littlePulleySize = 2.0
  */
-#define bigPulleySize 5.0
+#define bigPulleySize 4.0    //5.0 para ajedrez
 #define littlePulleySize 2.0
 
 /**
