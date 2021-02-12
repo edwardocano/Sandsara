@@ -207,8 +207,8 @@ class speedLedCallbacks : public BLECharacteristicCallbacks
         std::string rxValue = characteristic->getValue();
         String value = rxValue.c_str();
         int periodLed = value.toInt();
+        characteristic->setValue(String(periodLed).c_str());
         periodLed = map(periodLed, MIN_SLIDER_LEDSPEED,MAX_SLIDER_LEDSPEED,MAX_PERIOD_LED,MIN_PERIOD_LED);
-        
         if(periodLed < MIN_PERIOD_LED || periodLed > MAX_PERIOD_LED){
             ledCharacteristic_errorMsg->setValue("error = -70");
             ledCharacteristic_errorMsg->notify();
@@ -253,6 +253,7 @@ class cycleModeCallbacks : public BLECharacteristicCallbacks
             Serial.print("WRITE cycleMode: ");
             Serial.println(incrementIndexGlobal);
         #endif
+        characteristic->setValue(String(incrementIndexGlobal).c_str());
         ledCharacteristic_errorMsg->setValue("ok");
         ledCharacteristic_errorMsg->notify();
     } //onWrite
@@ -282,6 +283,7 @@ class directionCallbacks : public BLECharacteristicCallbacks
                 Serial.print("WRITE direction: ");
                 Serial.println("true");
             #endif
+            characteristic->setValue("1");
         }
         else{
             romSetLedsDirection(false);
@@ -289,9 +291,11 @@ class directionCallbacks : public BLECharacteristicCallbacks
                 Serial.print("WRITE direction: ");
                 Serial.println("false");
             #endif
+            characteristic->setValue("0");
         }
         
         ledsDirection = romGetLedsDirection();
+
         ledCharacteristic_errorMsg->setValue("ok");
         ledCharacteristic_errorMsg->notify();
     } //onWrite
@@ -319,6 +323,7 @@ class setBrightnessCallbacks : public BLECharacteristicCallbacks
             Serial.print("WRITE brightness: ");
             Serial.println(brightness);
         #endif
+        characteristic->setValue(String(brightness).c_str());
         brightness = map(brightness,MIN_SLIDER_BRIGHTNESS,MAX_SLIDER_BRIGHTNESS,48,255);
         
         if(brightness < 0 || brightness > 255){
@@ -327,9 +332,9 @@ class setBrightnessCallbacks : public BLECharacteristicCallbacks
             ledCharacteristic_errorMsg->notify();
             return;
         }
-        
         //FastLED.setBrightness(brightness);
         romSetBrightness(brightness);
+        
         ledCharacteristic_errorMsg->setValue("ok");
         ledCharacteristic_errorMsg->notify();
     } //onWrite
@@ -667,7 +672,7 @@ class playlistCallbacks_pathPosition : public BLECharacteristicCallbacks
             Serial.print("WRITE pathPosition: ");
             Serial.println(position);
         #endif
-        
+        characteristic->setValue(String(position).c_str());
         changedPosition = position;
         playlistCharacteristic_errorMsg->setValue("ok");
         playlistCharacteristic_errorMsg->notify();
@@ -686,6 +691,7 @@ class playlistCallbacks_pathPosition : public BLECharacteristicCallbacks
     #endif
 };
 
+//esta characteristic sera eliminada
 class playlistCallbacks_addPath : public BLECharacteristicCallbacks
 {
     void onWrite(BLECharacteristic *characteristic)
@@ -728,6 +734,7 @@ class playlistCallbacks_addPath : public BLECharacteristicCallbacks
     #endif
 };
 
+//esta characteristic sera eliminada
 class playlistCallbacks_mode : public BLECharacteristicCallbacks
 {
     void onWrite(BLECharacteristic *characteristic)
@@ -1194,6 +1201,7 @@ class generalCallbacks_speed : public BLECharacteristicCallbacks
             Serial.print("WRITE speedball : ");
             Serial.println(speed);
         #endif
+        characteristic->setValue(String(speed).c_str());
         //remap the speed acoording to the range of the ball speed
         speed = map(speed,MIN_SLIDER_MSPEED,MAX_SLIDER_MSPEED,MIN_SPEED_MOTOR,MAX_SPEED_MOTOR);
         if (speed > MAX_SPEED_MOTOR || speed < MIN_SPEED_MOTOR){
