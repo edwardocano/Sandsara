@@ -478,42 +478,6 @@ class CallbacksToUpdate : public BLECharacteristicCallbacks
         #ifdef DEBUGGING_BLUETOOTH
             Serial.println("");
         #endif
-        //=====
-        // int amountOfColors = String(ledCharacteristic_amountColors->getValue().c_str()).toInt();
-        // uint8_t positions[amountOfColors];
-        // uint8_t red[amountOfColors];
-        // uint8_t green[amountOfColors];
-        // uint8_t blue[amountOfColors];
-        // String positionsString = ledCharacteristic_positions->getValue().c_str();
-        // String redString = ledCharacteristic_red->getValue().c_str();
-        // String greenString = ledCharacteristic_green->getValue().c_str();
-        // String blueString = ledCharacteristic_blue->getValue().c_str();
-        // #ifdef DEBUGGING_BLUETOOTH
-        //     Serial.println(positionsString);
-        //     Serial.println(redString);
-        //     Serial.println(greenString);
-        //     Serial.println(blueString);
-        // #endif
-        // if (amountOfColors < 2 || amountOfColors > 16){
-        //     ledCharacteristic_errorMsg->setValue("error= -181");
-        //     ledCharacteristic_errorMsg->notify();
-        //     return;}
-        //if (stringToArray(positionsString, positions, amountOfColors) < 0){
-        //     ledCharacteristic_errorMsg->setValue("error= -182");
-        //     ledCharacteristic_errorMsg->notify();
-        //     return;}
-        // if (stringToArray(redString, red, amountOfColors) < 0){
-        //     ledCharacteristic_errorMsg->setValue("error= -183");
-        //     ledCharacteristic_errorMsg->notify();
-        //     return;}
-        // if (stringToArray(greenString, green, amountOfColors) < 0){
-        //     ledCharacteristic_errorMsg->setValue("error= -184");
-        //     ledCharacteristic_errorMsg->notify();
-        //     return;}
-        // if (stringToArray(blueString, blue, amountOfColors) < 0){
-        //     ledCharacteristic_errorMsg->setValue("error= -185");
-        //     ledCharacteristic_errorMsg->notify();
-        //     return;}
 
         romSetCustomPallete(positions, red, green, blue, n);
         Bluetooth::setRed();
@@ -1915,6 +1879,12 @@ void Bluetooth::setPlayMode(int mode){
 
 void Bluetooth::setLedSpeed(int speed){
     speed = map(speed,MIN_PERIOD_LED,MAX_PERIOD_LED,MAX_SLIDER_LEDSPEED,MIN_SLIDER_LEDSPEED);
+    if (speed > MAX_SLIDER_LEDSPEED){
+        speed = MAX_SLIDER_LEDSPEED;
+    }
+    if (speed < MIN_SLIDER_LEDSPEED){
+        speed = MIN_SLIDER_LEDSPEED;
+    }
     ledCharacteristic_speed->setValue(String(speed).c_str());
     #ifdef DEBUGGING_BLUETOOTH
         Serial.print("SET ledSoeed: ");
@@ -1935,7 +1905,7 @@ void Bluetooth::setLedDirection(int ledDirection){
         Serial.println(String(ledDirection).c_str());
     #endif
 }
-void Bluetooth::setBrightness(int brightness){
+void Bluetooth::setBrightness(uint16_t brightness){
     brightness = map(brightness,0,255,MIN_SLIDER_BRIGHTNESS,MAX_SLIDER_BRIGHTNESS);
     ledCharacteristic_brightness->setValue(String(brightness).c_str());
     #ifdef DEBUGGING_BLUETOOTH
@@ -1974,6 +1944,12 @@ void Bluetooth::setStatus(int status){
 }
 void Bluetooth::setMotorSpeed(int speed){
     speed = map(speed,MIN_SPEED_MOTOR,MAX_SPEED_MOTOR,MIN_SLIDER_MSPEED,MAX_SLIDER_MSPEED);
+    if (speed > MAX_SLIDER_MSPEED){
+        speed = MAX_SLIDER_MSPEED;
+    }
+    if (speed < MIN_SLIDER_MSPEED){
+        speed = MIN_SLIDER_MSPEED;
+    }
     generalCharacteristic_speed->setValue(String(speed).c_str());
     #ifdef DEBUGGING_BLUETOOTH
         Serial.print("SET motor Speed: ");

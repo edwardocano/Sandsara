@@ -59,7 +59,7 @@ class SdFiles {
     public:
         SdFiles(String , int = 1);
         ~SdFiles();
-        int getNextComponents(double* , double* );
+        int getNextComponents(double* , double* , bool = true);
         int getStatus();
         void autoSetMode(double );
         double getStartPoint(int = 1, int = 0);

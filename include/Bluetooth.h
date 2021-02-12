@@ -101,7 +101,7 @@ class Bluetooth {
         static void setLedSpeed(int);
         static void setCycleMode(int);
         static void setLedDirection(int);
-        static void setBrightness(int);
+        static void setBrightness(uint16_t);
         static void setIndexPalette(int);
         static void setRed();
         static void setGreen();

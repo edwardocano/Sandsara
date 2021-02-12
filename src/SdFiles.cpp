@@ -95,7 +95,7 @@ SdFiles::~SdFiles()
  * - -6 no es un tipo de archivo valido
  * - -10 ya no hay mas archivos por leer por posible problema con memoria sd.
  */
-int SdFiles::getNextComponents(double *component1, double *component2)
+int SdFiles::getNextComponents(double *component1, double *component2, bool bleProgress)
 {
     int resp;
     currentRow = nextRow();
@@ -108,19 +108,21 @@ int SdFiles::getNextComponents(double *component1, double *component2)
             statusFile = resp;
             return resp;
         }
-        if (directionMode == 1){
-            if (fileSize != 0){
-                if ((pFile*100)/fileSize != pathPercentage){
-                    pathPercentage = (pFile*100)/fileSize;
-                    Bluetooth::setPercentage(pathPercentage);
+        if (bleProgress){
+            if (directionMode == 1){
+                if (fileSize != 0){
+                    if ((pFile*100)/fileSize != pathPercentage){
+                        pathPercentage = (pFile*100)/fileSize;
+                        Bluetooth::setPercentage(pathPercentage);
+                    }
                 }
             }
-        }
-        else{
-            if (fileSize != 0){ 
-                if (((fileSize - pFile)*100)/fileSize != pathPercentage){
-                    pathPercentage = ((fileSize - pFile)*100)/fileSize;
-                    Bluetooth::setPercentage(pathPercentage);
+            else{
+                if (fileSize != 0){ 
+                    if (((fileSize - pFile)*100)/fileSize != pathPercentage){
+                        pathPercentage = ((fileSize - pFile)*100)/fileSize;
+                        Bluetooth::setPercentage(pathPercentage);
+                    }
                 }
             }
         }
@@ -499,14 +501,14 @@ double SdFiles::getStartPoint(int component, int ignoreZero)
     pFileBin = charsToRead / 6;
     if (ignoreZero == 1 && fileType != 2)
     {
-        resp = getNextComponents(&component1, &component2);
+        resp = getNextComponents(&component1, &component2, false);
         while (resp == 3)
         {
-            resp = getNextComponents(&component1, &component2);
+            resp = getNextComponents(&component1, &component2, false);
         }
         while (component1 == 0 && component2 == 0)
         {
-            if (getNextComponents(&component1, &component2) == 1)
+            if (getNextComponents(&component1, &component2, false) == 1)
             {
                 break;
             }
@@ -514,10 +516,10 @@ double SdFiles::getStartPoint(int component, int ignoreZero)
     }
     else
     {
-        resp = getNextComponents(&component1, &component2);
+        resp = getNextComponents(&component1, &component2, false);
         while (resp == 3)
         {
-            resp = getNextComponents(&component1, &component2);
+            resp = getNextComponents(&component1, &component2, false);
         }
     }
     pFile = stackPFile;
@@ -563,14 +565,14 @@ double SdFiles::getFinalPoint(int component, int ignoreZero)
     pFileBin = 0;
     if (ignoreZero == 1 && fileType != 2)
     {
-        resp = getNextComponents(&component1, &component2);
+        resp = getNextComponents(&component1, &component2, false);
         while (resp == 3)
         {
-            resp = getNextComponents(&component1, &component2);
+            resp = getNextComponents(&component1, &component2, false);
         }
         while (component1 == 0 && component2 == 0)
         {
-            if (getNextComponents(&component1, &component2) == 1)
+            if (getNextComponents(&component1, &component2, false) == 1)
             {
                 break;
             }
@@ -578,10 +580,10 @@ double SdFiles::getFinalPoint(int component, int ignoreZero)
     }
     else
     {
-        resp = getNextComponents(&component1, &component2);
+        resp = getNextComponents(&component1, &component2, false);
         while (resp == 3)
         {
-            resp = getNextComponents(&component1, &component2);
+            resp = getNextComponents(&component1, &component2, false);
         }
     }
     pFile = stackPFile;
@@ -972,10 +974,10 @@ bool SdFiles::isValid(){
     int stackPFileBin = pFileBin;
     long stackPFile = pFile;
     double component1, component2;
-    resp = getNextComponents(&component1, &component2);
+    resp = getNextComponents(&component1, &component2, false);
     while (resp == 3)
     {
-        resp = getNextComponents(&component1, &component2);
+        resp = getNextComponents(&component1, &component2, false);
     }
     pFile = stackPFile;
     pFileBin = stackPFileBin;
