@@ -896,6 +896,7 @@ class FilesCallbacks_sendFlag : public BLECharacteristicCallbacks
                 #endif
                 fileCharacteristic_errorMsg->setValue("error= -1"); //archivo no existe
                 fileCharacteristic_errorMsg->notify();
+                readingSDFile = false;
                 return;
             }
             fileSend = SD.open(name, FILE_READ);
@@ -906,6 +907,7 @@ class FilesCallbacks_sendFlag : public BLECharacteristicCallbacks
                 #ifdef DEBUGGING_BLUETOOTH
                     Serial.println("error al abrir el archivo"); //file cannot be opened
                 #endif
+                readingSDFile = false;
                 return;
             }
             readingSDFile = false;
