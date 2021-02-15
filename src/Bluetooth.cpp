@@ -591,6 +591,7 @@ class playlistCallbacks_name : public BLECharacteristicCallbacks
                 Serial.print("WRITE playlist not exists: ");
                 Serial.println(playList);
             #endif
+            Bluetooth::setPlaylistName(playListGlobal);
             return;
         }
         playListGlobal = "/" + playList;

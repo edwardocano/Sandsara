@@ -241,7 +241,6 @@ void setup()
     rgb2Interpolation(pallette13, palletteColors13);
     rgb2Interpolation(pallette14, palletteColors14);
     rgb2Interpolation(pallette15, palletteColors15);
-
     
     //====Restoring bluetooth name====
     bluetoothNameGlobal = "Sandsara " + romGetBluetoothName();
