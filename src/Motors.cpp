@@ -56,6 +56,9 @@ void Motors::moveTo(double x, double y, bool littleMovement)
     double q1, q2, distance;
     long steps_of_q1, steps_of_q2, positions[2];
     double currentSpeed1, currentSpeed2;
+    //Serial.print(x);
+    //Serial.print(" ");
+    //Serial.println(y);
     MultiStepper stepps;
     AccelStepper stepper1Aux;
     AccelStepper stepper2Aux;

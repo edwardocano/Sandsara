@@ -63,6 +63,10 @@ double  distanceGlobal;
 bool    speedChangedMain = false;
 String      changedProgram;
 int         changedPosition;
+
+
+bool pos_fin = 0;
+
 //====
 //====Pallete Color Variables====
 CRGBPalette16   NO_SD_PALLETE;
@@ -297,7 +301,7 @@ void setup()
     #ifdef DEBUGGING_DATA
         Serial.println("Calibrando...");
     #endif
-    //haloCalib.start();
+    haloCalib.start();
     #ifdef DEBUGGING_DATA
         Serial.println("calibrado");
     #endif
@@ -1870,6 +1874,16 @@ void moveSteps(void* pvParameters)
     Sandsara.setRealQ1(q1Current);
     Sandsara.setRealQ2(q2Current);
     //double milimiterSpeed = romGetSpeedMotor();
+    /*
+    if(pos_fin == 1)
+    {
+        digitalWrite(LED_PIN,LOW);
+    }
+    if(pos_fin == 0)
+    {
+        digitalWrite(LED_PIN,HIGH);
+    }
+    */
     for (;;){
         if (startMovement){
             q1Steps = q1StepsGlobal;
@@ -1932,7 +1946,7 @@ void moveSteps(void* pvParameters)
             Sandsara.setRealQ2(q2Current);
         }
         vTaskSuspend(motorsTask);
-    }
+    } 
 }
 
 void run_ajedrez()
@@ -1962,7 +1976,7 @@ void run_ajedrez()
                 //Serial.write(myFile.read());
                 char char_x_ini, char_y_ini, char_x_fin, char_y_fin;
                 char caracter = (myFile.read());
-
+                
                 if(caracter == '.')
                 {
                     Serial.println("Coordenada inicio");
@@ -1973,8 +1987,12 @@ void run_ajedrez()
                     coordenadas(char_x_ini,char_y_ini,Ap_comp_1,Ap_comp_2);
                     Serial.println(comp_1);
                     Serial.println(comp_2);
+                    //pos_fin = 0;
                     Sandsara.moveTo(comp_1, comp_2);
+                    Sandsara.completePath();
                     digitalWrite(LED_PIN,HIGH);
+                    //delay(2000);
+                    
                 }
                 
                 
@@ -1986,10 +2004,15 @@ void run_ajedrez()
                     Serial.print(char_x_fin);
                     Serial.println(char_y_fin);
                     coordenadas(char_x_fin,char_y_fin,Ap_comp_1,Ap_comp_2);
-                    Serial.println(comp_1);
-                    Serial.println(comp_2);
+                    Serial.println("Componentes");
+                    //Serial.println(comp_1);
+                    //Serial.println(comp_2);
+                    //pos_fin = 1;
                     Sandsara.moveTo(comp_1, comp_2);
+                    Sandsara.completePath();
                     digitalWrite(LED_PIN,LOW);
+                    //delay(2000);
+                    
                 }
 
             }
@@ -2012,8 +2035,8 @@ void run_ajedrez()
 }
 void coordenadas(char caract_1, char caract_2, double *c_1, double *c_2)
 {
-    //20833/3.5
-    double longitud = 5952;
+    //x/3.5
+    double longitud = 50;
 
     if(caract_1 == 'a')
     {
@@ -2050,35 +2073,35 @@ void coordenadas(char caract_1, char caract_2, double *c_1, double *c_2)
 
     if(caract_2 == '1')
     {
-        *c_2 = -3.5*longitud;
+        *c_2 = 3.5*longitud;
     }
     if(caract_2 == '2')
     {
-        *c_2 = -2.5*longitud;
+        *c_2 = 2.5*longitud;
     }
     if(caract_2 == '3')
     {
-        *c_2 = -1.5*longitud;
+        *c_2 = 1.5*longitud;
     }
     if(caract_2 == '4')
     {
-        *c_2 = -0.5*longitud;
+        *c_2 = 0.5*longitud;
     }
     if(caract_2 == '5')
     {
-        *c_2 = 0.5*longitud;
+        *c_2 = -0.5*longitud;
     }
     if(caract_2 == '6')
     {
-        *c_2 = 1.5*longitud;
+        *c_2 = -1.5*longitud;
     }
     if(caract_2 == '7')
     {
-        *c_2 = 2.5*longitud;
+        *c_2 = -2.5*longitud;
     }
     if(caract_2 == '8')
     {
-        *c_2 = 3.5*longitud;
+        *c_2 = -3.5*longitud;
     }
 
 }
