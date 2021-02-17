@@ -99,8 +99,22 @@ void    SetupBlackAndWhiteStripedPalette();
 void    SetupPurpleAndGreenPalette();
 void    ledsFunc( void * );
 int     run_sandsara(String ,int );
-void     run_ajedrez();
+
+
+double longitud = 50;
+void run_ajedrez();
 void coordenadas(char, char, double *, double *);
+void info_jugada(char [],char *,char *,char *,char *,char *,int *);
+void chess_King(char,char,char,char,int,bool);
+void chess_Queen(char,char,char,char,int,bool);
+void chess_Rook(char,char,char,char,int,bool);
+void chess_Bishop(char,char,char,char,int,bool);
+void chess_Knight(char,char,char,char,int,bool);
+void chess_Pawn(char,char,char,char,int,bool);
+void comer(char,char,bool);
+void enroque_corto(bool);
+void enroque_largo(bool);
+
 int     movePolarTo(double ,double ,double, bool = false);
 
 int     romSetPlaylist(String );
@@ -1951,20 +1965,24 @@ void moveSteps(void* pvParameters)
 
 void run_ajedrez()
 {
-    double comp_1,comp_2;
-    double *Ap_comp_1 = &comp_1;
-    double *Ap_comp_2 = &comp_2;
+    char char_x_ini, char_y_ini, char_x_fin, char_y_fin, char_pieza;
+    int int_accion = 0;
+    char *Ap_y_ini = &char_y_ini;
+    char *Ap_x_ini = &char_x_ini;
+    char *Ap_y_fin = &char_y_fin;
+    char *Ap_x_fin = &char_x_fin;
+    char *Ap_pieza = &char_pieza;
+    int *Ap_accion = &int_accion;
+    char mov_chess[7] = {'v','v','v','v','v','v','v'};
+    bool color_chess = false;
+    char char_actual;
+    int index_mov = 0;
     Serial.println("En funcion run_ajedrez");
     
         //====run program========================================================
-        //errorCode = runFile(fileName);
-
         File myFile;
-
         myFile = SD.open("movimiento.pgn", FILE_WRITE);
-
-        
-        // re-open the file for reading:
+        int band_vec = 0;
         myFile = SD.open("movimiento.pgn");
         if (myFile)
         {
@@ -1973,70 +1991,644 @@ void run_ajedrez()
             // read from the file until there's nothing else in it:
             while (myFile.available())
             {
-                //Serial.write(myFile.read());
-                char char_x_ini, char_y_ini, char_x_fin, char_y_fin;
-                char caracter = (myFile.read());
-                
-                if(caracter == '.')
+                if(index_mov == 0)
                 {
-                    Serial.println("Coordenada inicio");
-                    char_x_ini = (myFile.read());
-                    char_y_ini = (myFile.read());
-                    Serial.print(char_x_ini);
-                    Serial.println(char_y_ini);
-                    coordenadas(char_x_ini,char_y_ini,Ap_comp_1,Ap_comp_2);
-                    Serial.println(comp_1);
-                    Serial.println(comp_2);
-                    //pos_fin = 0;
-                    Sandsara.moveTo(comp_1, comp_2);
-                    Sandsara.completePath();
-                    digitalWrite(LED_PIN,HIGH);
-                    //delay(2000);
-                    
+                    char_actual = (myFile.read());
                 }
-                
-                
-                if(caracter == ' ')
+                if(char_actual == ' ')
                 {
-                    Serial.println("Coordenada final");
-                    char_x_fin = (myFile.read());
-                    char_y_fin = (myFile.read());
-                    Serial.print(char_x_fin);
-                    Serial.println(char_y_fin);
-                    coordenadas(char_x_fin,char_y_fin,Ap_comp_1,Ap_comp_2);
-                    Serial.println("Componentes");
-                    //Serial.println(comp_1);
-                    //Serial.println(comp_2);
-                    //pos_fin = 1;
-                    Sandsara.moveTo(comp_1, comp_2);
-                    Sandsara.completePath();
-                    digitalWrite(LED_PIN,LOW);
-                    //delay(2000);
+                    index_mov = 0;
+                    do
+                    {
+                        if(myFile.available())
+                        {
+                            char_actual = (myFile.read());
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        
+                        if(char_actual != ' ')
+                        {
+                            mov_chess[index_mov] = char_actual;
+                            index_mov++;
+                        }
+                    }
+                    while(char_actual != ' ');
+            
+                    for(int i = 0; i < 7; i++)
+                    {
+                        if(mov_chess[i] == '.')
+                        {
+                            band_vec = 1;
+                        }
+                    }
                     
-                }
+                    Serial.println(" ");
+                    if (band_vec == 0)
+                    {
+                        color_chess = !color_chess;
+                        info_jugada(mov_chess, Ap_x_ini, Ap_y_ini, Ap_x_fin, Ap_y_fin, Ap_pieza, Ap_accion);
+                        for (int i = 0; i < 7; i++)
+                        {
+                            mov_chess[i] = 'v';
+                        }
+                        Serial.println("Jugada");
+                        Serial.println(color_chess);
+                        switch (int_accion)
+                        {
+                        case 1:
+                            Serial.println("Solo mueve");
+                            break;
+                        case 3:
+                            Serial.println("Mueve y Come");
+                            break;
+                        case 4:
+                            Serial.println("Mueve y Jaque");
+                            break;
+                        case 6:
+                            Serial.println("Mueve, Come y Jaque");
+                            break;
+                        case 7:
+                            Serial.println("Enroque Corto");
+                            break;
+                        case 8:
+                            Serial.println("Enroque Largo");
+                            break;
+                        default:
+                            Serial.println("Movimiento no valido");
+                            break;
+                        }
 
+                        switch (char_pieza)
+                        {
+                        case 'K':
+                            Serial.println("King");
+                            chess_King(char_x_ini,char_y_ini,char_x_fin,char_y_fin,int_accion, color_chess);
+                            break;
+                        case 'Q':
+                            Serial.println("Queen");
+                            chess_Queen(char_x_ini,char_y_ini,char_x_fin,char_y_fin,int_accion, color_chess);
+                            break;
+                        case 'R':
+                            Serial.println("Rook");
+                            chess_Rook(char_x_ini,char_y_ini,char_x_fin,char_y_fin,int_accion, color_chess);
+                            break;
+                        case 'B':
+                            Serial.println("Bishop");
+                            chess_Bishop(char_x_ini,char_y_ini,char_x_fin,char_y_fin,int_accion, color_chess);
+                            break;
+                        case 'N':
+                            Serial.println("Knight");
+                            chess_Knight(char_x_ini,char_y_ini,char_x_fin,char_y_fin,int_accion, color_chess);
+                            break;
+                        case 'P':
+                            Serial.println("Pawn");
+                            chess_Pawn(char_x_ini,char_y_ini,char_x_fin,char_y_fin,int_accion, color_chess);
+                            break;
+                        case 'S':
+                            enroque_corto(color_chess);
+                            break;
+                        case 'L':
+                            enroque_largo(color_chess);
+                            break;        
+                        default:
+                            Serial.println("Pieza no valida");
+                            break;
+                        }
+                        Serial.print(char_x_ini);
+                        Serial.println(char_y_ini);
+                        Serial.print(char_x_fin);
+                        Serial.println(char_y_fin);
+
+                        int_accion = 0;
+                        
+                    }
+                    band_vec = 0;
+                }
             }
-            // close the file:
             myFile.close();
         }
         else
         {
-            // if the file didn't open, print an error:
             Serial.println("error opening movimiento.pgn");
         }
+}
 
-        //====
-        
-        //====Increment pListFileGlobal====
-        pListFileGlobal += 1;
-        //====
+//=========================Descripcion de simbolos==============================
+//    PIEZAS
+//    King: the letter K
+//    Queen: the letter Q
+//    Rook: the letter R
+//    Bishop: the letter B
+//    Knight: the letter N
+//    Pawn: no letter assigned
+
+//    Acciones
+//    - : Mueve pieza  
+//   ' ': Mueve pieza
+//    x : Come pieza
+//    + : Pone en jaque
+//    o : Enroque
+
+//    acc
+//    1 : solo mueve
+//    3 : mueve y come
+//    4 : mueve y jaque
+//    6 : mueve, come y jaque
+//    7 : Enroque corto
+//    8 : Enroque largo
+
+
+void info_jugada(char v[7],char *ini_c1,char *ini_c2,char *fin_c1,char *fin_c2,char *pieza,int *acc)
+{
+    char v_pieza[5] = {'K','Q','R','B','N'};
+    char v_accion[5] = {'-',' ','x','+','O'};
+    char ini_fin[4] = {'V','V','V','V'};
+    char accion;
+    int peon = 1;
+    int come = 0;
+    int jaque = 0;
+    int enroque = 5;
+    int move = 0;
+    for(int i = 0; i < 7; i++)
+    {
+        for(int j=0; j<5;j++)
+        {
+            if(v[i] == v_pieza[j])
+            {
+                *pieza = v_pieza[j];
+                peon = 0;
+                v[i] = 'v';
+            }
+            if(v[i] == v_accion[j])
+            {
+                accion = v_accion[j];
+                v[i] = 'v';
+                if(accion == '-' || accion == ' ')
+                {
+                    move = 1;
+                }
+                if(accion == 'x')
+                {
+                    come = 3;
+                }
+                if(accion == '+')
+                {
+                    jaque = 3;
+                }
+                if(accion == 'O')
+                {
+                    enroque++;
+                }
+            }
+        }
+        if(peon == 1)
+        {
+            *pieza = 'P';
+        }
+    }
+    if(enroque == 7)
+    {
+        *pieza = 'S';    //Enroque corto
+    }
+    if(enroque == 8)
+    {
+        *pieza = 'L';    //Enroque Largo
+    }
+    int k = 0;
+    for(int i = 0; i < 7; i++)
+    {
+        if(v[i] != 'v')
+        {
+            ini_fin[k] = v[i];
+            k++;
+        }
+    }
+    *ini_c1 = ini_fin[0];
+    *ini_c2 = ini_fin[1];
+    *fin_c1 = ini_fin[2];
+    *fin_c2 = ini_fin[3];
+    if(enroque == 5)
+    {
+        *acc = come + jaque + move;
+    }
+    else
+    {
+        *acc = enroque;
+    }
+}
+
+void chess_King(char x_ini, char y_ini, char x_fin, char y_fin, int movement, bool chess_color)
+{
+    double comp_1,comp_2;
+    double *Ap_comp_1 = &comp_1;
+    double *Ap_comp_2 = &comp_2;
+
+    if(movement == 3 || movement == 6)
+    {
+        comer(x_fin, y_fin, chess_color);
+    }
+
+    coordenadas(x_ini,y_ini, Ap_comp_1, Ap_comp_2);
+    Sandsara.moveTo(comp_1, comp_2);
+    Sandsara.completePath();
+    digitalWrite(LED_PIN, HIGH);
+    delay(1000);
+
+    coordenadas(x_fin, y_fin, Ap_comp_1, Ap_comp_2);
+    Sandsara.moveTo(comp_1, comp_2);
+    Sandsara.completePath();
+    digitalWrite(LED_PIN, LOW);
+    delay(1000);
+}
+
+void chess_Queen(char x_ini,char y_ini,char x_fin,char y_fin,int movement, bool chess_color)
+{
+    double comp_1,comp_2;
+    double *Ap_comp_1 = &comp_1;
+    double *Ap_comp_2 = &comp_2;
+
+    if(movement == 3 || movement == 6)
+    {
+        comer(x_fin, y_fin, chess_color);
+    }
+
+    coordenadas(x_ini,y_ini, Ap_comp_1, Ap_comp_2);
+    Sandsara.moveTo(comp_1, comp_2);
+    Sandsara.completePath();
+    digitalWrite(LED_PIN, HIGH);
+    delay(1000);
+
+    coordenadas(x_fin, y_fin, Ap_comp_1, Ap_comp_2);
+    Sandsara.moveTo(comp_1, comp_2);
+    Sandsara.completePath();
+    digitalWrite(LED_PIN, LOW);
+    delay(1000);
+
+}
+
+void chess_Rook(char x_ini,char y_ini,char x_fin,char y_fin,int movement, bool chess_color)
+{
+    double comp_1,comp_2;
+    double *Ap_comp_1 = &comp_1;
+    double *Ap_comp_2 = &comp_2;
+
+    if(movement == 3 || movement == 6)
+    {
+        comer(x_fin, y_fin, chess_color);
+    }
+
+    coordenadas(x_ini,y_ini, Ap_comp_1, Ap_comp_2);
+    Sandsara.moveTo(comp_1, comp_2);
+    Sandsara.completePath();
+    digitalWrite(LED_PIN, HIGH);
+    delay(1000);
+
+    coordenadas(x_fin, y_fin, Ap_comp_1, Ap_comp_2);
+    Sandsara.moveTo(comp_1, comp_2);
+    Sandsara.completePath();
+    digitalWrite(LED_PIN, LOW);
+    delay(1000);
+
+}
+
+void chess_Bishop(char x_ini,char y_ini,char x_fin,char y_fin,int movement, bool chess_color)
+{
+    double comp_1,comp_2;
+    double *Ap_comp_1 = &comp_1;
+    double *Ap_comp_2 = &comp_2;
+
+    if(movement == 3 || movement == 6)
+    {
+        comer(x_fin, y_fin, chess_color);
+    }
+
+    coordenadas(x_ini,y_ini, Ap_comp_1, Ap_comp_2);
+    Sandsara.moveTo(comp_1, comp_2);
+    Sandsara.completePath();
+    digitalWrite(LED_PIN, HIGH);
+    delay(1000);
+
+    coordenadas(x_fin, y_fin, Ap_comp_1, Ap_comp_2);
+    Sandsara.moveTo(comp_1, comp_2);
+    Sandsara.completePath();
+    digitalWrite(LED_PIN, LOW);
+    delay(1000);
+
+}
+
+void chess_Knight(char x_ini,char y_ini,char x_fin,char y_fin,int movement, bool chess_color)
+{
+    double comp_1,comp_2;
+    double *Ap_comp_1 = &comp_1;
+    double *Ap_comp_2 = &comp_2;
+
+    if(movement == 3 || movement == 6)
+    {
+        comer(x_fin, y_fin, chess_color);
+    }
+
+    coordenadas(x_ini,y_ini, Ap_comp_1, Ap_comp_2);
+    Sandsara.moveTo(comp_1, comp_2);
+    Sandsara.completePath();
+    digitalWrite(LED_PIN, HIGH);
+    delay(1000);
+
+    coordenadas(x_fin, y_fin, Ap_comp_1, Ap_comp_2);
+    Sandsara.moveTo(comp_1, comp_2);
+    Sandsara.completePath();
+    digitalWrite(LED_PIN, LOW);
+    delay(1000);
+
+}
+
+void chess_Pawn(char x_ini,char y_ini,char x_fin,char y_fin,int movement, bool chess_color)
+{
+    double comp_1,comp_2;
+    double *Ap_comp_1 = &comp_1;
+    double *Ap_comp_2 = &comp_2;
+
+    if(movement == 3 || movement == 6)
+    {
+        comer(x_fin, y_fin, chess_color);
+    }
+
+    coordenadas(x_ini,y_ini, Ap_comp_1, Ap_comp_2);
+    Sandsara.moveTo(comp_1, comp_2);
+    Sandsara.completePath();
+    digitalWrite(LED_PIN, HIGH);
+    delay(1000);
+
+    coordenadas(x_fin, y_fin, Ap_comp_1, Ap_comp_2);
+    Sandsara.moveTo(comp_1, comp_2);
+    Sandsara.completePath();
+    digitalWrite(LED_PIN, LOW);
+    delay(1000);
+
+}
+
+void comer(char x_fin,char y_fin,bool chess_color)
+{
+     //Movemos hacia la posicion donde se encuentra la pieza capturada
+    double comp_x,comp_y;
+    double *Ap_comp_x = &comp_x;
+    double *Ap_comp_y = &comp_y;
+
+    coordenadas(x_fin,y_fin, Ap_comp_x, Ap_comp_y);
+    Sandsara.moveTo(comp_x, comp_y);
+    Sandsara.completePath();
+    digitalWrite(LED_PIN, HIGH);
+    delay(1000);
+
+    //Movemos la pieza hacia la linea inferior más cercana    
+    if(chess_color == true)
+    {
+        comp_y = comp_y - (0.5 * longitud);
+    }
+    else
+    {
+        comp_y = comp_y + (0.5 * longitud);
+    }
+    Sandsara.moveTo(comp_x, comp_y);
+    Sandsara.completePath();
+    delay(1000);
+
+    //Movemos la pieza sobre la linea de los escaques, al lado izquierdo desde la perspectiva de cada jugador
+    if(chess_color == true)
+    {
+        comp_x = 4.0 * longitud;
+    }
+    else
+    {
+        comp_x = -4.0 * longitud;
+    }
+    Sandsara.moveTo(comp_x, comp_y);
+    Sandsara.completePath();
+    digitalWrite(LED_PIN, LOW);
+    delay(1000);
+}
+
+//Para ambos enroques la secuencia ya está definida, sólo cambia según el color de la pieza que va a mover 
+//y si se trata de un enroque corto o largo.
+//Por regla el primer movimiento lo debe realizar el rey y posteriormente la torre
+//Por ahora como sólo se están leyendo jugadas desde un archivo no se hacen las verificaciones necesarias
+void enroque_corto(bool chess_color)
+{
+    double comp_x;
+    double comp_y;
+    if(chess_color == true)  //Si es el turno de las blancas
+    {
+        //Movemos hacia la posicion del rey blanco "e1"
+        comp_x = 0.5 * longitud;
+        comp_y = 3.5 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, HIGH);
+        delay(500);
+
+        //Movemos el rey blanco a "g1"
+        comp_x = 2.5 * longitud;
+        comp_y = 3.5 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, LOW);
+        delay(500);
+
+        //Movemos a la posicion de la torre en "h1"
+        comp_x = 3.5 * longitud;
+        comp_y = 3.5 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, HIGH);
+        delay(500);
+
+        //Movemos la torre a la linea inferior del limite del tablero
+        comp_x = 3.5 * longitud;
+        comp_y = 4.0 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        delay(500);
+
+        //Movemos la torre sobre la linea inferior del tablero hasta "f1"
+        comp_x = 1.5 * longitud;
+        comp_y = 4.0 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        delay(500);
+
+        //Movemos la torre al centro de "f1"
+        comp_x = 1.5 * longitud;
+        comp_y = 3.5 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, LOW);
+        delay(500);
+
+    }
+    else                      //Si es el turno de las negras
+    {
+        //Movemos hacia la posicion del rey negro "e8"
+        comp_x = 0.5 * longitud;
+        comp_y = -3.5 * longitud;
+        Serial.println(comp_x/longitud);
+        Serial.println(comp_y/longitud);
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, HIGH);
+        delay(500);
+
+        //Movemos el rey negro a "g8"
+        comp_x = 2.5 * longitud;
+        comp_y = -3.5 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, LOW);
+        delay(500);
+
+        //Movemos a la posicion de la torre en "h8"
+        comp_x = 3.5 * longitud;
+        comp_y = -3.5 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, HIGH);
+        delay(500);
+
+        //Movemos la torre a la linea inferior del limite del tablero
+        comp_x = 3.5 * longitud;
+        comp_y = -4.0 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        delay(500);
+
+        //Movemos la torre sobre la linea inferior del tablero hasta "f8"
+        comp_x = 1.5 * longitud;
+        comp_y = -4.0 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        delay(500);
+
+        //Movemos la torre al centro de "f1"
+        comp_x = 1.5 * longitud;
+        comp_y = -3.5 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, LOW);
+        delay(500);
+    }
     
 
 }
+ 
+void enroque_largo(bool chess_color)   
+{
+    double comp_x;
+    double comp_y;
+    if(chess_color == true)  //Si es el turno de las blancas
+    {
+        //Movemos hacia la posicion del rey blanco "e1"
+        comp_x = 0.5 * longitud;
+        comp_y = 3.5 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, HIGH);
+        delay(500);
+
+        //Movemos el rey blanco a "c1"
+        comp_x = -1.5 * longitud;
+        comp_y = 3.5 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, LOW);
+        delay(500);
+
+        //Movemos a la posicion de la torre en "a1"
+        comp_x = -3.5 * longitud;
+        comp_y = 3.5 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, HIGH);
+        delay(500);
+
+        //Movemos la torre a la linea inferior del limite del tablero
+        comp_x = -3.5 * longitud;
+        comp_y = 4.0 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        delay(500);
+
+        //Movemos la torre sobre la linea inferior del tablero hasta "d1"
+        comp_x = -0.5 * longitud;
+        comp_y = 4.0 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        delay(500);
+
+        //Movemos la torre al centro de "d1"
+        comp_x = -0.5 * longitud;
+        comp_y = 3.5 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, LOW);
+        delay(500);
+
+    }
+    else                      //Si es el turno de las negras
+    {
+        //Movemos hacia la posicion del rey negro "e8"
+        comp_x = 0.5 * longitud;
+        comp_y = -3.5 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, HIGH);
+        delay(500);
+
+        //Movemos el rey negro a "c8"
+        comp_x = -1.5 * longitud;
+        comp_y = -3.5 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, LOW);
+        delay(500);
+
+        //Movemos a la posicion de la torre en "a8"
+        comp_x = -3.5 * longitud;
+        comp_y = -3.5 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, HIGH);
+        delay(500);
+
+        //Movemos la torre a la linea inferior del limite del tablero
+        comp_x = -3.5 * longitud;
+        comp_y = -4.0 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        delay(500);
+
+        //Movemos la torre sobre la linea inferior del tablero hasta "d8"
+        comp_x = -0.5 * longitud;
+        comp_y = -4.0 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        delay(500);
+
+        //Movemos la torre al centro de "d8"
+        comp_x = -0.5 * longitud;
+        comp_y = -3.5 * longitud;
+        Sandsara.moveTo(comp_x, comp_y);
+        Sandsara.completePath();
+        digitalWrite(LED_PIN, LOW);
+        delay(500);
+    }
+
+}
+
 void coordenadas(char caract_1, char caract_2, double *c_1, double *c_2)
 {
     //x/3.5
-    double longitud = 50;
+    //double longitud = 50;
 
     if(caract_1 == 'a')
     {
