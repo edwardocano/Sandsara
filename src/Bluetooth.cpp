@@ -1948,6 +1948,7 @@ void Bluetooth::setName(String name){
 }
 void Bluetooth::setStatus(int status){
     generalCharacteristic_status->setValue(String(status).c_str());
+    generalCharacteristic_status->notify();
     #ifdef DEBUGGING_BLUETOOTH
         Serial.print("SET status: ");
         Serial.println(String(status).c_str());
