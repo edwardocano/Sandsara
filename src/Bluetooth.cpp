@@ -675,6 +675,7 @@ class playlistCallbacks_pathPosition : public BLECharacteristicCallbacks
         #endif
         characteristic->setValue(String(position).c_str());
         changedPosition = position;
+        Bluetooth::setPercentage(0);
         playlistCharacteristic_errorMsg->setValue("ok");
         playlistCharacteristic_errorMsg->notify();
         changePositionList = true;
