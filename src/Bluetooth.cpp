@@ -128,6 +128,7 @@ BLECharacteristic *generalCharacteristic_speed;
 BLECharacteristic *generalCharacteristic_restart;
 BLECharacteristic *generalCharacteristic_factoryReset;
 BLECharacteristic *generalCharacteristic_errorMsg;
+BLECharacteristic *generalCharacteristic_calibration;
 
 //================================Callbacks=============================
 //======================================================================
@@ -605,7 +606,7 @@ class playlistCallbacks_name : public BLECharacteristicCallbacks
         #endif
         playlistCharacteristic_errorMsg->setValue("ok");
         playlistCharacteristic_errorMsg->notify();
-    } //onWrite
+    } //onWrite 
 
     #ifdef DEBUGGING_BLUETOOTH
         void onRead(BLECharacteristic *characteristic)
@@ -1261,6 +1262,19 @@ class generalCallbacks_factoryReset : public BLECharacteristicCallbacks
     }
 };
 
+class generalCallbacks_status: public BLECharacteristicCallbacks {
+    #ifdef DEBUGGING_BLUETOOTH
+        void onRead(BLECharacteristic *characteristic){
+            Serial.print("READ status: ");
+            Serial.println(characteristic->getValue().c_str());
+        }
+    #endif
+};
+
+class generalCallback_calibrating: public BLECharacteristic {
+
+};
+
 Bluetooth::Bluetooth(){
 
 }
@@ -1449,6 +1463,7 @@ int Bluetooth::init(String name){
     generalCharacteristic_speed->setCallbacks(new generalCallbacks_speed());
     generalCharacteristic_restart->setCallbacks(new generalCallbacks_restart());
     generalCharacteristic_factoryReset->setCallbacks(new generalCallbacks_factoryReset());
+    generalCharacteristic_status->setCallbacks(new generalCallbacks_status());
 
     //====Characteristics for File configuration====
     fileCharacteristic_receiveFlag = pServiceFile->createCharacteristic(
