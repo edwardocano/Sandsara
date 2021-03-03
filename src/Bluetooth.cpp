@@ -1272,7 +1272,9 @@ class generalCallbacks_status: public BLECharacteristicCallbacks {
 };
 
 class generalCallback_calibrating: public BLECharacteristic {
-
+    void onWrite(BLECharacteristic *characteristic){
+        
+    }
 };
 
 Bluetooth::Bluetooth(){
