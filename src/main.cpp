@@ -67,6 +67,16 @@ int         changedPosition;
 
 bool pos_fin = 0;
 
+
+//Para configuracion de PWM
+/*
+int PWM_FREQUENCY = 20000; // this variable is used to define the time period 
+int PWM_CHANNEL = 0; // this variable is used to select the channel number
+int PWM_RESOUTION = 8; // this will define the resolution of the signal which is 8 in this case
+int GPIOPIN = 32 ; // GPIO to which we want to attach this channel signal
+int dutyCycle = 190; // it will define the width of signal or also the one time
+*/
+
 //====
 //====Pallete Color Variables====
 CRGBPalette16   NO_SD_PALLETE;
@@ -200,6 +210,7 @@ void setup()
     //====Testing====
 	int dat_pin;
 	dat_pin = analogRead(PIN_ProducType);
+    //dat_pin = 2000;
 	if(dat_pin > 682 && dat_pin < 2047)
 	{
 		haloTest.Test();	
@@ -276,8 +287,8 @@ void setup()
     Sandsara.init();
     SdFiles::DISTANCIA_MAX = MAX_RADIO;
     BluetoothSand.setVersion(String(v1Current) + "." + String(v2Current) + "." + String(v3Current));
-    Serial.println("antes de setname");
-    Serial.println(bluetoothNameGlobal);
+    //Serial.println("antes de setname");
+    //Serial.println(bluetoothNameGlobal);
     BluetoothSand.setName(bluetoothNameGlobal);
     BluetoothSand.setStatus(MODE_CALIBRATION);
     //====Select type of product====
@@ -439,6 +450,11 @@ void setup()
     // }
     delay(1000);
     firstExecution = true;
+
+    /*
+    ledcSetup(PWM_CHANNEL, PWM_FREQUENCY, PWM_RESOUTION);
+    ledcAttachPin(GPIOPIN, PWM_CHANNEL);
+    */
     run_ajedrez();
 }
 
@@ -1285,8 +1301,8 @@ int romGetPallete(){
         *(p + i) = EEPROM.read(ADDRESSPALLETE + i);
     }
     if (pallete>MAX_PALLETE || pallete < MIN_PALLETE){
-        Serial.print("pallete excedido por ");
-        Serial.println(pallete);
+        //Serial.print("pallete excedido por ");
+        //Serial.println(pallete);
         pallete = 16;
     }
     return pallete;
@@ -1965,6 +1981,10 @@ void moveSteps(void* pvParameters)
 
 void run_ajedrez()
 {
+
+    
+     
+
     char char_x_ini, char_y_ini, char_x_fin, char_y_fin, char_pieza;
     int int_accion = 0;
     char *Ap_y_ini = &char_y_ini;
@@ -2359,12 +2379,14 @@ void chess_Pawn(char x_ini,char y_ini,char x_fin,char y_fin,int movement, bool c
     Sandsara.moveTo(comp_1, comp_2);
     Sandsara.completePath();
     digitalWrite(LED_PIN, HIGH);
+    //ledcWrite(PWM_CHANNEL, dutyCycle);
     delay(1000);
 
     coordenadas(x_fin, y_fin, Ap_comp_1, Ap_comp_2);
     Sandsara.moveTo(comp_1, comp_2);
     Sandsara.completePath();
     digitalWrite(LED_PIN, LOW);
+    //ledcWrite(PWM_CHANNEL, 0);
     delay(1000);
 
 }
@@ -2385,11 +2407,11 @@ void comer(char x_fin,char y_fin,bool chess_color)
     //Movemos la pieza hacia la linea inferior más cercana    
     if(chess_color == true)
     {
-        comp_y = comp_y - (0.5 * longitud);
+        comp_y = comp_y + (0.5 * longitud);
     }
     else
     {
-        comp_y = comp_y + (0.5 * longitud);
+        comp_y = comp_y - (0.5 * longitud);
     }
     Sandsara.moveTo(comp_x, comp_y);
     Sandsara.completePath();
@@ -2398,11 +2420,11 @@ void comer(char x_fin,char y_fin,bool chess_color)
     //Movemos la pieza sobre la linea de los escaques, al lado izquierdo desde la perspectiva de cada jugador
     if(chess_color == true)
     {
-        comp_x = 4.0 * longitud;
+        comp_x = -4.0 * longitud;
     }
     else
     {
-        comp_x = -4.0 * longitud;
+        comp_x = 4.0 * longitud;
     }
     Sandsara.moveTo(comp_x, comp_y);
     Sandsara.completePath();
@@ -2421,46 +2443,46 @@ void enroque_corto(bool chess_color)
     if(chess_color == true)  //Si es el turno de las blancas
     {
         //Movemos hacia la posicion del rey blanco "e1"
-        comp_x = 0.5 * longitud;
-        comp_y = 3.5 * longitud;
+        comp_x = -0.5 * longitud;
+        comp_y = -3.5 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         digitalWrite(LED_PIN, HIGH);
         delay(500);
 
         //Movemos el rey blanco a "g1"
-        comp_x = 2.5 * longitud;
-        comp_y = 3.5 * longitud;
+        comp_x = -2.5 * longitud;
+        comp_y = -3.5 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         digitalWrite(LED_PIN, LOW);
         delay(500);
 
         //Movemos a la posicion de la torre en "h1"
-        comp_x = 3.5 * longitud;
-        comp_y = 3.5 * longitud;
+        comp_x = -3.5 * longitud;
+        comp_y = -3.5 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         digitalWrite(LED_PIN, HIGH);
         delay(500);
 
         //Movemos la torre a la linea inferior del limite del tablero
-        comp_x = 3.5 * longitud;
-        comp_y = 4.0 * longitud;
+        comp_x = -3.5 * longitud;
+        comp_y = -4.0 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         delay(500);
 
         //Movemos la torre sobre la linea inferior del tablero hasta "f1"
-        comp_x = 1.5 * longitud;
-        comp_y = 4.0 * longitud;
+        comp_x = -1.5 * longitud;
+        comp_y = -4.0 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         delay(500);
 
         //Movemos la torre al centro de "f1"
-        comp_x = 1.5 * longitud;
-        comp_y = 3.5 * longitud;
+        comp_x = -1.5 * longitud;
+        comp_y = -3.5 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         digitalWrite(LED_PIN, LOW);
@@ -2470,8 +2492,8 @@ void enroque_corto(bool chess_color)
     else                      //Si es el turno de las negras
     {
         //Movemos hacia la posicion del rey negro "e8"
-        comp_x = 0.5 * longitud;
-        comp_y = -3.5 * longitud;
+        comp_x = -0.5 * longitud;
+        comp_y = 3.5 * longitud;
         Serial.println(comp_x/longitud);
         Serial.println(comp_y/longitud);
         Sandsara.moveTo(comp_x, comp_y);
@@ -2480,38 +2502,38 @@ void enroque_corto(bool chess_color)
         delay(500);
 
         //Movemos el rey negro a "g8"
-        comp_x = 2.5 * longitud;
-        comp_y = -3.5 * longitud;
+        comp_x = -2.5 * longitud;
+        comp_y = 3.5 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         digitalWrite(LED_PIN, LOW);
         delay(500);
 
         //Movemos a la posicion de la torre en "h8"
-        comp_x = 3.5 * longitud;
-        comp_y = -3.5 * longitud;
+        comp_x = -3.5 * longitud;
+        comp_y = 3.5 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         digitalWrite(LED_PIN, HIGH);
         delay(500);
 
         //Movemos la torre a la linea inferior del limite del tablero
-        comp_x = 3.5 * longitud;
-        comp_y = -4.0 * longitud;
+        comp_x = -3.5 * longitud;
+        comp_y = 4.0 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         delay(500);
 
         //Movemos la torre sobre la linea inferior del tablero hasta "f8"
-        comp_x = 1.5 * longitud;
-        comp_y = -4.0 * longitud;
+        comp_x = -1.5 * longitud;
+        comp_y = 4.0 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         delay(500);
 
         //Movemos la torre al centro de "f1"
-        comp_x = 1.5 * longitud;
-        comp_y = -3.5 * longitud;
+        comp_x = -1.5 * longitud;
+        comp_y = 3.5 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         digitalWrite(LED_PIN, LOW);
@@ -2528,46 +2550,46 @@ void enroque_largo(bool chess_color)
     if(chess_color == true)  //Si es el turno de las blancas
     {
         //Movemos hacia la posicion del rey blanco "e1"
-        comp_x = 0.5 * longitud;
-        comp_y = 3.5 * longitud;
+        comp_x = -0.5 * longitud;
+        comp_y = -3.5 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         digitalWrite(LED_PIN, HIGH);
         delay(500);
 
         //Movemos el rey blanco a "c1"
-        comp_x = -1.5 * longitud;
-        comp_y = 3.5 * longitud;
+        comp_x = 1.5 * longitud;
+        comp_y = -3.5 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         digitalWrite(LED_PIN, LOW);
         delay(500);
 
         //Movemos a la posicion de la torre en "a1"
-        comp_x = -3.5 * longitud;
-        comp_y = 3.5 * longitud;
+        comp_x = 3.5 * longitud;
+        comp_y = -3.5 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         digitalWrite(LED_PIN, HIGH);
         delay(500);
 
         //Movemos la torre a la linea inferior del limite del tablero
-        comp_x = -3.5 * longitud;
-        comp_y = 4.0 * longitud;
+        comp_x = 3.5 * longitud;
+        comp_y = -4.0 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         delay(500);
 
         //Movemos la torre sobre la linea inferior del tablero hasta "d1"
-        comp_x = -0.5 * longitud;
-        comp_y = 4.0 * longitud;
+        comp_x = 0.5 * longitud;
+        comp_y = -4.0 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         delay(500);
 
         //Movemos la torre al centro de "d1"
-        comp_x = -0.5 * longitud;
-        comp_y = 3.5 * longitud;
+        comp_x = 0.5 * longitud;
+        comp_y = -3.5 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         digitalWrite(LED_PIN, LOW);
@@ -2577,46 +2599,46 @@ void enroque_largo(bool chess_color)
     else                      //Si es el turno de las negras
     {
         //Movemos hacia la posicion del rey negro "e8"
-        comp_x = 0.5 * longitud;
-        comp_y = -3.5 * longitud;
+        comp_x = -0.5 * longitud;
+        comp_y = 3.5 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         digitalWrite(LED_PIN, HIGH);
         delay(500);
 
         //Movemos el rey negro a "c8"
-        comp_x = -1.5 * longitud;
-        comp_y = -3.5 * longitud;
+        comp_x = 1.5 * longitud;
+        comp_y = 3.5 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         digitalWrite(LED_PIN, LOW);
         delay(500);
 
         //Movemos a la posicion de la torre en "a8"
-        comp_x = -3.5 * longitud;
-        comp_y = -3.5 * longitud;
+        comp_x = 3.5 * longitud;
+        comp_y = 3.5 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         digitalWrite(LED_PIN, HIGH);
         delay(500);
 
         //Movemos la torre a la linea inferior del limite del tablero
-        comp_x = -3.5 * longitud;
-        comp_y = -4.0 * longitud;
+        comp_x = 3.5 * longitud;
+        comp_y = 4.0 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         delay(500);
 
         //Movemos la torre sobre la linea inferior del tablero hasta "d8"
-        comp_x = -0.5 * longitud;
-        comp_y = -4.0 * longitud;
+        comp_x = 0.5 * longitud;
+        comp_y = 4.0 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         delay(500);
 
         //Movemos la torre al centro de "d8"
-        comp_x = -0.5 * longitud;
-        comp_y = -3.5 * longitud;
+        comp_x = 0.5 * longitud;
+        comp_y = 3.5 * longitud;
         Sandsara.moveTo(comp_x, comp_y);
         Sandsara.completePath();
         digitalWrite(LED_PIN, LOW);
@@ -2632,68 +2654,68 @@ void coordenadas(char caract_1, char caract_2, double *c_1, double *c_2)
 
     if(caract_1 == 'a')
     {
-        *c_1 = -3.5*longitud;
+        *c_1 = 3.5*longitud;
     }
     if(caract_1 == 'b')
     {
-        *c_1 = -2.5*longitud;
+        *c_1 = 2.5*longitud;
     }
     if(caract_1 == 'c')
     {
-        *c_1 = -1.5*longitud;
+        *c_1 = 1.5*longitud;
     }
     if(caract_1 == 'd')
     {
-        *c_1 = -0.5*longitud;
+        *c_1 = 0.5*longitud;
     }
     if(caract_1 == 'e')
     {
-        *c_1 = 0.5*longitud;
+        *c_1 = -0.5*longitud;
     }
     if(caract_1 == 'f')
     {
-        *c_1 = 1.5*longitud;
+        *c_1 = -1.5*longitud;
     }
     if(caract_1 == 'g')
     {
-        *c_1 = 2.5*longitud;
+        *c_1 = -2.5*longitud;
     }
     if(caract_1 == 'h')
     {
-        *c_1 = 3.5*longitud;
+        *c_1 = -3.5*longitud;
     }
 
     if(caract_2 == '1')
     {
-        *c_2 = 3.5*longitud;
+        *c_2 = -3.5*longitud;
     }
     if(caract_2 == '2')
     {
-        *c_2 = 2.5*longitud;
+        *c_2 = -2.5*longitud;
     }
     if(caract_2 == '3')
     {
-        *c_2 = 1.5*longitud;
+        *c_2 = -1.5*longitud;
     }
     if(caract_2 == '4')
     {
-        *c_2 = 0.5*longitud;
+        *c_2 = -0.5*longitud;
     }
     if(caract_2 == '5')
     {
-        *c_2 = -0.5*longitud;
+        *c_2 = 0.5*longitud;
     }
     if(caract_2 == '6')
     {
-        *c_2 = -1.5*longitud;
+        *c_2 = 1.5*longitud;
     }
     if(caract_2 == '7')
     {
-        *c_2 = -2.5*longitud;
+        *c_2 = 2.5*longitud;
     }
     if(caract_2 == '8')
     {
-        *c_2 = -3.5*longitud;
+        *c_2 = 3.5*longitud;
     }
 
 }

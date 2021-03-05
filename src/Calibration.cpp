@@ -4,7 +4,7 @@ hw_timer_t *timer1 = NULL;
 
 MeanFilter<long> meanFilter(5);
 MeanFilter<long> meanFilter2(40);
-MeanFilter<long> meanFilter3(10);
+MeanFilter<long> meanFilter3(5);
 MeanFilter<long> meanFilter4(10);
 int flag = 0;
 int avoid = 0;
@@ -43,8 +43,11 @@ int read_hall1;
 int Pole_sens1;
 int Pole_sens2;
 int Flag_adjust_ini = 0;
+
+int ProductTypeChess;
+
 TMC2209Stepper driver(&SERIAL_PORT, R_SENSE, DRIVER_ADDRESS);
-TMC2209Stepper driver2(&SERIAL_PORT2, R_SENSE, DRIVER_ADDRESS2);
+TMC2209Stepper driver2(&SERIAL_PORT2, R_SENSE, DRIVER_ADDRESS2);            //TMC2209Stepper driver2(&SERIAL_PORT, R_SENSE, DRIVER_ADDRESS2);
 
 void normal_turn();
 void move(int, int, int);
@@ -76,6 +79,7 @@ void Calibration::init()
 	SERIAL_PORT.begin(115200);
 	SERIAL_PORT2.begin(115200);
 
+    
 	pinMode(DIAG_PIN, INPUT);
 	pinMode(EN_PIN, OUTPUT);
 	pinMode(STEP_PIN, OUTPUT);
@@ -91,6 +95,7 @@ void Calibration::init()
 
 	digitalWrite(EN_PIN2, LOW);
 	digitalWrite(DIR_PIN2, HIGH);
+	
 
 	driver.begin();                   
 
@@ -154,7 +159,7 @@ void Calibration::init()
 	driver2.SGTHRS(STALL_VALUE2);      // Nivel de umbral StallGuard4 [0 ... 255] para la detección de bloqueo. Compensa
   									   // características específicas del motor y controla la sensibilidad. Un valor más alto da un valor más alto
   									   // sensibilidad. Un valor más alto hace que StallGuard4 sea más sensible y requiere menos torque para
-  									   // indica una oposicion al movimiento. 
+  									   // indica una oposicion al movimiento. 								 
 
 	EEPROM.begin(EEPROM_SIZE);
     delay(100);
@@ -194,6 +199,41 @@ int Calibration::start()
 	int cont_turn = 0;
 	int cont_turn1 = 0;
 	flag = 0;
+    /*
+    //=============Prueba de comandos UART============
+	flag = 1;
+	
+	pinMode(EN_PIN, OUTPUT);
+	pinMode(EN_PIN2, OUTPUT);
+	digitalWrite(EN_PIN, LOW);
+	digitalWrite(EN_PIN2, LOW);
+
+    driver.toff(4);
+	driver2.toff(4);
+    driver.shaft(1);
+	driver2.shaft(1);
+	driver.rms_current(800);
+	driver2.rms_current(1);
+	move(1000,1,6000);
+    delay(1000);
+
+    driver.toff(0);
+	driver2.toff(0);
+	driver.rms_current(1);
+	driver2.rms_current(1);
+    delay(5000);
+
+    driver.toff(4);
+	driver2.toff(4);
+    driver.shaft(0);
+	driver2.shaft(0);
+	driver.rms_current(800);
+	driver2.rms_current(1);
+	move(1000,1,6000);
+    delay(5000);
+
+	//================================================
+    */
 
 	Flag_adjust_ini = Check_ini();
 	if (Flag_adjust_ini == 1)
@@ -286,27 +326,65 @@ int Calibration::start()
 	digitalWrite(DIR_PIN, HIGH);
 	driver.rms_current(800);
 	normal_turn();
-	delay(100);
+	delay(200);
+	int stall_data = 0;
+	int stall_out = 0;
 	while (true)
 	{
 		digitalWrite(EN_PIN2, HIGH);
 		digitalWrite(DIR_PIN2, LOW);
         cont_turn1++;
-		if (analogRead(PIN_ProducType) > 3500)
+		ProductTypeChess = analogRead(PIN_ProducType);
+        ProductTypeChess = 4000;
+		//if (analogRead(PIN_ProducType) > 3500)
+		if (ProductTypeChess > 3500)
 		{
-			if (digitalRead(DIAG_PIN) == 1 || cont_turn == 1480)
+			
+			for (int i = 0; i < 5; i++)
+			{
+				stall_data = meanFilter3.AddValue(driver.SG_RESULT());
+			}
+			
+			if(stall_data < 90)
+			{
+			   flag = 1;
+               stall_out = 1;
+			   
+			}
+			else
+			{
+				stall_out = 0;
+			}
+			
+			
+			
+			Serial.print(0);
+			Serial.print("\t");
+    		Serial.print(driver.SG_RESULT(), DEC);
+    		Serial.print("\t");
+			Serial.print(digitalRead(DIAG_PIN)*100);
+			Serial.print("\t");
+			Serial.print(stall_data*10);
+			//Serial.print(stall_out*100);
+			Serial.print("\t");
+    		Serial.println(200);
+			//Serial.println(driver.cs2rms(driver.cs_actual()), DEC);
+            
+			
+			//if (digitalRead(DIAG_PIN) == 1 || cont_turn == 1480)
+			if (stall_out == 1 || cont_turn == 1480)
 			{
 				cont_turn1 = 0;
 				flag = 1;
 				//Back a little  first arm
 				digitalWrite(DIR_PIN, LOW);
-				move(300, 1, 5000);
+				move(300, 1, 1000);
 
 				//Move second arm 90 degrees.
 				digitalWrite(EN_PIN, LOW);
 				digitalWrite(EN_PIN2, LOW);
 				digitalWrite(DIR_PIN2, HIGH);
-				move(2400, 2, 5000);
+				move(2400, 2, 1000);
 				//move both arms until encoder detects
 				digitalWrite(DIR_PIN, HIGH);
 				digitalWrite(DIR_PIN2, HIGH);
@@ -366,7 +444,10 @@ int Calibration::start()
 					flag = 3;
 					delay(10);
 					cont_turn++;
-					if (analogRead(PIN_ProducType) > 3500)
+					ProductTypeChess = analogRead(PIN_ProducType);
+                    ProductTypeChess = 4000;
+					//if (analogRead(PIN_ProducType) > 3500)
+					if(ProductTypeChess > 3500)
 					{
 						if ((digitalRead(DIAG_PIN2) == 1 and avoid2 == 1) || cont_turn == 1480)
 						{
@@ -375,10 +456,10 @@ int Calibration::start()
 							
 							delay(250);
 							digitalWrite(DIR_PIN, LOW);
-							move(540, 1, 5000);
+							move(540, 1, 1000);
 							//second arm 90 degree
 							digitalWrite(DIR_PIN2, HIGH);
-							move(3200, 2, 2000);
+							move(3200, 2, 1000);
 
 							//move both arms at same time.
 							digitalWrite(DIR_PIN, HIGH);
@@ -463,11 +544,13 @@ int Calibration::start()
                 
 				delay(3000);
 				digitalWrite(DIR_PIN2, HIGH);
-				move(2000, 2, 500);              /////Para mandar brazo a cero
+				move(667, 2, 500);              /////Para mandar brazo a cero
 				delay(5000);
 				avoid = 1;
 				return 0;
 			}
+			
+
 		}
 		//====WITHOUT STALLGUARD====
 		for (int i = 0; i < 40; i++)
@@ -522,7 +605,10 @@ int Calibration::start()
 					flag = 3;
 					delay(10);
 					cont_turn++;
-					if (analogRead(PIN_ProducType) > 3500)
+					ProductTypeChess = analogRead(PIN_ProducType);
+                    ProductTypeChess = 4000;
+					//if (analogRead(PIN_ProducType) > 3500)
+		            if(ProductTypeChess > 3500)		
 					{
 
 						if ((digitalRead(DIAG_PIN2) == 1 and avoid2 == 1) || cont_turn == 1480)
@@ -640,7 +726,7 @@ int Calibration::start()
 
                 delay(3000);
 				digitalWrite(DIR_PIN2, HIGH);
-				move(2000, 2, 500);              /////Para mandar brazo a cero
+				move(667, 2, 500);              /////Para mandar brazo a cero
                 delay(5000);
 				avoid = 1;
 				return 0;
@@ -657,7 +743,7 @@ void normal_turn()
 													  // el prescaler es 8, y true es una Flagera que indica si la interrupcion se realiza en borde o en level
 		timerAttachInterrupt(timer1, &onTimer, true); //Se vincula el timer con la funcion AttachInterrup
 													  //la cual se ejecuta cuando se genera la interrupcion
-		timerAlarmWrite(timer1, 10000, true);		  //En esta funcion se define el valor del contador en el cual se genera la interrupción del timer
+		timerAlarmWrite(timer1, 5000, true);		  //En esta funcion se define el valor del contador en el cual se genera la interrupción del timer original 10000
 		timerAlarmEnable(timer1);					  //Función para habilitar el temporizador.
 		sei();										  //allow interrupts
 	}
@@ -2143,7 +2229,10 @@ int zero_Hall1(void)
 	int flag_c = 0;
 	digitalWrite(DIR_PIN, HIGH);
 	digitalWrite(DIR_PIN2, HIGH);
-	if (analogRead(PIN_ProducType) > 3500)
+	ProductTypeChess = analogRead(PIN_ProducType);
+    ProductTypeChess = 4000;
+	//if (analogRead(PIN_ProducType) > 3500)
+	if(ProductTypeChess > 3500)
 	{
 		normal_turn();
 		delay(500);
@@ -2436,8 +2525,10 @@ int zero_Hall2(void)
 	int p = 0;
 	int flag_c = 0;
 	
-
-	if (analogRead(PIN_ProducType) > 3500)
+    ProductTypeChess = analogRead(PIN_ProducType);
+    ProductTypeChess = 4000;
+	//if (analogRead(PIN_ProducType) > 3500)
+	if(ProductTypeChess > 3500)
 	{
 		digitalWrite(EN_PIN, HIGH);
 		flag = 3;

@@ -420,6 +420,8 @@ void Testing::Test()
 			band_sd = 1;
 			
 		}
+		driver.rms_current(700);
+        driver2.rms_current(700);
         
 		while(true)
 		{
@@ -446,6 +448,8 @@ void Testing::Test()
 					break;
 				}
 			}
+			mover(1, 1, 60);
+			mover(1, 2, 60);
 		}
 	}
 	

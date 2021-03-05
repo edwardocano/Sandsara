@@ -26,8 +26,8 @@
 #define R_SENSE             0.11f
 
 //STALL_VALUE y STALL_VALUE2 es la sensibilidad para la deteccion de colision la cual tambien depende de la corriente.
-#define STALL_VALUE         2 // [0..255]
-#define STALL_VALUE2        2
+#define STALL_VALUE         32 // [0..255]
+#define STALL_VALUE2        32
 
 //MICROSTEPPING es para configurar las distintas configuraciones de de microstepping que tiene el motor
 // entre las opciones estan 1,2,4,8,16,32,64.
@@ -68,12 +68,12 @@
  * STEP_PIN2 es el pin step del driver para el motor 2
  * EN_PIN2 es el pin enable del driver del motor 2
  */
-#define DIR_PIN 33
-#define STEP_PIN 25
-#define EN_PIN 14
-#define DIR_PIN2 4
-#define STEP_PIN2 21
-#define EN_PIN2 15
+#define DIR_PIN 33      //33
+#define STEP_PIN 25     //25
+#define EN_PIN 14       //14
+#define DIR_PIN2 4      //4
+#define STEP_PIN2 21    //21
+#define EN_PIN2 15      //15
 
 //no_picos representa el numero de picos de Stelle
 #define no_picos 6
@@ -85,13 +85,13 @@
  * si DISABLE_MOTORS se define, los motores no se moveran a la hora de dibujar los archivos.
  */
 //#define PROCESSING_SIMULATOR
-#define DEBUGGING_DATA
+//#define DEBUGGING_DATA
 //#define DEBUGGING_DETAIL
 //#define DISABLE_MOTORS
 //#define DEBUGGIN_LED2
 #define IMPLEMENT_ACCELERATION
 #define RESQUEST_ANSWER
-#define DEBUGGING_BLUETOOTH
+//#define DEBUGGING_BLUETOOTH
 
 /**
  * encoder es el pin para la senal del encoder
@@ -111,8 +111,8 @@
 #define DRIVER_ADDRESS      0b00 // TMC2209 Driver address according to MS1 and MS2
 
 
-#define SERIAL_PORT2        Serial2 // TMC2208/TMC2224 HardwareSerial port
-#define DRIVER_ADDRESS2     0b00 // TMC2209 Driver address according to MS1 and MS2
+#define SERIAL_PORT2        Serial2 // TMC2208/TMC2224 HardwareSerial port                       
+#define DRIVER_ADDRESS2     0b00 // TMC2209 Driver address according to MS1 and MS2              //0b10      <---------   Dir para usar un solo PDN  
 
 #define radius_1 152.0
 #define radius_2 100.0
@@ -167,8 +167,8 @@
 #define MAX_CHARACTER_PER_LINE  1000
 #define OUTOFTIME_BLUETOOTH     20000
 #define OUTOFTIME_BLUETOOTH_LINE 1000
-#define NORMAL_CURRENT          900
-#define CURRENT_IN_CALIBRATION  800
+#define NORMAL_CURRENT          900  //900
+#define CURRENT_IN_CALIBRATION  800  //800
 //#define ACCELERATION            400.0
 #define ACCEL_THRESHOLD         500.0
 #define SAFE_SPEED              1.0
