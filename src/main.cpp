@@ -322,6 +322,7 @@ void setup()
 
     //====restore the value intermediateCalibration====
     intermediateCalibration = romGetIntermediateCalibration();
+    BluetoothSand.setCalibrationStatus(intermediateCalibration);
     //====Restore speedMotor====
     speedMotorGlobal = romGetSpeedMotor();
     if (speedMotorGlobal > MAX_SPEED_MOTOR || speedMotorGlobal < MIN_SPEED_MOTOR){

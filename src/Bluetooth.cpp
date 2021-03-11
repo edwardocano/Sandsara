@@ -59,6 +59,7 @@ extern  String  bluetoothNameGlobal;
 extern  bool    suspensionModeGlobal;
 extern  Motors Sandsara;
 extern  bool    speedChangedMain;
+extern  bool    intermediateCalibration;
 
 
 //====variables====
@@ -1271,9 +1272,20 @@ class generalCallbacks_status: public BLECharacteristicCallbacks {
     #endif
 };
 
-class generalCallback_calibrating: public BLECharacteristic {
+class generalCallbacks_calibrating: public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic *characteristic){
-        
+        std::string rxData = characteristic->getValue();
+        String value = rxData.c_str();
+        int calibrationStatus = value.toInt();
+
+        if (calibrationStatus > 0){
+            romSetIntermediateCalibration(true);
+            intermediateCalibration = true;
+        }
+        else {
+            romSetIntermediateCalibration(false);
+            intermediateCalibration = false;
+        }
     }
 };
 
@@ -1451,6 +1463,11 @@ int Bluetooth::init(String name){
     generalCharacteristic_factoryReset = pServiceGeneralConfig->createCharacteristic(
         GENERAL_UUID_FACTORYRESET,
             BLECharacteristic::PROPERTY_WRITE);
+    
+    generalCharacteristic_calibration = pServiceGeneralConfig->createCharacteristic(
+        GENERAL_UUID_CALIBRATION,
+            BLECharacteristic::PROPERTY_WRITE |
+            BLECharacteristic::PROPERTY_READ);
 
     generalCharacteristic_errorMsg = pServiceGeneralConfig->createCharacteristic(
         GENERAL_UUID_ERRORMSG,
@@ -1466,6 +1483,7 @@ int Bluetooth::init(String name){
     generalCharacteristic_restart->setCallbacks(new generalCallbacks_restart());
     generalCharacteristic_factoryReset->setCallbacks(new generalCallbacks_factoryReset());
     generalCharacteristic_status->setCallbacks(new generalCallbacks_status());
+    generalCharacteristic_calibration->setCallbacks(new generalCallbacks_calibrating());
 
     //====Characteristics for File configuration====
     fileCharacteristic_receiveFlag = pServiceFile->createCharacteristic(
@@ -2086,4 +2104,13 @@ void Bluetooth::setAmountOfColors(){
         Serial.print("SET amount: ");
         Serial.println(amount.c_str());
     #endif
+}
+
+void Bluetooth::setCalibrationStatus(bool calibrationStatus){
+    if (calibrationStatus){
+        generalCharacteristic_calibration->setValue("1");
+    }
+    else{
+        generalCharacteristic_calibration->setValue("0");
+    }
 }

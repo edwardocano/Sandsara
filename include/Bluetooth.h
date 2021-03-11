@@ -114,4 +114,5 @@ class Bluetooth {
         static void setStatus(int);
         static void setMotorSpeed(int);
         static void setPercentage(int);
+        static void setCalibrationStatus(bool);
 };
