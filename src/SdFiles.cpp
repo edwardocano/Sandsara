@@ -26,7 +26,9 @@ SdFiles::SdFiles(String nameF, int directionMode)
     this->directionMode = directionMode;
 #ifdef DEBUGGING_DATA
     Serial.print("Se abrira el archivo: ");
-    Serial.println(fileName);
+    Serial.print(fileName);
+    Serial.print(" de tipo: ");
+    Serial.println(fileType);
 #endif
     while (readingSDFile){
         delay(1);
@@ -90,6 +92,7 @@ SdFiles::~SdFiles()
  * - 0 no hubo problemas
  * - 1 ya no hay mas lineas por leer en el archivo
  * - 3 la linea es un comentario.
+ * - 5 es la ultima linea y ya no hay mas por leer del archivo.
  * - -1 no se encontro el separador de los componentes (',' o ' ')
  * - -4 no se encontro un segundo componente
  * - -6 no es un tipo de archivo valido
@@ -983,8 +986,7 @@ bool SdFiles::isValid(){
     pFileBin = stackPFileBin;
     dataBuffer = "";
     directionMode = stackMode;
-
-    if (resp == 0){
+    if (resp == 0 || resp == 5){
         return true;
     }
     else{

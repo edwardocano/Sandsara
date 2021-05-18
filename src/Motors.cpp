@@ -900,3 +900,22 @@ long Motors::calculate_steps(double q1, double q2)
     else
         return steps_option_2 / degrees_per_step;
 }
+
+void Motors::constrainXY(double& x, double& y)
+{
+    double z = Motors::zPolar(x, y);
+    ///calculus of theta
+    double theta = Motors::thetaPolar(x, y);
+    ///if x,y is out of range, z will be the maximun radius possible
+    if (z > l1 + l2)
+        z = l1 + l2;
+    ///Delimiter module z
+    int i = theta / (2 * PI / (2 * no_picos));
+    double tantheta = tan(theta);
+    double z_max = abs(b[i] / (tantheta - m[i]) * sqrt(1 + tantheta * tantheta));
+    if (z > z_max) {
+        z = z_max;
+    }
+    x = z * cos(theta);
+    y = z * sin(theta);
+}

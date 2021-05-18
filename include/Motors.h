@@ -94,9 +94,10 @@ class Motors {
         void    setRealSpeed1(double );
         void    setRealSpeed2(double ); 
         void    resetSpeeds();
-        
-    private:
-        void    moveInterpolateTo(double ,double ,double ,bool );
+        static void constrainXY(double& x, double& y);
+
+        private :
+        void    moveInterpolateTo(double, double, double, bool);
         void    moveSteps(long, long, double);
         //mathematics methods
         long    calculate_steps(double , double );

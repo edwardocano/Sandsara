@@ -263,10 +263,16 @@ void setup()
     if (analogRead(PIN_ProducType) < 1000){
         productType = false;
         NUM_LEDS = LEDS_OF_HALO;
+#ifdef DEBUGGING_DATA
+        Serial.println("Product: Halo");
+#endif
     }
     else{
         productType = true;
         NUM_LEDS = LEDS_OF_STELLE;
+#ifdef DEBUGGING_DATA
+        Serial.println("Product: Stelle");
+#endif
     }
     delay(1000);
     //====Restoring of the latest pallete choosed====
@@ -582,6 +588,10 @@ int run_sandsara(String playList, int orderMode)
         readingSDFile = false;
         //====run program====
         errorCode = runFile(fileName);
+#ifdef DEBUGGING_DATA
+        Serial.print("error code de runFile: ");
+        Serial.println(errorCode);
+#endif
         //====
         if (errorCode == -70)   {continue;}
         else if (errorCode == -71)   {break;}
@@ -624,6 +634,10 @@ int run_sandsara(String playList, int orderMode)
  *  40, an instruction for suspention was recieved.
  */
 int runFile(String fileName){
+#ifdef DEBUGGING_DATA
+    Serial.print("runFile: ");
+    Serial.println(fileName);
+#endif
     double component_1, component_2, distance;
     int working_status = 0;
     //====restore the path name and its position in the playlist.
@@ -645,6 +659,9 @@ int runFile(String fileName){
     //====
     if (!file.isValid()){
         pListFileGlobal += 1;
+#ifdef DEBUGGING_DATA
+        Serial.println("Archivo no valido");
+#endif
         return -70;
     }
     #ifdef PROCESSING_SIMULATOR
@@ -770,7 +787,7 @@ int runFile(String fileName){
         //====
         //====Get new components of the next point to go====
         //Serial.println("antes de next components");
-        working_status = file.getNextComponents(&component_1, &component_2);                
+        working_status = file.getNextComponents(&component_1, &component_2);              
         if (working_status == 3)
         {
             continue;
@@ -1037,7 +1054,15 @@ int movePolarTo(double component_1, double component_2, double couplingAngle, bo
         zAuxliar = zCurrent + deltaZ * double(i);
         xAux = zAuxliar * cos(thetaAuxiliar);
         yAux = zAuxliar * sin(thetaAuxiliar);
+        // si el producto es Stelle entonces limita a x y y.
+        if (productType){
+            Motors::constrainXY(xAux, yAux);
+        }
         distance = Sandsara.module(xAux, yAux, Sandsara.x_current, Sandsara.y_current);
+// #ifdef DEBUGGING_DATA
+//         Serial.print("distance: ");
+//         Serial.println(distance);
+// #endif
         if (distance > MAX_DISTANCE_FOR_MOVEMENT)
         {
             if (lastPointInThisFunction && i == (slices - 1)){
