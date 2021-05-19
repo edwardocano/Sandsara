@@ -787,7 +787,7 @@ int runFile(String fileName){
         //====
         //====Get new components of the next point to go====
         //Serial.println("antes de next components");
-        working_status = file.getNextComponents(&component_1, &component_2);              
+        working_status = file.getNextComponents(&component_1, &component_2);           
         if (working_status == 3)
         {
             continue;
@@ -811,6 +811,9 @@ int runFile(String fileName){
                 speedChangedMain = false;
             }
             Motors::rotate(component_1, component_2, -couplingAngle);
+            if (productType) {
+                Motors::constrainXY(component_1, component_2);
+            }
             distance = Sandsara.module(component_1, component_2, Sandsara.x_current, Sandsara.y_current);
             if (distance > MAX_DISTANCE_FOR_MOVEMENT)
             {
